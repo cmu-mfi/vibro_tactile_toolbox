@@ -27,6 +27,8 @@ from moveit_msgs.srv import GetMotionPlan
 
 from enum import Enum
 
+from robot_controller.robot_commander import BaseRobotCommander
+
 
 ## Uncomment to use with Gazebo
 # MOVEIT_CONTROLLER = "pos_joint_traj_controller"
@@ -90,7 +92,7 @@ def _poses_close(
     return result
 
 
-class RobotMoveGroup(object):
+class YaskawaRobotCommander(BaseRobotCommander):
 
     JOINTS = [
         "joint_1_s",
@@ -167,7 +169,7 @@ class RobotMoveGroup(object):
         velocity_scaling: float = 0.01,
         acc_scaling: float = 0.01,
         wait: bool = True):
-        return self.go_to_joint_state(self.HOME_JOINTS, cartesian_path, tolerance, velocity_scaling, acc_scaling, wait)
+        return self.go_to_joints(self.HOME_JOINTS, cartesian_path, tolerance, velocity_scaling, acc_scaling, wait)
 
 
     def get_current_pose(self, end_effector_link: str = "", stamped: bool = False) -> Union[Pose, PoseStamped]:
@@ -188,14 +190,7 @@ class RobotMoveGroup(object):
             joint_state = [np.rad2deg(joint) for joint in joint_state]
         return joint_state
 
-    def go_to_joints(self, joint_goal: List[float], wait:bool = True):
-
-        self.move_group.set_max_velocity_scaling_factor(0.03)
-        self.move_group.set_joint_value_target(joint_goal)
-        ret_val = self.move_group.go(wait)
-        return ret_val
-
-    def go_to_joint_state(
+    def go_to_joints(
         self,
         joint_goal: List[float],
         cartesian_path: bool = False,

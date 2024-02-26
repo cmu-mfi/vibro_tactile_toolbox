@@ -9,7 +9,7 @@ import os
 
 from geometry_msgs.msg import Pose, Twist
 
-from yaskawa_controller.commander import RobotMoveGroup
+from robot_controller.yk_commander import YaskawaRobotCommander
 
 from autolab_core import RigidTransform
 
@@ -48,7 +48,7 @@ def run():
     start_trial = rospy.get_param("collect_tactile_data/start_trial")
 
     # Create Move-It Group for Yaskawa
-    robot_mg = RobotMoveGroup(namespace)
+    robot_mg = YaskawaRobotCommander(namespace)
     
     # Load End-Effector Kinematics
     T_lego_ee = RigidTransform.load(root_pwd+'/config/lego_ee.tf')
