@@ -4,7 +4,7 @@
     <arg name="output" default="screen"/>
     <!-- Hardware depth registration -->
     <arg name="depth_registration" default="true"/>
-    <arg name="serial_number" default=""/>
+    <arg name="serial_number" default="CL8FC3100R4"/>
     <arg name="usb_port" default=""/>
     <arg name="device_num" default="1"/>
     <arg name="vendor_id" default="0x2bc5"/>

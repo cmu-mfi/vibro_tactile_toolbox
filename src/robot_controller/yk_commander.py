@@ -28,6 +28,8 @@ from moveit_msgs.srv import GetMotionPlan
 from enum import Enum
 
 from robot_controller.robot_commander import BaseRobotCommander
+from std_srvs.srv import Trigger, TriggerRequest
+
 
 
 ## Uncomment to use with Gazebo
@@ -111,6 +113,9 @@ class YaskawaRobotCommander(BaseRobotCommander):
         # set a default timeout threshold non-motion requests
         self.timeout = rospy.Duration(5)
 
+
+        self.srv_client = rospy.ServiceProxy(f'/{namespace}/robot_disable', Trigger)
+
         # setup moveit publishers, services, and actions
         self.get_plan = rospy.ServiceProxy("/" + namespace+"/plan_kinematic_path", GetMotionPlan)
         rospy.wait_for_service("/" + namespace+"/plan_kinematic_path", self.timeout)
@@ -162,6 +167,14 @@ class YaskawaRobotCommander(BaseRobotCommander):
             print("============ Printing robot state")
             print(self.robot.get_current_state())
             print("")
+
+    def stop(self):
+        # Direct to yk
+        trigger_req = TriggerRequest()
+        self.srv_client(trigger_req)
+
+        # Movegroup stop
+        # self.move_group.stop()
 
     def go_home(self, 
         cartesian_path: bool = False,

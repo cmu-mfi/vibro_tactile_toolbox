@@ -162,6 +162,8 @@ include_directories(
 catkin_install_python(PROGRAMS
   scripts/collect_tactile_data.py
   scripts/save_lego_pose.py
+  scripts/image_cropped_republisher.py
+  scripts/terminator_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

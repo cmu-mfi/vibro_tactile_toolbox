@@ -6,7 +6,7 @@ import numpy as np
 
 from geometry_msgs.msg import Pose, Twist
 
-from pallet_pick_and_place_package.commander import RobotMoveGroup
+from robot_controller.yk_commander import YaskawaRobotCommander
 
 from autolab_core import RigidTransform
 
@@ -17,7 +17,7 @@ def run():
     namespace = rospy.get_param("save_lego_pose/namespace")
     root_pwd = rospy.get_param("save_lego_pose/root_pwd")
 
-    robot_mg = RobotMoveGroup(namespace)
+    robot_mg = YaskawaRobotCommander(namespace)
     
     T_lego_ee = RigidTransform.load(root_pwd+'/config/lego_ee.tf')
 

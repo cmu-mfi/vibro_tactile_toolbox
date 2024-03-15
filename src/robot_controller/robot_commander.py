@@ -10,6 +10,10 @@ class BaseRobotCommander(object, metaclass=abc.ABCMeta):
     """
     Abstract base class for RobotCommander objects
     """
+    def stop(self):
+
+        raise NotImplementedError
+
     def go_home(self, 
         cartesian_path: bool = False,
         tolerance: float = 0.001,
