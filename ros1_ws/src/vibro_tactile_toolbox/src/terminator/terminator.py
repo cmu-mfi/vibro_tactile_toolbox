@@ -29,3 +29,5 @@ class Terminator(object):
         if (abs(fts_wrench.torque.z) > self.fts_wrench_thresh.torque.z):
             return True
         return False
+    
+# test
