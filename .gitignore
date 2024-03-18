@@ -3,3 +3,6 @@ __pycache__
 data/*
 results/*
 *.zip
+ros1_ws/build
+ros1_ws/devel
+ros1_ws/install
