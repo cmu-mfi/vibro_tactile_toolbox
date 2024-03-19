@@ -9,13 +9,24 @@ RUN apt-get install -y git \
     && apt-get install -y python3-pip
 
 # Clone vibro_tactile_toolbox repo
-# RUN cd ~/ \
-#     && mkdir -p /ros1_ws
-
-# COPY ros1_ws /ros1_ws
 RUN git clone --branch docker-image https://github.com/cmu-mfi/vibro_tactile_toolbox.git \
     && cd /vibro_tactile_toolbox \
     && git pull
+
+# Install pip dependencies
+RUN cd /vibro_tactile_toolbox/docker \
+    && pip install -r requirements.txt
+
+# Add external packages into worskpace
+
+## Audio (https://github.com/firephinx/sounddevice_ros)
+RUN apt-get install libportaudio2 libasound-dev \
+    && cd /vibro_tactile_toolbox/ros1_ws/src \ 
+    && git clone https://github.com/firephinx/sounddevice_ros.git
+
+## Robot controller
+
+## Cameras
 
 # Build and install the ROS workspace
 RUN source /opt/ros/noetic/setup.bash \

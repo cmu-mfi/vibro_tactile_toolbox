@@ -1,2 +1,6 @@
+# Robot controller
 pyquaternion
-# moveit_commander???
+
+# Audio (https://github.com/firephinx/sounddevice_ros)
+sounddevice
+pysoundfile
