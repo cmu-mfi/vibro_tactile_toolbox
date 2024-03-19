@@ -28,6 +28,10 @@ RUN apt-get install -y libportaudio2 \
 ## Robot controller
 
 ## Cameras
+RUN cd /vibro_tactile_toolbox/ros1_ws/src \ 
+    && git clone https://github.com/orbbec/OrbbecSDK_ROS1.git
+
+## FTS
 
 # Build and install the ROS workspace
 RUN source /opt/ros/noetic/setup.bash \
