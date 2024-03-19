@@ -28,7 +28,15 @@ RUN apt-get install -y libportaudio2 \
 ## Robot controller
 
 ## Cameras
-RUN cd /vibro_tactile_toolbox/ros1_ws/src \ 
+RUN apt-get install -y libgflags-dev \
+    && apt-get install -y ros-$ROS_DISTRO-image-geometry \
+    && apt-get install -y ros-$ROS_DISTRO-camera-info-manager \
+    && apt-get install -y ros-$ROS_DISTRO-image-transport \
+    && apt-get install -y ros-$ROS_DISTRO-image-publisher \
+    && apt-get install -y libgoogle-glog-dev \
+    && apt-get install -y libusb-1.0-0-dev \
+    && apt-get install -y libeigen3-dev  \
+    && cd /vibro_tactile_toolbox/ros1_ws/src \ 
     && git clone https://github.com/orbbec/OrbbecSDK_ROS1.git
 
 ## FTS
