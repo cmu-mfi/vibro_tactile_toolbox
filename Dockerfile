@@ -20,7 +20,8 @@ RUN cd /vibro_tactile_toolbox/docker \
 # Add external packages into worskpace
 
 ## Audio (https://github.com/firephinx/sounddevice_ros)
-RUN apt-get install libportaudio2 libasound-dev \
+RUN apt-get install -y libportaudio2 \
+    && apt-get install -y libasound-dev \
     && cd /vibro_tactile_toolbox/ros1_ws/src \ 
     && git clone https://github.com/firephinx/sounddevice_ros.git
 
