@@ -13,7 +13,9 @@ RUN apt-get install -y git \
 #     && mkdir -p /ros1_ws
 
 # COPY ros1_ws /ros1_ws
-RUN git clone --branch docker-image https://github.com/cmu-mfi/vibro_tactile_toolbox.git
+RUN git clone --branch docker-image https://github.com/cmu-mfi/vibro_tactile_toolbox.git \
+    && cd /vibro_tactile_toolbox \
+    && git pull
 
 # Build and install the ROS workspace
 RUN source /opt/ros/noetic/setup.bash \
