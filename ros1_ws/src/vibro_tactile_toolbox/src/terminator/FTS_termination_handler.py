@@ -1,6 +1,10 @@
+#!/usr/bin/env python3
+
+from terminator.base_termination_handler import BaseTerminationHandler
+
 from geometry_msgs.msg import WrenchStamped, Wrench
 
-class Terminator(object):
+class FTSTerminationHandler(BaseTerminationHandler):
     def __init__(self, fts_wrench_thresh: Wrench):
         self.fts_wrench_thresh = fts_wrench_thresh
 
