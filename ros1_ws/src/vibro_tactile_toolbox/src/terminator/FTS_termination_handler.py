@@ -1,37 +1,72 @@
 #!/usr/bin/env python3
 
+import rospy
 from terminator.base_termination_handler import BaseTerminationHandler
 
 from geometry_msgs.msg import WrenchStamped, Wrench
+from vibro_tactile_toolbox.msg import TerminationSignal, TerminationConfig
+
+
+TERMINATOR_TIMER_PERIOD_NS = 1000 # nanoseconds
+TERMINATOR_WRENCH_THRESH = Wrench()
+
 
 class FTSTerminationHandler(BaseTerminationHandler):
-    def __init__(self, fts_wrench_thresh: Wrench):
-        self.fts_wrench_thresh = fts_wrench_thresh
+    def __init__(self):
+        self.input_data_class = WrenchStamped
+        self.check_rate_ns = 10E6 # 1 ms default
 
-    def get_termination_signal(self, fts_wrench: WrenchStamped):
-        # FTS check
-        if self.fts_wrench_exceeds_thresh(fts_wrench):
-            return True
+        self.fts_wrench = Wrench()
 
-        return False
+        # Termination condition: Magnitude threshold
+        self.wrench_thresh = Wrench()
+        self.wrench_thresh.force.x = 30
+        self.wrench_thresh.force.y = 30
+        self.wrench_thresh.force.z = 30
+        self.wrench_thresh.torque.x = 2
+        self.wrench_thresh.torque.y = 2
+        self.wrench_thresh.torque.z = 2
+
+    def update_config(self, cfg: TerminationConfig):
+        """
+        Update the termination handler config:
+        - check_rate_ns
+        - fts_wrench
+        """
+        raise NotImplementedError
     
-    def fts_wrench_exceeds_thresh(self, fts_wrench: WrenchStamped):
-        # Basic magnitude thresholding
-        if fts_wrench is None:
-            return False
-        fts_wrench = fts_wrench.wrench
-        if (abs(fts_wrench.force.x) > self.fts_wrench_thresh.force.x):
-            return True
-        if (abs(fts_wrench.force.y) > self.fts_wrench_thresh.force.y):
-            return True
-        if (abs(fts_wrench.force.z) > self.fts_wrench_thresh.force.z):
-            return True
-        if (abs(fts_wrench.torque.x) > self.fts_wrench_thresh.torque.x):
-            return True
-        if (abs(fts_wrench.torque.y) > self.fts_wrench_thresh.torque.y):
-            return True
-        if (abs(fts_wrench.torque.z) > self.fts_wrench_thresh.torque.z):
-            return True
-        return False
+    def update_input_data(self, input_signal: WrenchStamped):
+        """
+        Extract the wrench from the most recent FTS reading
+        """
+        self.fts_wrench = input_signal.wrench
     
-# test
+    def get_termiation_signal(self) -> TerminationSignal:
+        """
+        Create the termination signal and add causes based on fts_wrench magnitude and the threshold
+        """
+        terminate = False
+        cause = "FTS termination handler caused by:\n"
+        if (abs(self.fts_wrench.force.x) > self.wrench_thresh.force.x):
+            terminate = True
+            cause += f"Fx ({self.fts_wrench.force.x:0.2f}) exceeds threshold ({self.wrench_thresh.force.x:0.2f})"
+        if (abs(self.fts_wrench.force.y) > self.wrench_thresh.force.y):
+            terminate = True
+            cause += f"Fy ({self.fts_wrench.force.y:0.2f}) exceeds threshold ({self.wrench_thresh.force.y:0.2f})"
+        if (abs(self.fts_wrench.force.z) > self.wrench_thresh.force.z):
+            terminate = True
+            cause += f"Fz ({self.fts_wrench.force.z:0.2f}) exceeds threshold ({self.wrench_thresh.force.z:0.2f})"
+        if (abs(self.fts_wrench.torque.x) > self.wrench_thresh.torque.x):
+            terminate = True
+            cause += f"Tx ({self.fts_wrench.torque.x:0.2f}) exceeds threshold ({self.wrench_thresh.torque.x:0.2f})"
+        if (abs(self.fts_wrench.torque.y) > self.wrench_thresh.torque.y):
+            terminate = True
+            cause += f"Ty ({self.fts_wrench.torque.y:0.2f}) exceeds threshold ({self.wrench_thresh.torque.y:0.2f})"
+        if (abs(self.fts_wrench.torque.z) > self.wrench_thresh.torque.z):
+            terminate = True
+            cause += f"Tz ({self.fts_wrench.torque.z:0.2f}) exceeds threshold ({self.wrench_thresh.torque.z:0.2f})"
+        
+        termination_signal = TerminationSignal()
+        termination_signal.terminate = terminate
+        termination_signal.cause = cause
+        return termination_signal

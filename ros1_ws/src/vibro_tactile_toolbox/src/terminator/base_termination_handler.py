@@ -2,24 +2,31 @@
 
 import abc
 
-class BaseTerminationHandler(object, abc.metaclass):
+from vibro_tactile_toolbox.msg import TerminationConfig, TerminationSignal
+
+class BaseTerminationHandler(object, metaclass=abc.ABCMeta):
     """
-    Abstract termination handler class
+    Abstract base class for TerminationHandler objects
     """
+
     def __init__(self):
-        """
-        A termination handler will have:
-        1. Termination criteria
-        2. Input signals
-        3. Termination signal
-        4. 
-        """
+        self.input_data_class = None
+        self.check_rate_ns = 10E9
 
-        self.termination_criteria = None
-        self.input_signals = None
-        self.termination_signal = None
-
-    def get_termination_signal(self):
+    def update_config(self, cfg: TerminationConfig):
         """
-        
+        Callback to update the termination handler config
         """
+        raise NotImplementedError
+    
+    def update_input_data(self, input_signal):
+        """
+        Callback to update the input signal
+        """
+        raise NotImplementedError
+    
+    def get_termiation_signal(self) -> TerminationSignal:
+        """
+        Callback to produce the termination signal
+        """
+        raise NotImplementedError
