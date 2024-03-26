@@ -51,6 +51,4 @@ RUN echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
 RUN echo "source /vibro_tactile_toolbox/ros1_ws/devel/setup.bash" >> ~/.bashrc
 RUN echo "source /vibro_tactile_toolbox/ros1_ws/install/setup.bash" >> ~/.bashrc
 
-# RUN pip install -r requirements.txt
-
 RUN echo "All Done "
