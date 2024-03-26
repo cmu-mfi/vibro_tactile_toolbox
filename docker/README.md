@@ -54,3 +54,30 @@ cd /vibro_tactile_toolbox/ros1_ws
 source build/setup.bash
 source install/setup.bash
 ```
+
+## Additional Docker Helper Functions
+
+- **Stop Docker Container:**
+  ```bash
+  docker stop <container_name_or_id>
+  ```
+
+- **Remove Docker Container:**
+  ```bash
+  docker rm <container_name_or_id>
+  ```
+
+- **Remove Docker Image:**
+  ```bash
+  docker rmi <image_name_or_id>
+  ```
+
+- **List All Docker Containers:**
+  ```bash
+  docker ps -a
+  ```
+
+- **List All Docker Images:**
+  ```bash
+  docker images
+  ```
