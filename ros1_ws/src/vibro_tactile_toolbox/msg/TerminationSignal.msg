@@ -1,0 +1,2 @@
+Bool terminate
+String cause

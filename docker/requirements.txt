@@ -1,0 +1,6 @@
+# Robot controller
+pyquaternion
+
+# Audio (https://github.com/firephinx/sounddevice_ros)
+sounddevice
+pysoundfile

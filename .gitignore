@@ -3,3 +3,8 @@ __pycache__
 data/*
 results/*
 *.zip
+ros1_ws/build
+ros1_ws/devel
+ros1_ws/install
+ros1_ws/src/OrbbecSDK_ROS1
+ros1_ws/src/sounddevice_ros
