@@ -15,13 +15,14 @@ class BaseTerminationHandler(object, metaclass=abc.ABCMeta):
 
     def update_config(self, cfg: TerminationConfig):
         """
-        Callback to update the termination handler config
+        Callback to update the termination handler config from a json
         """
         raise NotImplementedError
     
     def update_input_data(self, input_signal):
         """
         Callback to update the input signal
+        TODO: allow for multiple input signals
         """
         raise NotImplementedError
     

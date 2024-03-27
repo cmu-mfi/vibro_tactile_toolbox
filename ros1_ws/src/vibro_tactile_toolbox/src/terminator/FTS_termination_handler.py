@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import rospy
+import json
 from terminator.base_termination_handler import BaseTerminationHandler
 
 from geometry_msgs.msg import WrenchStamped, Wrench
@@ -30,9 +30,15 @@ class FTSTerminationHandler(BaseTerminationHandler):
     def update_config(self, cfg: TerminationConfig):
         """
         Update the termination handler config:
+        - id
         - check_rate_ns
         - fts_wrench
         """
+        cfg_jsons = cfg.cfg_json
+        full_cfg = json.loads(cfg_jsons)
+        print(full_cfg)
+        FTS_cfg = full_cfg['FTS']
+        print(FTS_cfg)
         raise NotImplementedError
     
     def update_input_data(self, input_signal: WrenchStamped):

@@ -1,1 +1,2 @@
-# Do later, maybe a dictionary?
+# json of termination configs
+string cfg_json
