@@ -6,6 +6,8 @@ from terminator.base_termination_handler import BaseTerminationHandler
 from geometry_msgs.msg import WrenchStamped, Wrench
 from vibro_tactile_toolbox.msg import TerminationSignal, TerminationConfig
 
+import terminator.utils as t_utils
+
 
 TERMINATOR_TIMER_PERIOD_NS = 1000 # nanoseconds
 TERMINATOR_WRENCH_THRESH = Wrench()
@@ -13,6 +15,7 @@ TERMINATOR_WRENCH_THRESH = Wrench()
 
 class FTSTerminationHandler(BaseTerminationHandler):
     def __init__(self):
+        self.id = -1
         self.input_data_class = WrenchStamped
         self.check_rate_ns = 10E6 # 1 ms default
 
@@ -36,10 +39,11 @@ class FTSTerminationHandler(BaseTerminationHandler):
         """
         cfg_jsons = cfg.cfg_json
         full_cfg = json.loads(cfg_jsons)
-        print(full_cfg)
         FTS_cfg = full_cfg['FTS']
-        print(FTS_cfg)
-        raise NotImplementedError
+        self.id = full_cfg['id']
+        self.check_rate_ns = FTS_cfg['check_rate_ns']
+        self.wrench_thresh = t_utils.dict_to_wrench(FTS_cfg['threshold'])
+
     
     def update_input_data(self, input_signal: WrenchStamped):
         """
@@ -47,7 +51,7 @@ class FTSTerminationHandler(BaseTerminationHandler):
         """
         self.fts_wrench = input_signal.wrench
     
-    def get_termiation_signal(self) -> TerminationSignal:
+    def get_termination_signal(self) -> TerminationSignal:
         """
         Create the termination signal and add causes based on fts_wrench magnitude and the threshold
         """

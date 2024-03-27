@@ -2,8 +2,9 @@
 
 import sys
 import rospy
+import json
 
-from vibro_tactile_toolbox.msg import TerminationSignal, TerminatorConfig
+from vibro_tactile_toolbox.msg import TerminationSignal, TerminationConfig
 
 class TerminatorNode:
   """
@@ -23,7 +24,7 @@ class TerminatorNode:
 
     self.termination_config_sub = rospy.Subscriber(
       "/terminator/termination_config", 
-      TerminatorConfig,
+      TerminationConfig,
       self.terminator_config_cb,
       queue_size=1
     )
@@ -34,8 +35,17 @@ class TerminatorNode:
     self.audio_handler_sub = None
     self.vision_handler_sub = None
 
-  def terminator_config_cb(self, cfg: TerminatorConfig):
-    raise NotImplementedError
+  def terminator_config_cb(self, cfg: TerminationConfig):
+    cfg_jsons = cfg.cfg_json
+
+    print(f"==Received Termination Config==\n{cfg_jsons}")
+
+    cfg_json = json.loads(cfg_jsons)
+    self.use_fts_handler = 'FTS' in cfg_json
+    self.use_timeout_handler = 'timeout' in cfg_json
+    self.use_robotstate_handler = 'robot' in cfg_json
+    self.use_audio_handler = 'audio' in cfg_json
+    self.use_vision_handler = 'vision' in cfg_json
 
   def fts_handler_cb(self, fts_termination_signal: TerminationSignal):
     if self.use_fts_handler:

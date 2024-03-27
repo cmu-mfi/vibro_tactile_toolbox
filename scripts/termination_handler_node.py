@@ -7,6 +7,7 @@ from std_msgs.msg import Bool
 from rospy.timer import TimerEvent
 from vibro_tactile_toolbox.msg import TerminationSignal, TerminationConfig
 
+from terminator.base_termination_handler import BaseTerminationHandler
 import terminator.utils as t_utils
 
 
@@ -17,6 +18,8 @@ class TerminationHandlerNode:
   1. Termination handler (from src/terminator/)
   2. Input signal topics (must match the expected input signal message types of the termination handler)
   """
+  termination_handler: BaseTerminationHandler
+
   def __init__(self, handler_name: str, input_topic: str):
     # Publisher for the output signal
     self.termination_signal_pub = rospy.Publisher(
@@ -69,8 +72,9 @@ class TerminationHandlerNode:
       self.termination_signal_pub.publish(termination_signal)
 
 def main(args):
+  print(args)
   rospy.init_node(f'{args.termination_handler}_termination_handler_node', anonymous=True)
-  node = TerminationHandlerNode(args.termination_handler, args.input_topics)
+  node = TerminationHandlerNode(args.termination_handler, args.input_topic)
   try:
     rospy.spin()
   except KeyboardInterrupt:
@@ -78,10 +82,12 @@ def main(args):
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser()
-    args.add_argument('-h', '--termination_handler', type=str,
+    args.add_argument('-t', '--termination_handler', type=str,
       help='Termination handler to load into this node')
     # Arg for specifying the ROS topics to use for the input to the termination handler
-    args.add_argument('t', '--input_topic', type=str,
+    args.add_argument('-i', '--input_topic', type=str,
       help='ROS topic to input to termination handler')
+    
+    args = args.parse_args()
 
     main(args)

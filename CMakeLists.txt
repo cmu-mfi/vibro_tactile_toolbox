@@ -164,6 +164,8 @@ catkin_install_python(PROGRAMS
   scripts/save_lego_pose.py
   scripts/image_cropped_republisher.py
   scripts/terminator_node.py
+  scripts/termination_handler_node.py
+  scripts/test_terminator.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
