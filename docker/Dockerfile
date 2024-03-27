@@ -9,7 +9,7 @@ RUN apt-get install -y git \
     && apt-get install -y python3-pip
 
 # Clone vibro_tactile_toolbox repo
-RUN git clone --branch docker-image https://github.com/cmu-mfi/vibro_tactile_toolbox.git \
+RUN git clone https://github.com/cmu-mfi/vibro_tactile_toolbox.git \
     && cd /vibro_tactile_toolbox \
     && git pull
 
