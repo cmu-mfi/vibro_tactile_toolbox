@@ -1,1 +1,1 @@
-docker build --no-cache -t noetic_vibro_tactile_toolbox .
+docker build -t noetic_vibro_tactile_toolbox .
