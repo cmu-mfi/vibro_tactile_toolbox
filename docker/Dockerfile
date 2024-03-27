@@ -41,7 +41,10 @@ RUN cd /Documents \
     && cp salt/helpers/* segment-anything/
 
 # Create a Ros1 ws
-RUN cd / && mkdir -p ros1_ws/src \
+RUN cd / && mkdir -p ros1_ws/src
+
+# Install catkin tools
+RUN apt-get -y install python3-catkin-tools
 
 # Clone vibro_tactile_toolbox repo
 RUN cd /ros1_ws/src \
