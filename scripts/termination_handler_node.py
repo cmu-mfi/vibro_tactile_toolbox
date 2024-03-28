@@ -24,7 +24,8 @@ class TerminationHandlerNode:
     # Publisher for the output signal
     self.termination_signal_pub = rospy.Publisher(
       f"/terminator/{handler_name}_termination_signal", 
-      TerminationSignal
+      TerminationSignal,
+      queue_size=1
     )
     # Subscriber for terminator config
     self.termination_config_sub = rospy.Subscriber(
@@ -38,12 +39,15 @@ class TerminationHandlerNode:
     self.termination_handler = t_utils.get_handler_from_name(handler_name)
 
     # Subscriber for the input signal
-    self.input_signal_sub = rospy.Subscriber(
-      f"{input_topic}",
-      self.termination_handler.input_data_class,
-      self.termination_handler.update_input_data,
-      queue_size=10
-    )
+    if input_topic == None:
+      self.input_signal_sub = None
+    else:
+      self.input_signal_sub = rospy.Subscriber(
+        f"{input_topic}",
+        self.termination_handler.input_data_class,
+        self.termination_handler.update_input_data,
+        queue_size=10
+      )
 
     # Timer for publishing the termination signal
     self.check_termination_timer = rospy.Timer(
@@ -85,7 +89,7 @@ if __name__ == '__main__':
     args.add_argument('-t', '--termination_handler', type=str,
       help='Termination handler to load into this node')
     # Arg for specifying the ROS topics to use for the input to the termination handler
-    args.add_argument('-i', '--input_topic', type=str,
+    args.add_argument('-i', '--input_topic', type=str, default=None,
       help='ROS topic to input to termination handler')
     
     args = args.parse_args()

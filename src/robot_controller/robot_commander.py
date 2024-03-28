@@ -14,6 +14,10 @@ class BaseRobotCommander(object, metaclass=abc.ABCMeta):
 
         raise NotImplementedError
 
+    def wait_for_skill(self):
+
+        raise NotImplementedError
+
     def go_home(self, 
         cartesian_path: bool = False,
         tolerance: float = 0.001,

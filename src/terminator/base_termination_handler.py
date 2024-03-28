@@ -26,7 +26,7 @@ class BaseTerminationHandler(object, metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
     
-    def get_termiation_signal(self) -> TerminationSignal:
+    def get_termination_signal(self) -> TerminationSignal:
         """
         Callback to produce the termination signal
         """

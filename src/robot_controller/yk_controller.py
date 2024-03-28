@@ -15,31 +15,109 @@ from geometry_msgs.msg import Pose, PoseStamped, Twist
 from sensor_msgs.msg import JointState
 
 from yk_tasks.srv import *
+from yk_tasks.msg import *
 from std_srvs.srv import Trigger, TriggerRequest
 
+from robot_controller.robot_commander import BaseRobotCommander
+
+def pose_to_list(pose: Pose):
+    return [pose.position.x, pose.position.y, pose.position.z, pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w]
+
+def _joints_close(goal: List, actual: List, tolerance: float):
+    """
+    Check if the joint values in two lists are within a tolerance of each other
+    """
+    for index in range(len(goal)):
+        if abs(actual[index] - goal[index]) > tolerance:
+            err = goal[index] - actual[index]
+            rospy.logwarn(
+                f"Joint error ({err} rad) is greater than the tolerance ({tolerance} rad)"
+            )
+            return False
+    return True
+
+def _poses_close(
+    goal: Union[Pose, PoseStamped],
+    actual: Union[Pose, PoseStamped],
+    pos_tolerance: float,
+    orient_tolerance: float,
+):
+    """
+    Check if the actual and goal poses are within a tolerance of each other.
+    For Pose and PoseStamped inputs, the angle between the two quaternions is compared (the angle
+    between the identical orientations q and -q is calculated correctly).
+    """
+
+    goal = goal.pose if isinstance(goal, PoseStamped) else goal
+    actual = actual.pose if isinstance(actual, PoseStamped) else actual
+
+    x0, y0, z0, qx0, qy0, qz0, qw0 = pose_to_list(actual)
+    x1, y1, z1, qx1, qy1, qz1, qw1 = pose_to_list(goal)
+    # Euclidean distance
+    d = math.dist((x1, y1, z1), (x0, y0, z0))
+    # angle between orientations
+    quat_1 = pyq.Quaternion(qx0, qy0, qz0, qw0)
+    quat_2 = pyq.Quaternion(qx1, qy1, qz1, qw1)
+    phi = 2 * min(
+        pyq.Quaternion.distance(quat_1, quat_2),
+        pyq.Quaternion.distance(quat_1, -quat_2)
+    )
+
+    result = True
+    if d > pos_tolerance:
+        rospy.logwarn(
+            f"Position error ({d} m) is greater than the tolerance ({pos_tolerance} m)"
+        )
+        result = False
+    if phi > orient_tolerance:
+        rospy.logwarn(
+            f"Orientation error ({phi} rad) is greater than the tolerance ({orient_tolerance} rad)"
+        )
+        result = False
+    return result
 
 class YaskawaRobotController(BaseRobotCommander):
 
     def __init__(self, namespace: str = '/', verbose: bool = False) -> None:
 
-        self.namespace = f'/{namespace}'
-        self.get_pose_client = rospy.ServiceProxy(f'/{namespace}/yk_get_pose', GetPose)
-        self.get_pose_stamped_client = rospy.ServiceProxy(f'/{namespace}/yk_get_pose_stamped', GetPoseStamped)
-        self.set_pose_client = rospy.ServiceProxy(f'/{namespace}/yk_set_pose', SetPose)
-        self.set_pose_client = rospy.ServiceProxy(f'/{namespace}/yk_set_joints', SetJoints)
-        self.stop_srv_client = rospy.ServiceProxy(f'/{namespace}/robot_disable', Trigger)
+        self.joints = [
+            "joint_1_s",
+            "joint_2_l",
+            "joint_3_u",
+            "joint_4_r",
+            "joint_5_b",
+            "joint_6_t",
+        ]
 
-        self.joint_state_topic = f'/{namespace}/joint_state'
+        self.namespace = '/' + namespace + '/'
+        self.get_pose_client = rospy.ServiceProxy(self.namespace + 'yk_get_pose', GetPose)
+        self.get_pose_stamped_client = rospy.ServiceProxy(self.namespace + 'yk_get_pose_stamped', GetPoseStamped)
+        self.go_to_pose_client = actionlib.SimpleActionClient(self.namespace + 'yk_go_to_pose', GoToPoseAction)
+        self.go_to_joints_client = actionlib.SimpleActionClient(self.namespace + 'yk_go_to_joints', GoToJointsAction)
+        self.stop_srv_client = rospy.ServiceProxy(self.namespace + 'yk_stop_trajectory', Trigger)
+
+        self.joint_state_topic = self.namespace + 'joint_state'
         self.HOME_JOINTS = [0, 0, 0, 0, -np.pi/2, 0]
+
+        self.current_skill = None
 
 
     def stop(self):
         # Direct to yk
         trigger_req = TriggerRequest()
-        self.srv_client(trigger_req)
+        self.stop_srv_client(trigger_req)
 
-        # Movegroup stop
-        # self.move_group.stop()
+    def wait_for_skill(self):
+        if current_skill is not None:
+            if current_skill == "joint":
+                resp = self.go_to_joints_client.wait_for_result()
+                current_skill = None
+                return True
+            elif current_skill == "pose":
+                self.go_to_pose_client.wait_for_result()
+                current_skill = None
+                return True
+        return False
 
     def go_home(self, 
         cartesian_path: bool = False,
@@ -50,14 +128,14 @@ class YaskawaRobotController(BaseRobotCommander):
         return self.go_to_joints(self.HOME_JOINTS, cartesian_path, tolerance, velocity_scaling, acc_scaling, wait)
 
 
-    def get_current_pose(self, end_effector_link: str = "", stamped: bool = False) -> Union[Pose, PoseStamped]:
+    def get_current_pose(self, end_effector_link: str = "base_link", stamped: bool = False) -> Union[Pose, PoseStamped]:
         """
         position in metres. orientation in radians
         """
         if stamped:
-            return self.get_pose_stamped_client(end_effector_link)
+            return self.get_pose_stamped_client(end_effector_link).pose
         else:
-            return self.get_pose_client(end_effector_link)
+            return self.get_pose_client(end_effector_link).pose
 
     def get_current_joints(self, in_degrees: bool = False) -> List:
         """
@@ -77,50 +155,18 @@ class YaskawaRobotController(BaseRobotCommander):
         acc_scaling: float = 0.05,
         wait: bool = True,
     ) -> bool:
-        # Check if MoveIt planner is running
-        #rospy.wait_for_service("/plan_kinematic_path", self.timeout)
-        # Create a motion planning request with all necessary goals and constraints
-        mp_req = mi_msg.MotionPlanRequest()
-        mp_req.pipeline_id = "pilz_industrial_motion_planner"
-        mp_req.planner_id = "LIN" if cartesian_path else "PTP"
-        mp_req.group_name = "manipulator"
-        mp_req.num_planning_attempts = 1
-
-        constraints = mi_msg.Constraints()
-        for joint_no in range(len(self.JOINTS)):
-            constraints.joint_constraints.append(mi_msg.JointConstraint())
-            constraints.joint_constraints[-1].joint_name = self.JOINTS[joint_no]
-            constraints.joint_constraints[-1].position = joint_goal[joint_no]
-            constraints.joint_constraints[-1].tolerance_above = tolerance
-            constraints.joint_constraints[-1].tolerance_below = tolerance
-
-        mp_req.goal_constraints.append(constraints)
-        mp_req.max_velocity_scaling_factor = velocity_scaling
-        mp_req.max_acceleration_scaling_factor = acc_scaling
-
-        mp_res = self.get_plan(mp_req).motion_plan_response
-        if mp_res.error_code.val != mp_res.error_code.SUCCESS:
-            rospy.logerr(
-                "Planner failed to generate a valid plan to the goal joint_state"
-            )
-            return False
-        if (
-            len(mp_res.trajectory.joint_trajectory.points) > 1
-            and mp_res.trajectory.joint_trajectory.points[-1].time_from_start
-            == mp_res.trajectory.joint_trajectory.points[-2].time_from_start
-        ):
-            mp_res.trajectory.joint_trajectory.points.pop(-2)
-            rospy.logwarn(
-                "Duplicate time stamp in the planned trajectory. Second last way-point was removed."
-            )
-        goal = mi_msg.ExecuteTrajectoryGoal(trajectory=mp_res.trajectory)
-        self.execute_plan.wait_for_server()
-        self.execute_plan.send_goal(goal)
+        goal = GoToJointsGoal()
+        goal.state.name = self.joints
+        goal.state.position = joint_goal
+        goal.max_velocity_scaling_factor = velocity_scaling
+        goal.max_acceleration_scaling_factor = acc_scaling
+        self.go_to_joints_client.wait_for_server()
+        self.go_to_joints_client.send_goal(goal)
+        current_skill = "joint"
         if wait:
-            self.execute_plan.wait_for_result()
-            # Calling ``stop()`` ensures that there is no residual movement
-            self.move_group.stop()
-            return _joints_close(joint_goal, self.get_current_joints(), tolerance)
+            resp = self.go_to_joints_client.wait_for_result()
+            current_skill = None
+            return _joints_close(joint_goal, self.go_to_joints_client.get_result().state.position, tolerance)
         return True
 
     def go_to_pose_goal(
@@ -130,44 +176,22 @@ class YaskawaRobotController(BaseRobotCommander):
         pos_tolerance: float = 0.001,
         orient_tolerance: float = 0.01,
         velocity_scaling: float = 0.1,
-        eef_frame: Optional[str] = None,
+        eef_frame: Optional[str] = "base_link",
         acc_scaling: float = 0.1,
         wait: bool = True,
     ) -> bool:
 
-        if eef_frame is None:
-            eef_frame = self.eef_frame
-        # Check if MoveIt planner is running
-        #rospy.wait_for_service("/plan_kinematic_path", self.timeout)
-        # Create a motion planning request with all necessary goals and constraints
-        mp_req = mi_msg.MotionPlanRequest()
-        mp_req.pipeline_id = "pilz_industrial_motion_planner"
-        mp_req.planner_id = "LIN" if cartesian_path else "PTP"
-        mp_req.group_name = "manipulator"
-        mp_req.num_planning_attempts = 5
-
-        mp_req_pose_goal = PoseStamped(
-            header=std_msgs.msg.Header(frame_id=self.planning_frame), pose=pose_goal
-        )
-
-        constraints = constructGoalConstraints(
-            eef_frame, mp_req_pose_goal, pos_tolerance, orient_tolerance
-        )
-        mp_req.goal_constraints.append(constraints)
-        mp_req.max_velocity_scaling_factor = velocity_scaling
-        mp_req.max_acceleration_scaling_factor = acc_scaling
-
-        mp_res = self.get_plan(mp_req).motion_plan_response
-        if mp_res.error_code.val != mp_res.error_code.SUCCESS:
-            rospy.logerr("Planner failed to generate a valid plan to the goal pose")
-            return False
-        goal = mi_msg.ExecuteTrajectoryGoal(trajectory=mp_res.trajectory)
-        self.execute_plan.wait_for_server()
-        self.execute_plan.send_goal(goal)
+        goal = GoToPoseGoal()
+        goal.pose = pose_goal
+        goal.base_frame = eef_frame
+        goal.max_velocity_scaling_factor = velocity_scaling
+        goal.max_acceleration_scaling_factor = acc_scaling
+        self.go_to_pose_client.wait_for_server()
+        self.go_to_pose_client.send_goal(goal)
+        current_skill = "pose"
         if wait:
-            self.execute_plan.wait_for_result()
-            # Calling ``stop()`` ensures that there is no residual movement
-            self.move_group.stop()
+            self.go_to_pose_client.wait_for_result()
+            current_skill = None
             return _poses_close(
                 pose_goal, self.get_current_pose(eef_frame), pos_tolerance, orient_tolerance
             )

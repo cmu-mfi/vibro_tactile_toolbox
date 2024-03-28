@@ -11,7 +11,7 @@ class TerminatorNode:
   Node that listens to all termination handlers and will terminate the skill based on the termination config
   """
   def __init__(self):
-    self.use_fts_handler = True
+    self.use_fts_handler = False
     self.use_timeout_handler = False
     self.use_robotstate_handler = False
     self.use_audio_handler = False
@@ -19,7 +19,8 @@ class TerminatorNode:
 
     self.termination_pub = rospy.Publisher(
       "/terminator/skill_termination_signal", 
-      TerminationSignal
+      TerminationSignal,
+      queue_size=1
     )
 
     self.termination_config_sub = rospy.Subscriber(
@@ -30,7 +31,7 @@ class TerminatorNode:
     )
 
     self.fts_handler_sub = rospy.Subscriber("/terminator/FTS_termination_signal", TerminationSignal, self.fts_handler_cb)
-    self.timeout_handler_sub = None
+    self.timeout_handler_sub = rospy.Subscriber("/terminator/timeout_termination_signal", TerminationSignal, self.timeout_handler_cb)
     self.robotstate_handler_sub = None
     self.audio_handler_sub = None
     self.vision_handler_sub = None
@@ -50,6 +51,10 @@ class TerminatorNode:
   def fts_handler_cb(self, fts_termination_signal: TerminationSignal):
     if self.use_fts_handler:
       self.termination_pub.publish(fts_termination_signal)
+
+  def timeout_handler_cb(self, timeout_termination_signal: TerminationSignal):
+    if self.use_timeout_handler:
+      self.termination_pub.publish(timeout_termination_signal)
 
 
 def main(args):

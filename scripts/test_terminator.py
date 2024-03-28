@@ -15,11 +15,13 @@ import terminator.utils as t_utils
 class TerminatorTest:
 
   def __init__(self):
-    self.termination_cfg_pub = rospy.Publisher("/terminator/termination_config", TerminationConfig)
+    self.termination_cfg_pub = rospy.Publisher("/terminator/termination_config", TerminationConfig, queue_size=1)
 
     self.termination_signal_sub = rospy.Subscriber("/terminator/skill_termination_signal", TerminationSignal, self.terminate_skill_cb)
 
     self.FTS_lims = {'force': 30, 'torque': 1.5}
+
+    self.termination_cfg_pub.publish(self.make_random_cfg())
 
   def terminate_skill_cb(self, msg: TerminationSignal):
     print(f"Terminating skill with cause: \n{msg.cause}")
@@ -40,7 +42,8 @@ class TerminatorTest:
 
     cfg_json = {
       'id': id,
-      'FTS': {'check_rate_ns': FTS_check_rate_ns, 'threshold': t_utils.wrench_to_dict(FTS_thresh)}
+      'FTS': {'check_rate_ns': FTS_check_rate_ns, 'threshold': t_utils.wrench_to_dict(FTS_thresh)},
+      'timeout': {'timeout_duration_ns': 5E9}
     }
 
     msg = TerminationConfig()
@@ -49,8 +52,8 @@ class TerminatorTest:
 
 
 def main(args):
-  node = TerminatorTest()
   rospy.init_node('test_terminator', anonymous=True)
+  node = TerminatorTest()
   try:
     rospy.spin()
   except KeyboardInterrupt:

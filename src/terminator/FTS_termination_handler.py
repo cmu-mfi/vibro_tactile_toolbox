@@ -38,11 +38,14 @@ class FTSTerminationHandler(BaseTerminationHandler):
         - fts_wrench
         """
         cfg_jsons = cfg.cfg_json
-        full_cfg = json.loads(cfg_jsons)
-        FTS_cfg = full_cfg['FTS']
-        self.id = full_cfg['id']
-        self.check_rate_ns = FTS_cfg['check_rate_ns']
-        self.wrench_thresh = t_utils.dict_to_wrench(FTS_cfg['threshold'])
+        cfg_json = json.loads(cfg_jsons)
+        if 'FTS' in cfg_json:
+            self.id = cfg_json['id']
+            FTS_cfg = cfg_json['FTS']
+            if 'check_rate_ns' in FTS_cfg:
+                self.check_rate_ns = FTS_cfg['check_rate_ns']
+            if 'threshold' in FTS_cfg:
+                self.wrench_thresh = t_utils.dict_to_wrench(FTS_cfg['threshold'])
 
     
     def update_input_data(self, input_signal: WrenchStamped):
@@ -59,22 +62,22 @@ class FTSTerminationHandler(BaseTerminationHandler):
         cause = "FTS termination handler caused by:\n"
         if (abs(self.fts_wrench.force.x) > self.wrench_thresh.force.x):
             terminate = True
-            cause += f"Fx ({self.fts_wrench.force.x:0.2f}) exceeds threshold ({self.wrench_thresh.force.x:0.2f})"
+            cause += f"Fx ({self.fts_wrench.force.x:0.2f}) exceeds threshold ({self.wrench_thresh.force.x:0.2f})\n"
         if (abs(self.fts_wrench.force.y) > self.wrench_thresh.force.y):
             terminate = True
-            cause += f"Fy ({self.fts_wrench.force.y:0.2f}) exceeds threshold ({self.wrench_thresh.force.y:0.2f})"
+            cause += f"Fy ({self.fts_wrench.force.y:0.2f}) exceeds threshold ({self.wrench_thresh.force.y:0.2f})\n"
         if (abs(self.fts_wrench.force.z) > self.wrench_thresh.force.z):
             terminate = True
-            cause += f"Fz ({self.fts_wrench.force.z:0.2f}) exceeds threshold ({self.wrench_thresh.force.z:0.2f})"
+            cause += f"Fz ({self.fts_wrench.force.z:0.2f}) exceeds threshold ({self.wrench_thresh.force.z:0.2f})\n"
         if (abs(self.fts_wrench.torque.x) > self.wrench_thresh.torque.x):
             terminate = True
-            cause += f"Tx ({self.fts_wrench.torque.x:0.2f}) exceeds threshold ({self.wrench_thresh.torque.x:0.2f})"
+            cause += f"Tx ({self.fts_wrench.torque.x:0.2f}) exceeds threshold ({self.wrench_thresh.torque.x:0.2f})\n"
         if (abs(self.fts_wrench.torque.y) > self.wrench_thresh.torque.y):
             terminate = True
-            cause += f"Ty ({self.fts_wrench.torque.y:0.2f}) exceeds threshold ({self.wrench_thresh.torque.y:0.2f})"
+            cause += f"Ty ({self.fts_wrench.torque.y:0.2f}) exceeds threshold ({self.wrench_thresh.torque.y:0.2f})\n"
         if (abs(self.fts_wrench.torque.z) > self.wrench_thresh.torque.z):
             terminate = True
-            cause += f"Tz ({self.fts_wrench.torque.z:0.2f}) exceeds threshold ({self.wrench_thresh.torque.z:0.2f})"
+            cause += f"Tz ({self.fts_wrench.torque.z:0.2f}) exceeds threshold ({self.wrench_thresh.torque.z:0.2f})\n"
         
         termination_signal = TerminationSignal()
         termination_signal.terminate = terminate
