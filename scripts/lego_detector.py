@@ -11,30 +11,15 @@ import math
 import numpy as np
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
-
-from detectron2.data.datasets import register_coco_instances
-register_coco_instances("lego", {}, "./datasets/lego/annotations.json", "./datasets/lego/")
+import json
 
 import cv2
 from detectron2 import model_zoo
 from detectron2.engine import DefaultPredictor
-from detectron2.utils.visualizer import Visualizer
-from detectron2.data import MetadataCatalog, DatasetCatalog
-
-lego_metadata = MetadataCatalog.get("lego")
-dataset_dicts = DatasetCatalog.get("lego")
-
-from detectron2.engine import DefaultTrainer
 from detectron2.config import get_cfg
-from detectron2.utils.visualizer import ColorMode
 
 from vibro_tactile_toolbox.srv import LegoOutcome, LegoOutcomeResponse
-
-import random
-
-import pickle
-
-clicks = []
+from vibro_tactile_toolbox.msg import BoundingBox
 
 class Detectron2:
 
@@ -42,10 +27,8 @@ class Detectron2:
 
         self.cfg = get_cfg()
         self.cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
-        self.cfg.MODEL.WEIGHTS = os.path.join("./datasets/lego/model_final.pth")
-        self.cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5   # set the testing threshold for this model
+        self.cfg.MODEL.WEIGHTS = os.path.join("./models/lego_model.pth")
         self.cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1
-        self.cfg.DATASETS.TEST = ("lego", )
         self.predictor = DefaultPredictor(self.cfg)
         self.bridge = CvBridge()
         self.starting_top = 0
@@ -55,12 +38,15 @@ class Detectron2:
     def detect_lego(self, req):
 
         img_msg = rospy.wait_for_message(req.topic_name, Image)
+        resp = LegoOutcomeResponse()
+        resp.img = img_msg
 
         cv_image = self.bridge.imgmsg_to_cv2(img_msg, "bgr8")
 
         outputs = self.predictor(im)
 
         outputs_on_cpu = outputs['instances'].to("cpu")
+        print(outputs_on_cpu)
         bounding_boxes = outputs_on_cpu.pred_boxes
         scores = outputs_on_cpu.scores.numpy()
 
@@ -73,44 +59,61 @@ class Detectron2:
             for i in bounding_boxes.__iter__():
                 current_score = scores[ind]
                 ind += 1
-                if current_score >= self.score_threshold:
+                if current_score >= req.score_threshold:
                     bbox = i.numpy()
-                    if bbox[0] >= self.top_bbox[0] and bbox[1] >= self.top_bbox[1] and bbox[2] <= self.top_bbox[2] and bbox[3] <= self.top_bbox[3]:
+                    bbox_msg = BoundingBox()
+                    bbox_msg.coords = bbox
+                    resp.obj_bboxes.append(bbox_msg)
+                    if bbox[0] >= req.top_bbox[0] and bbox[1] >= req.top_bbox[1] and bbox[2] <= req.top_bbox[2] and bbox[3] <= req.top_bbox[3]:
                         self.starting_top += 1
-                    if bbox[0] >= self.bottom_bbox[0] and bbox[1] >= self.bottom_bbox[1] and bbox[2] <= self.bottom_bbox[2] and bbox[3] <= self.bottom_bbox[3]:
+                    if bbox[0] >= req.bottom_bbox[0] and bbox[1] >= req.bottom_bbox[1] and bbox[2] <= req.bottom_bbox[2] and bbox[3] <= req.bottom_bbox[3]:
                         self.starting_bottom += 1
 
+            resp.result = json.dumps({'starting_top' : str(self.starting_top), 'starting_bottom' : str(self.starting_bottom)})
             print("Starting Top : " + str(self.starting_top))
             print("Starting Bottom : " + str(self.starting_bottom))
+            return resp
 
         else:
             ind = 0
+
             self.ending_top = 0
             self.ending_bottom = 0
 
             for i in bounding_boxes.__iter__():
                 current_score = scores[ind]
                 ind += 1
-                if current_score >= self.score_threshold:
+                if current_score >= req.score_threshold:
                     bbox = i.numpy()
-                    if bbox[0] >= self.top_bbox[0] and bbox[1] >= self.top_bbox[1] and bbox[2] <= self.top_bbox[2] and bbox[3] <= self.top_bbox[3]:
+                    bbox_msg = BoundingBox()
+                    bbox_msg.coords = bbox
+                    resp.obj_bboxes.append(bbox_msg)
+                    if bbox[0] >= req.top_bbox[0] and bbox[1] >= req.top_bbox[1] and bbox[2] <= req.top_bbox[2] and bbox[3] <= req.top_bbox[3]:
                         self.ending_top += 1
-                    if bbox[0] >= self.bottom_bbox[0] and bbox[1] >= self.bottom_bbox[1] and bbox[2] <= self.bottom_bbox[2] and bbox[3] <= self.bottom_bbox[3]:
+                    if bbox[0] >= req.bottom_bbox[0] and bbox[1] >= req.bottom_bbox[1] and bbox[2] <= req.bottom_bbox[2] and bbox[3] <= req.bottom_bbox[3]:
                         self.ending_bottom += 1
 
-            print("Ending Top : " + str(self.ending_top))
-            print("Ending Bottom : " + str(self.ending_bottom))
+            
+            result = ''
 
             if self.starting_top == self.ending_top and self.starting_bottom == self.ending_bottom:
-                print('Failed to pick or place block.')
+                result = 'Failed to pick or place block.'
             elif self.starting_top < self.ending_top and self.starting_bottom > self.ending_bottom:
-                print('Successfully picked up ' + str(self.ending_top - self.starting_top) + ' block(s).')
+                result = 'Successfully picked up ' + str(self.ending_top - self.starting_top) + ' block(s).'
             elif self.starting_top > self.ending_top and self.starting_bottom < self.ending_bottom:
-                print('Successfully placed ' + str(self.ending_bottom - self.starting_bottom) + ' block(s).')
+                result = 'Successfully placed ' + str(self.ending_bottom - self.starting_bottom) + ' block(s).'
             else:
-                print('Some error has occurred.')
+                result = 'Some error has occurred.'
 
-
+            resp.result = json.dumps({'starting_top' : str(self.starting_top), 'starting_bottom' : str(self.starting_bottom), 
+                                      'ending_top' : str(self.ending_top), 'ending_bottom' : str(self.ending_bottom),
+                                      'result' : result})
+            print("Starting Top : " + str(self.starting_top))
+            print("Starting Bottom : " + str(self.starting_bottom))
+            print("Ending Top : " + str(self.ending_top))
+            print("Ending Bottom : " + str(self.ending_bottom))
+            print(result)
+            return resp
                                                         
 def main():
     rospy.init_node('lego_detector_server')

@@ -2,6 +2,7 @@ __pycache__
 .vscode/
 data/*
 results/*
+models/*
 *.zip
 ros1_ws/build
 ros1_ws/devel

@@ -11,7 +11,6 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
-  vision_msgs
   sensor_msgs
   message_generation
 ) 
@@ -52,6 +51,7 @@ catkin_python_setup()
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
+  BoundingBox.msg
   TerminationConfig.msg
   TerminationSignal.msg
 )
@@ -74,7 +74,6 @@ generate_messages(
  DEPENDENCIES
  std_msgs
  sensor_msgs
- vision_msgs
 )
 
 ################################################
@@ -109,7 +108,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
   LIBRARIES vibro_tactile_toolbox
-  CATKIN_DEPENDS roscpp rospy std_msgs message_runtime sensor_msgs vision_msgs
+  CATKIN_DEPENDS roscpp rospy std_msgs message_runtime sensor_msgs
 #  DEPENDS system_lib
 )
 

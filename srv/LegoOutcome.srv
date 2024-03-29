@@ -1,11 +1,12 @@
 int32 id
 string topic_name
 bool start
-vision_msgs/BoundingBox2D top_bbox
-vision_msgs/BoundingBox2D bot_bbox
+float64 score_threshold
+BoundingBox top_bbox
+BoundingBox bot_bbox
 ---
 int32 id
-sensor_msgs/Image source_img
+sensor_msgs/Image img
 int64[] obj_ids
-vision_msgs/BoundingBox2D[] obj_bboxes
+BoundingBox[] obj_bboxes
 string result
