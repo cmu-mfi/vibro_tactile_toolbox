@@ -89,15 +89,25 @@ class YaskawaRobotController(BaseRobotCommander):
             "joint_6_t",
         ]
 
-        if namespace != '/':
-            self.namespace = '/' + namespace + '/'
-        self.get_pose_client = rospy.ServiceProxy(self.namespace + 'yk_get_pose', GetPose)
-        self.get_pose_stamped_client = rospy.ServiceProxy(self.namespace + 'yk_get_pose_stamped', GetPoseStamped)
-        self.go_to_pose_client = actionlib.SimpleActionClient(self.namespace + 'yk_go_to_pose', GoToPoseAction)
-        self.go_to_joints_client = actionlib.SimpleActionClient(self.namespace + 'yk_go_to_joints', GoToJointsAction)
-        self.stop_srv_client = rospy.ServiceProxy(self.namespace + 'yk_stop_trajectory', Trigger)
+        self.namespace = namespace
+        self.get_pose_client = rospy.ServiceProxy(f'/{namespace}/yk_get_pose', GetPose)
+        self.get_pose_stamped_client = rospy.ServiceProxy(f'/{namespace}/yk_get_pose_stamped', GetPoseStamped)
+        self.go_to_pose_client = actionlib.SimpleActionClient(f'/{namespace}/yk_go_to_pose', GoToPoseAction)
+        self.go_to_joints_client = actionlib.SimpleActionClient(f'/{namespace}/yk_go_to_joints', GoToJointsAction)
+        self.stop_srv_client = rospy.ServiceProxy(f'/{namespace}/yk_stop_trajectory', Trigger)
 
-        self.joint_state_topic = self.namespace + 'joint_state'
+        rospy.wait_for_service(f'/{namespace}/yk_get_pose')
+        rospy.loginfo("Found get pose server.")
+        rospy.wait_for_service(f'/{namespace}/yk_get_pose_stamped')
+        rospy.loginfo("Found get pose stamped server.")
+        self.go_to_pose_client.wait_for_server()
+        rospy.loginfo("Found go to pose server.")
+        self.go_to_joints_client.wait_for_server()
+        rospy.loginfo("Found go to joints server.")
+        rospy.wait_for_service(f'/{namespace}/yk_stop_trajectory')
+        rospy.loginfo("Found stop server.")
+
+        self.joint_state_topic = f'/{namespace}/joint_state'
         self.HOME_JOINTS = [0, 0, 0, 0, -np.pi/2, 0]
 
         self.current_skill = None

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-import sys
 import rospy
 import json
+import argparse
 
 from vibro_tactile_toolbox.msg import TerminationSignal, TerminationConfig
 
@@ -10,7 +10,7 @@ class TerminatorNode:
   """
   Node that listens to all termination handlers and will terminate the skill based on the termination config
   """
-  def __init__(self):
+  def __init__(self, namespace):
     self.use_fts_handler = False
     self.use_timeout_handler = False
     self.use_joint_handler = False
@@ -20,22 +20,22 @@ class TerminatorNode:
     self.id = -1
 
     self.termination_pub = rospy.Publisher(
-      "/terminator/skill_termination_signal", 
+      f"/{args.namespace}/terminator/skill_termination_signal", 
       TerminationSignal,
       queue_size=1
     )
 
     self.termination_config_sub = rospy.Subscriber(
-      "/terminator/termination_config", 
+      f"/{args.namespace}/terminator/termination_config", 
       TerminationConfig,
       self.terminator_config_cb,
       queue_size=1
     )
 
-    self.fts_handler_sub = rospy.Subscriber("/terminator/fts_termination_signal", TerminationSignal, self.fts_handler_cb)
-    self.timeout_handler_sub = rospy.Subscriber("/terminator/time_termination_signal", TerminationSignal, self.timeout_handler_cb)
-    self.joint_handler_sub = rospy.Subscriber("/terminator/joint_termination_signal", TerminationSignal, self.joint_handler_cb)
-    self.pose_handler_sub = rospy.Subscriber("/terminator/pose_termination_signal", TerminationSignal, self.pose_handler_cb)
+    self.fts_handler_sub = rospy.Subscriber(f"/{args.namespace}/terminator/fts_termination_signal", TerminationSignal, self.fts_handler_cb)
+    self.timeout_handler_sub = rospy.Subscriber(f"/{args.namespace}/terminator/time_termination_signal", TerminationSignal, self.timeout_handler_cb)
+    self.joint_handler_sub = rospy.Subscriber(f"/{args.namespace}/terminator/joint_termination_signal", TerminationSignal, self.joint_handler_cb)
+    self.pose_handler_sub = rospy.Subscriber(f"/{args.namespace}/terminator/pose_termination_signal", TerminationSignal, self.pose_handler_cb)
     self.audio_handler_sub = None
     self.vision_handler_sub = None
 
@@ -71,12 +71,17 @@ class TerminatorNode:
 
 
 def main(args):
-  rospy.init_node('terminator_node', anonymous=True)
-  terminator_node = TerminatorNode()
+  rospy.init_node(f'{args.namespace}_terminator_node', anonymous=True)
+  terminator_node = TerminatorNode(args.namespace)
   try:
     rospy.spin()
   except KeyboardInterrupt:
     print("Shutting down")
 
 if __name__ == '__main__':
-    main(sys.argv)
+    args = argparse.ArgumentParser()
+    args.add_argument('-n', '--namespace', type=str,
+      help='Namespace to use')
+    args = args.parse_args()
+
+    main(args)

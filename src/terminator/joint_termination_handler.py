@@ -41,9 +41,8 @@ class JointTerminationHandler(BaseTerminationHandler):
                 self.check_rate_ns = joint_cfg['check_rate_ns']
             if 'tolerance' in joint_cfg:
                 self.tolerance = joint_cfg['tolerance']
-            if 'positions' in joint_cfg:
-                self.goal_joints = t_utils.dict_to_joints(joint_cfg['positions'])
-
+            if 'position' in joint_cfg:
+                self.goal_joints = t_utils.dict_to_joint_state(joint_cfg)
     
     def update_input_data(self, input_signal: JointState):
         """

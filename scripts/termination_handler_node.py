@@ -20,16 +20,16 @@ class TerminationHandlerNode:
   """
   termination_handler: BaseTerminationHandler
 
-  def __init__(self, handler_name: str, input_topic: str):
+  def __init__(self, namespace: str, handler_name: str, input_topic: str):
     # Publisher for the output signal
     self.termination_signal_pub = rospy.Publisher(
-      f"/terminator/{handler_name}_termination_signal", 
+      f"/{namespace}/terminator/{handler_name}_termination_signal", 
       TerminationSignal,
       queue_size=1
     )
     # Subscriber for terminator config
     self.termination_config_sub = rospy.Subscriber(
-      "/terminator/termination_config",
+      f"/{namespace}/terminator/termination_config",
       TerminationConfig,
       self.termination_config_cb,
       queue_size=1
@@ -77,8 +77,8 @@ class TerminationHandlerNode:
 
 def main(args):
   print(args)
-  rospy.init_node(f'{args.termination_handler}_termination_handler_node', anonymous=True)
-  node = TerminationHandlerNode(args.termination_handler, args.input_topic)
+  rospy.init_node(f'{args.namespace}_{args.termination_handler}_termination_handler_node', anonymous=True)
+  node = TerminationHandlerNode(args.namespace, args.termination_handler, args.input_topic)
   try:
     rospy.spin()
   except KeyboardInterrupt:
@@ -86,12 +86,13 @@ def main(args):
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser()
+    args.add_argument('-n', '--namespace', type=str,
+      help='Namespace to use')
     args.add_argument('-t', '--termination_handler', type=str,
       help='Termination handler to load into this node')
     # Arg for specifying the ROS topics to use for the input to the termination handler
     args.add_argument('-i', '--input_topic', type=str, default=None,
       help='ROS topic to input to termination handler')
-    
     args = args.parse_args()
 
     main(args)

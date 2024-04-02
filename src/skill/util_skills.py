@@ -10,12 +10,12 @@ from typing import Tuple, List
 
 class GoHomeSkill(BaseSkill):
 
-    def __init__(self, robot_commander: BaseRobotCommander):
+    def __init__(self, robot_commander: BaseRobotCommander, namespace: str, publishers: dict):
 
-        super().__init__(robot_commander)
+        super().__init__(robot_commander, namespace, publishers)
 
         self.skill_steps = [
              {'step_name': 'go_to_home_joints',
               'command': lambda param: self.robot_commander.go_to_joints([0, 0, 0, 0, -np.pi/2, 0], wait=False),
-              'termination_cfg': {'joint': {'positions': [0, 0, 0, 0, -np.pi/2, 0]}}}
+              'termination_cfg': {'joint': {'position': [0, 0, 0, 0, -np.pi/2, 0]}}}
         ]

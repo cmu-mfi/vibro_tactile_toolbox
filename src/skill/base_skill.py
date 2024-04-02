@@ -1,23 +1,35 @@
 #!/usr/bin/env python3
 
 import rospy
+from rospy import Publisher
 import json
 from vibro_tactile_toolbox.msg import SkillParams, TerminationSignal, TerminationConfig
+from std_msgs.msg import String
 
 from robot_controller.robot_commander import BaseRobotCommander
 
 from typing import Tuple, List
 
+def create_skill_publishers(namespace):
+    publishers = {}
+    publishers['skill_param_pub'] = rospy.Publisher(f'/{namespace}/skill/param', SkillParams, queue_size=10)
+    publishers['termination_config_pub'] = rospy.Publisher(f'/{namespace}/terminator/termination_config', TerminationConfig, queue_size=10)
+    while publishers['termination_config_pub'].get_num_connections() == 0:
+        rospy.loginfo("Waiting for subscriber to connect")
+        rospy.sleep(1)
+    return publishers
+
 class BaseSkill:
 
-    def __init__(self, robot_commander: BaseRobotCommander):
+    def __init__(self, robot_commander: BaseRobotCommander, namespace: str, publishers: dict):
+
+        self.namespace = namespace
 
         self.robot_commander = robot_commander
-
-        self.skill_termination_sub = rospy.Subscriber("/terminator/skill_termination_signal", TerminationSignal, self.skill_termination_callback)
-        self.termination_config_pub = rospy.Publisher("/terminator/termination_config", TerminationConfig, queue_size=1)
-        self.skill_param_pub = rospy.Publisher("/skill/param", SkillParams, queue_size=1)
-
+        self.skill_termination_topic_name = f'/{namespace}/terminator/skill_termination_signal'
+        self.skill_param_pub = publishers['skill_param_pub']
+        self.termination_config_pub = publishers['termination_config_pub']
+        
         self.outcome_srv = None
 
         self.skill_steps = []
@@ -59,15 +71,12 @@ class BaseSkill:
         termination_cfg_msg = TerminationConfig()
         termination_cfg_msg.cfg_json = json.dumps(termination_config)
         self.termination_config_pub.publish(termination_cfg_msg)
-        self.termination_signal = None
-
-        rospy.sleep(1)
 
         # 2. Send the robot command
         robot_command(skill_param)
 
         # 3. Wait for termination
-        termination_signal = rospy.wait_for_message("/terminator/skill_termination_signal", TerminationSignal, rospy.Duration(20))
+        termination_signal = rospy.wait_for_message(self.skill_termination_topic_name, TerminationSignal, rospy.Duration(20))
 
         # 4. Get outcome
         outcome = 0
@@ -75,14 +84,6 @@ class BaseSkill:
         # 5. Return terminal and outcome
         return termination_signal, outcome
 
-
-    def skill_termination_callback(self, msg):
-        # Check termination conditions
-        # Perform termination actions if necessary
-        if msg.terminate:
-            rospy.loginfo("Skill termination signal received. Stopping the robot.")
-            self.robot_commander.stop()
-            self.termination_signal = msg
 
     def stop_robot(self):
         # Call robot stop service

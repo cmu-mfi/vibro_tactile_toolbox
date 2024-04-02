@@ -31,7 +31,7 @@ TerminationConfig Example
 {
     'id': int 0,
     'time': {
-        'timeout_duration_ns': int 10E9
+        'duration': float 10.0
     },
     'fts': {
         'check_rate_ns': int 1E6
@@ -57,11 +57,11 @@ TerminationConfig Example
 '''    
 
 
-def make_termination_config(id, timeout_cfg=None, fts_cfg=None, joint_cfg=None, pose_cfg=None, audio_cfg=None, vision_cfg=None) -> TerminationConfig:
+def make_termination_config(id, time_cfg=None, fts_cfg=None, joint_cfg=None, pose_cfg=None, audio_cfg=None, vision_cfg=None) -> TerminationConfig:
     termination_config = TerminationConfig()
     cfg_json = {'id': id}
-    if timeout_cfg:
-        cfg_json['timeout'] = timeout_cfg
+    if time_cfg:
+        cfg_json['time'] = time_cfg
     if FTS_cfg:
         cfg_json['fts'] = fts_cfg
     if joint_cfg:
@@ -114,10 +114,14 @@ def joint_state_to_dict(msg: JointState):
 
 def dict_to_joint_state(msg_dict: dict) -> JointState:
     msg = JointState()
-    msg.name = msg_dict['name']
-    msg.position = msg_dict['position']
-    msg.velocity = msg_dict['velocity']
-    msg.effort = msg_dict['effort']
+    if 'name' in msg_dict:
+        msg.name = msg_dict['name']
+    if 'position' in msg_dict:
+        msg.position = msg_dict['position']
+    if 'velocity' in msg_dict:
+        msg.velocity = msg_dict['velocity']
+    if 'effort' in msg_dict:
+        msg.effort = msg_dict['effort']
     return msg
 
 def pose_to_dict(msg: Pose):
