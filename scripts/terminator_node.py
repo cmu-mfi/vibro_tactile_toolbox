@@ -18,6 +18,7 @@ class TerminatorNode:
     self.use_audio_handler = False
     self.use_vision_handler = False
     self.id = -1
+    self.published = False
 
     self.termination_pub = rospy.Publisher(
       f"/{args.namespace}/terminator/skill_termination_signal", 
@@ -52,22 +53,27 @@ class TerminatorNode:
     self.use_pose_handler = 'pose' in cfg_json
     self.use_audio_handler = 'audio' in cfg_json
     self.use_vision_handler = 'vision' in cfg_json
+    self.published = False
 
   def fts_handler_cb(self, fts_termination_signal: TerminationSignal):
-    if self.use_fts_handler and fts_termination_signal.id == self.id:
+    if self.use_fts_handler and fts_termination_signal.id == self.id and not self.published:
       self.termination_pub.publish(fts_termination_signal)
+      self.published = True
 
   def timeout_handler_cb(self, time_termination_signal: TerminationSignal):
-    if self.use_timeout_handler and time_termination_signal.id == self.id:
+    if self.use_timeout_handler and time_termination_signal.id == self.id and not self.published:
       self.termination_pub.publish(time_termination_signal)
+      self.published = True
 
   def joint_handler_cb(self, joint_termination_signal: TerminationSignal):
-    if self.use_joint_handler and joint_termination_signal.id == self.id:
+    if self.use_joint_handler and joint_termination_signal.id == self.id and not self.published:
       self.termination_pub.publish(joint_termination_signal)
+      self.published = True
 
   def pose_handler_cb(self, pose_termination_signal: TerminationSignal):
-    if self.use_pose_handler and pose_termination_signal.id == self.id:
+    if self.use_pose_handler and pose_termination_signal.id == self.id and not self.published:
       self.termination_pub.publish(pose_termination_signal)
+      self.published = True
 
 
 def main(args):
