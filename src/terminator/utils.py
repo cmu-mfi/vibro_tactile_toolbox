@@ -62,7 +62,7 @@ def make_termination_config(id, time_cfg=None, fts_cfg=None, joint_cfg=None, pos
     cfg_json = {'id': id}
     if time_cfg:
         cfg_json['time'] = time_cfg
-    if FTS_cfg:
+    if fts_cfg:
         cfg_json['fts'] = fts_cfg
     if joint_cfg:
         cfg_json['joint'] = joint_cfg

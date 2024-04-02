@@ -64,7 +64,7 @@ class PoseTerminationHandler(BaseTerminationHandler):
             if 'orient_tolerance' in pose_cfg:
                 self.orient_tolerance = pose_cfg['orient_tolerance']
             if 'pose' in pose_cfg:
-                self.goal_pose = t_utils.dict_to_pose(robot_cfg['pose'])
+                self.goal_pose = t_utils.dict_to_pose(pose_cfg['pose'])
 
     
     def update_input_data(self, input_signal: PoseStamped):

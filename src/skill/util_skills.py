@@ -3,7 +3,7 @@
 import numpy as np
 
 from skill.base_skill import BaseSkill
-from robot_controller.robot_commander import BaseRobotCommander
+from robot_controller.base_robot_commander import BaseRobotCommander
 import terminator.utils as t_utils
 
 from typing import Tuple, List

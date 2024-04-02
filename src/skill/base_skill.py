@@ -6,7 +6,7 @@ import json
 from vibro_tactile_toolbox.msg import SkillParams, TerminationSignal, TerminationConfig
 from std_msgs.msg import String
 
-from robot_controller.robot_commander import BaseRobotCommander
+from robot_controller.base_robot_commander import BaseRobotCommander
 
 from typing import Tuple, List
 

@@ -18,7 +18,7 @@ from yk_tasks.srv import *
 from yk_tasks.msg import *
 from std_srvs.srv import Trigger, TriggerRequest
 
-from robot_controller.robot_commander import BaseRobotCommander
+from robot_controller.base_robot_commander import BaseRobotCommander
 
 def pose_to_list(pose: Pose):
     return [pose.position.x, pose.position.y, pose.position.z, pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w]

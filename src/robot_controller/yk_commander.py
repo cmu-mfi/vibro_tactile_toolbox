@@ -27,7 +27,7 @@ from moveit_msgs.srv import GetMotionPlan
 
 from enum import Enum
 
-from robot_controller.robot_commander import BaseRobotCommander
+from robot_controller.base_robot_commander import BaseRobotCommander
 from std_srvs.srv import Trigger, TriggerRequest
 
 

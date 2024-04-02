@@ -9,11 +9,11 @@ import os
 
 from geometry_msgs.msg import Pose, Twist
 
-from robot_controller.yk_commander import YaskawaRobotCommander
+from robot_controller.yk_controller import YaskawaRobotController
 
 from autolab_core import RigidTransform
 
-from skill.basic import Basic
+from skill.lego_skills import PlaceLegoSkill, PickLegoSkill
 
 STUD_WIDTH = 0.008 # mm
 LEGO_BLOCK_HEIGHT=0.0096 #z
@@ -33,9 +33,15 @@ def run():
     root_pwd = rospy.get_param("collect_tactile_data/root_pwd")
     start_trial = rospy.get_param("collect_tactile_data/start_trial")
 
-    # Create Move-It Group for Yaskawa
-    robot_commander = YaskawaRobotCommander(namespace)
-    
+    # Instantiate robot controller for Yaskawa API
+    robot_commander = YaskawaRobotController(namespace)
+
+    # Load End-Effector Kinematics
+    T_lego_ee = RigidTransform.load(root_pwd+'/config/lego_ee.tf')
+
+    # Load Lego block registration pose 
+    T_lego_world = RigidTransform.load(root_pwd+'/config/yk_creator_lego_pose.tf')
+
     ### Skill Routine ###
 
     # 1. Begin rosbag recording
@@ -44,7 +50,7 @@ def run():
     # joint states
     # FTS
     # vibrophone
-    rosbag_name = f"basic_skill_test.bag"
+    rosbag_name = f"name_me.bag"
     rosbag_path = os.path.join(results_dir, rosbag_name)
     command = f"exec rosbag record -O {rosbag_path} " + \
                 f"/side_camera/color/image_cropped " + \
@@ -59,8 +65,14 @@ def run():
     rosbag_recorder_process = subprocess.Popen(command, stdin=subprocess.PIPE, shell=True)
 
     # 2. Begin Skill
-    basic_skill = Basic(robot_commander)
-    terminals, outcomes = basic_skill.execute_skill()
+    place_lego_params = {
+        'T_lego_ee': T_lego_ee,
+        'T_lego_world': T_lego_world,
+        'place_perturbation_mm': (0, 0, 0)
+    }
+
+    place_skill = PlaceLegoSkill(robot_commander, params=place_lego_params)
+    terminals, outcomes = place_skill.execute_skill()
 
     # 3. End rosbag recording
     rosbag_recorder_process.terminate()
