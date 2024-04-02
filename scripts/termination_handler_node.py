@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import sys
 import rospy
 import argparse
 
@@ -39,7 +40,7 @@ class TerminationHandlerNode:
     self.termination_handler = t_utils.get_handler_from_name(handler_name)
 
     # Subscriber for the input signal
-    if input_topic == None:
+    if input_topic == "":
       self.input_signal_sub = None
     else:
       self.input_signal_sub = rospy.Subscriber(
@@ -76,23 +77,16 @@ class TerminationHandlerNode:
       self.termination_signal_pub.publish(termination_signal)
 
 def main(args):
-  print(args)
-  rospy.init_node(f'{args.namespace}_{args.termination_handler}_termination_handler_node', anonymous=True)
-  node = TerminationHandlerNode(args.namespace, args.termination_handler, args.input_topic)
+  node_name = args[1].split(':=')[1]
+  rospy.init_node(node_name, anonymous=True)
+  namespace = rospy.get_param(f'{node_name}/namespace')
+  termination_handler = rospy.get_param(f'{node_name}/type')
+  topic = rospy.get_param(f'{node_name}/topic')
+  node = TerminationHandlerNode(namespace, termination_handler, topic)
   try:
     rospy.spin()
   except KeyboardInterrupt:
     print("Shutting down")
 
 if __name__ == '__main__':
-    args = argparse.ArgumentParser()
-    args.add_argument('-n', '--namespace', type=str,
-      help='Namespace to use')
-    args.add_argument('-t', '--termination_handler', type=str,
-      help='Termination handler to load into this node')
-    # Arg for specifying the ROS topics to use for the input to the termination handler
-    args.add_argument('-i', '--input_topic', type=str, default=None,
-      help='ROS topic to input to termination handler')
-    args = args.parse_args()
-
-    main(args)
+    main(sys.argv)
