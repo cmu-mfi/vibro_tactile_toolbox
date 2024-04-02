@@ -52,6 +52,7 @@ catkin_python_setup()
 add_message_files(
   FILES
   BoundingBox.msg
+  SkillParams.msg
   TerminationConfig.msg
   TerminationSignal.msg
 )
@@ -168,7 +169,7 @@ catkin_install_python(PROGRAMS
   scripts/image_cropped_republisher.py
   scripts/terminator_node.py
   scripts/termination_handler_node.py
-  scripts/test_terminator.py
+  scripts/pose_stamped_publisher.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

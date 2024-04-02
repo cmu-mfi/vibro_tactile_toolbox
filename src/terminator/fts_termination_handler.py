@@ -9,15 +9,11 @@ from vibro_tactile_toolbox.msg import TerminationSignal, TerminationConfig
 import terminator.utils as t_utils
 
 
-TERMINATOR_TIMER_PERIOD_NS = 1000 # nanoseconds
-TERMINATOR_WRENCH_THRESH = Wrench()
-
-
 class FTSTerminationHandler(BaseTerminationHandler):
     def __init__(self):
         self.id = -1
         self.input_data_class = WrenchStamped
-        self.check_rate_ns = 10E6 # 1 ms default
+        self.check_rate_ns = 10E6 # 10 ms default
 
         self.fts_wrench = Wrench()
 
@@ -80,6 +76,7 @@ class FTSTerminationHandler(BaseTerminationHandler):
             cause += f"Tz ({self.fts_wrench.torque.z:0.2f}) exceeds threshold ({self.wrench_thresh.torque.z:0.2f})\n"
         
         termination_signal = TerminationSignal()
+        termination_signal.id = self.id
         termination_signal.terminate = terminate
         termination_signal.cause = cause
         return termination_signal

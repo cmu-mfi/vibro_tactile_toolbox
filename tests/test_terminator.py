@@ -43,7 +43,7 @@ class TerminatorTest:
     cfg_json = {
       'id': id,
       'FTS': {'check_rate_ns': FTS_check_rate_ns, 'threshold': t_utils.wrench_to_dict(FTS_thresh)},
-      'timeout': {'timeout_duration_ns': 5E9}
+      'time': {'duration': 5.0}
     }
 
     msg = TerminationConfig()

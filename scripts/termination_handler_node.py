@@ -72,7 +72,7 @@ class TerminationHandlerNode:
     Callback to check if this termination handler should publish a termination signal
     """
     termination_signal = self.termination_handler.get_termination_signal()
-    if termination_signal.terminate:
+    if termination_signal.terminate and termination_signal.id > 0:
       self.termination_signal_pub.publish(termination_signal)
 
 def main(args):

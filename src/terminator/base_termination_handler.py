@@ -11,7 +11,7 @@ class BaseTerminationHandler(object, metaclass=abc.ABCMeta):
 
     def __init__(self):
         self.input_data_class = None
-        self.check_rate_ns = 10E9
+        self.check_rate_ns = 10E6
 
     def update_config(self, cfg: TerminationConfig):
         """

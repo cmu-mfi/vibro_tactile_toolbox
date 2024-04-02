@@ -6,16 +6,16 @@ import json
 from vibro_tactile_toolbox.msg import TerminationConfig, TerminationSignal
 from terminator.base_termination_handler import BaseTerminationHandler
 
-class TimeoutTerminationHandler(BaseTerminationHandler):
+class TimeTerminationHandler(BaseTerminationHandler):
     """
-    Termination handler to stop on a timeout condition
+    Termination handler to stop on a time condition
     """
     def __init__(self):
         self.id = -1
         self.input_data_class = None
-        self.check_rate_ns = 100E6 # 100ms default
+        self.check_rate_ns = 10E6 # 10ms default
 
-        self.timeout_duration_ns = 10E9
+        self.duration = 10.0
 
         self.start_time = None
 
@@ -25,12 +25,12 @@ class TimeoutTerminationHandler(BaseTerminationHandler):
         """
         cfg_jsons = cfg.cfg_json
         cfg_json = json.loads(cfg_jsons)
-        if 'timeout' in cfg_json:
+        if 'time' in cfg_json:
             self.id = cfg_json['id']
-            timeout_cfg = cfg_json['timeout']
-            if 'timeout_duration_ns' in timeout_cfg:
-                self.timeout_duration_ns = timeout_cfg['timeout_duration_ns']
-            # Always reset the time if a timeout termination is requested
+            time_cfg = cfg_json['time']
+            if 'duration' in time_cfg:
+                self.duration = time_cfg['duration']
+            # Always reset the time if a time termination is requested
             self.start_time = rospy.get_time()
 
     
@@ -47,11 +47,12 @@ class TimeoutTerminationHandler(BaseTerminationHandler):
         """
         termination_signal = TerminationSignal()
         curr_time = rospy.get_time()
-        terminate = (self.start_time is not None) and (curr_time - self.start_time) > self.timeout_duration_ns / 1E9
-        cause = f"Timeout termination handler caused by:\n"
+        terminate = (self.start_time is not None) and (curr_time - self.start_time) > self.duration
+        cause = f"Time termination handler caused by:\n"
         if terminate:
-            cause += f"Command execution timeout after {(curr_time - self.start_time):0.2f}s with timeout duration {self.timeout_duration_ns/1E9:0.2f}s"
+            cause += f"Command execution time after {(curr_time - self.start_time):0.2f}s with time duration {self.duration:0.2f}s"
         
+        termination_signal.id = self.id
         termination_signal.terminate = terminate
         termination_signal.cause = cause
         return termination_signal

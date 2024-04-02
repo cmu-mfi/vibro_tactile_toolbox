@@ -89,7 +89,8 @@ class YaskawaRobotController(BaseRobotCommander):
             "joint_6_t",
         ]
 
-        self.namespace = '/' + namespace + '/'
+        if namespace != '/':
+            self.namespace = '/' + namespace + '/'
         self.get_pose_client = rospy.ServiceProxy(self.namespace + 'yk_get_pose', GetPose)
         self.get_pose_stamped_client = rospy.ServiceProxy(self.namespace + 'yk_get_pose_stamped', GetPoseStamped)
         self.go_to_pose_client = actionlib.SimpleActionClient(self.namespace + 'yk_go_to_pose', GoToPoseAction)

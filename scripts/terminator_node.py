@@ -13,9 +13,11 @@ class TerminatorNode:
   def __init__(self):
     self.use_fts_handler = False
     self.use_timeout_handler = False
-    self.use_robotstate_handler = False
+    self.use_joint_handler = False
+    self.use_pose_handler = False
     self.use_audio_handler = False
     self.use_vision_handler = False
+    self.id = -1
 
     self.termination_pub = rospy.Publisher(
       "/terminator/skill_termination_signal", 
@@ -30,9 +32,10 @@ class TerminatorNode:
       queue_size=1
     )
 
-    self.fts_handler_sub = rospy.Subscriber("/terminator/FTS_termination_signal", TerminationSignal, self.fts_handler_cb)
-    self.timeout_handler_sub = rospy.Subscriber("/terminator/timeout_termination_signal", TerminationSignal, self.timeout_handler_cb)
-    self.robotstate_handler_sub = None
+    self.fts_handler_sub = rospy.Subscriber("/terminator/fts_termination_signal", TerminationSignal, self.fts_handler_cb)
+    self.timeout_handler_sub = rospy.Subscriber("/terminator/time_termination_signal", TerminationSignal, self.timeout_handler_cb)
+    self.joint_handler_sub = rospy.Subscriber("/terminator/joint_termination_signal", TerminationSignal, self.joint_handler_cb)
+    self.pose_handler_sub = rospy.Subscriber("/terminator/pose_termination_signal", TerminationSignal, self.pose_handler_cb)
     self.audio_handler_sub = None
     self.vision_handler_sub = None
 
@@ -42,19 +45,29 @@ class TerminatorNode:
     print(f"==Received Termination Config==\n{cfg_jsons}")
 
     cfg_json = json.loads(cfg_jsons)
-    self.use_fts_handler = 'FTS' in cfg_json
+    self.id = cfg_json['id']
+    self.use_fts_handler = 'fts' in cfg_json
     self.use_timeout_handler = 'timeout' in cfg_json
-    self.use_robotstate_handler = 'robot' in cfg_json
+    self.use_joint_handler = 'joint' in cfg_json
+    self.use_pose_handler = 'pose' in cfg_json
     self.use_audio_handler = 'audio' in cfg_json
     self.use_vision_handler = 'vision' in cfg_json
 
   def fts_handler_cb(self, fts_termination_signal: TerminationSignal):
-    if self.use_fts_handler:
+    if self.use_fts_handler and fts_termination_signal.id == self.id:
       self.termination_pub.publish(fts_termination_signal)
 
-  def timeout_handler_cb(self, timeout_termination_signal: TerminationSignal):
-    if self.use_timeout_handler:
-      self.termination_pub.publish(timeout_termination_signal)
+  def timeout_handler_cb(self, time_termination_signal: TerminationSignal):
+    if self.use_timeout_handler and time_termination_signal.id == self.id:
+      self.termination_pub.publish(time_termination_signal)
+
+  def joint_handler_cb(self, joint_termination_signal: TerminationSignal):
+    if self.use_joint_handler and joint_termination_signal.id == self.id:
+      self.termination_pub.publish(joint_termination_signal)
+
+  def pose_handler_cb(self, pose_termination_signal: TerminationSignal):
+    if self.use_pose_handler and pose_termination_signal.id == self.id:
+      self.termination_pub.publish(pose_termination_signal)
 
 
 def main(args):
