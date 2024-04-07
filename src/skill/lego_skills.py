@@ -17,8 +17,8 @@ from typing import Tuple, List
 
 ### Lego specific globals ###
 
-STUD_WIDTH = 0.008 # mm
-LEGO_BLOCK_HEIGHT=0.0096 #z
+STUD_WIDTH = 0.008 # 8 mm
+LEGO_BLOCK_HEIGHT=0.0096 # z 9.6mm
 LEGO_BLOCK_WIDTH=1*STUD_WIDTH #x    #0.0158 (with clearance)
 LEGO_BLOCK_LENGTH=2*STUD_WIDTH #y   #0.0318 (with clearance)
 

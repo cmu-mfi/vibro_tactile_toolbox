@@ -21,7 +21,7 @@ from detectron2.config import get_cfg
 from vibro_tactile_toolbox.srv import LegoOutcome, LegoOutcomeResponse
 from vibro_tactile_toolbox.msg import BoundingBox
 
-class Detectron2:
+class LegoDetector:
 
     def __init__(self):
 
