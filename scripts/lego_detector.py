@@ -43,7 +43,7 @@ class LegoDetector:
 
         cv_image = self.bridge.imgmsg_to_cv2(img_msg, "bgr8")
 
-        outputs = self.predictor(im)
+        outputs = self.predictor(cv_image)
 
         outputs_on_cpu = outputs['instances'].to("cpu")
         print(outputs_on_cpu)
@@ -61,12 +61,13 @@ class LegoDetector:
                 ind += 1
                 if current_score >= req.score_threshold:
                     bbox = i.numpy()
+                    print(bbox)
                     bbox_msg = BoundingBox()
                     bbox_msg.coords = bbox
                     resp.obj_bboxes.append(bbox_msg)
-                    if bbox[0] >= req.top_bbox[0] and bbox[1] >= req.top_bbox[1] and bbox[2] <= req.top_bbox[2] and bbox[3] <= req.top_bbox[3]:
+                    if bbox[0] >= req.top_bbox.coords[0] and bbox[1] >= req.top_bbox.coords[1] and bbox[2] <= req.top_bbox.coords[2] and bbox[3] <= req.top_bbox.coords[3]:
                         self.starting_top += 1
-                    if bbox[0] >= req.bottom_bbox[0] and bbox[1] >= req.bottom_bbox[1] and bbox[2] <= req.bottom_bbox[2] and bbox[3] <= req.bottom_bbox[3]:
+                    if bbox[0] >= req.bot_bbox.coords[0] and bbox[1] >= req.bot_bbox.coords[1] and bbox[2] <= req.bot_bbox.coords[2] and bbox[3] <= req.bot_bbox.coords[3]:
                         self.starting_bottom += 1
 
             resp.result = json.dumps({'starting_top' : str(self.starting_top), 'starting_bottom' : str(self.starting_bottom)})
@@ -88,9 +89,9 @@ class LegoDetector:
                     bbox_msg = BoundingBox()
                     bbox_msg.coords = bbox
                     resp.obj_bboxes.append(bbox_msg)
-                    if bbox[0] >= req.top_bbox[0] and bbox[1] >= req.top_bbox[1] and bbox[2] <= req.top_bbox[2] and bbox[3] <= req.top_bbox[3]:
+                    if bbox[0] >= req.top_bbox.coords[0] and bbox[1] >= req.top_bbox.coords[1] and bbox[2] <= req.top_bbox.coords[2] and bbox[3] <= req.top_bbox.coords[3]:
                         self.ending_top += 1
-                    if bbox[0] >= req.bottom_bbox[0] and bbox[1] >= req.bottom_bbox[1] and bbox[2] <= req.bottom_bbox[2] and bbox[3] <= req.bottom_bbox[3]:
+                    if bbox[0] >= req.bot_bbox.coords[0] and bbox[1] >= req.bot_bbox.coords[1] and bbox[2] <= req.bot_bbox.coords[2] and bbox[3] <= req.bot_bbox.coords[3]:
                         self.ending_bottom += 1
 
             

@@ -1,1 +1,1 @@
-int32 coords #
+float64[] coords #

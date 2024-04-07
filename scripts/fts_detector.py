@@ -10,7 +10,7 @@ import tf
 import math
 import numpy as np
 import json
-from geometry_msgs.msg import Wrench
+from geometry_msgs.msg import Wrench, WrenchStamped
 
 from vibro_tactile_toolbox.srv import FTSOutcome, FTSOutcomeResponse
 
@@ -23,8 +23,9 @@ class FTSDetector:
         self.service = rospy.Service('fts_detector', FTSOutcome, self.detect_fts)
 
     def detect_fts(self, req):
-
-        current_wrench = rospy.wait_for_message(req.topic_name, Wrench)
+        print("Received Request")
+        current_wrench = rospy.wait_for_message(req.topic_name, WrenchStamped).wrench
+        print("Received Current Wrench")
         resp = FTSOutcomeResponse()
         resp.wrench = current_wrench
         self.wrench_threshold = req.threshold
