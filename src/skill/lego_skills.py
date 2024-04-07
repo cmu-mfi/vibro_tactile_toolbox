@@ -96,70 +96,82 @@ class PlaceLegoSkill(BaseSkill):
 
         super().__init__(robot_commander)
         
-        T_lego_ee = params['T_lego_ee']
-        T_lego_world = params['T_lego_world']
+        self.T_lego_ee = params['T_lego_ee']
+        self.T_lego_world = params['T_lego_world']
 
-        T_lego_approach = RigidTransform(
-            translation=np.array([0.0, 0.0, -0.050])
+        self.T_lego_approach = RigidTransform(
+            translation=np.array([0.0, 0.0, params['approach_height_offset']]),
+            from_frame='lego', to_frame='lego'
         )
-        T_lego_rotation = RigidTransform(
-            rotation=RigidTransform.y_axis_rotation(np.deg2rad(10)), 
+        self.T_lego_rotation = RigidTransform(
+            rotation=RigidTransform.y_axis_rotation(np.deg2rad(params['place_rotation'])), 
             translation=np.array([LEGO_BLOCK_WIDTH/2,0,0]), 
             from_frame='lego', to_frame='lego'
         )
-        T_lego_rotation_point_offset = RigidTransform(
+        self.T_lego_rotation_point_offset = RigidTransform(
             translation=np.array([LEGO_BLOCK_WIDTH/2,0,0]), 
             from_frame='lego', to_frame='lego'
         )
-        T_lego_servo = RigidTransform(
+        self.T_lego_servo = RigidTransform(
             translation=np.array([0.0, 0.0, -0.001]),
             from_frame='lego', to_frame='lego'
         )
 
 
-        T_place_target = T_lego_world
+        self.T_place_target = self.T_lego_world.copy()
         if params['place_perturbation_mm']:
-            place_perturbation = np.array(params['place_perturbation_mm']) / 1000.0
+            self.place_perturbation = np.array(params['place_perturbation_mm']) / 1000.0
             # Should this be a perturbation in the world frame or EE frame?
-            T_place_target *= RigidTransform(
-                translation=place_perturbation, 
+            self.T_place_target *= RigidTransform(
+                translation=self.place_perturbation, 
                 from_frame='lego', to_frame='lego'
             )
         
-        place_pose = T_place_target * T_lego_ee.inverse()
-        place_pose = place_pose.pose_msg
+        self.place_pose = self.T_place_target * self.T_lego_ee.inverse()
+        self.place_pose_msg = self.place_pose.pose_msg
 
-        approach_pose = T_place_target * T_lego_approach * T_lego_ee.inverse()
-        approach_pose = approach_pose.pose_msg
+        self.approach_pose = self.T_place_target * self.T_lego_approach * self.T_lego_ee.inverse()
+        self.approach_pose_msg = self.approach_pose.pose_msg
 
-        release_pose = T_place_target * T_lego_rotation 
-        release_pose *= T_lego_rotation_point_offset.inverse() * T_lego_ee.inverse()
-        release_pose = release_pose.pose_msg
+        self.release_pose = self.T_place_target * self.T_lego_rotation 
+        self.release_pose *= self.T_lego_rotation_point_offset.inverse() * self.T_lego_ee.inverse()
+        self.release_pose_msg = self.release_pose.pose_msg
 
-        servo_pose = T_place_target * T_lego_servo * T_lego_ee.inverse()
-        servo_pose = servo_pose.pose_msg
+        self.servo_pose = self.T_place_target * self.T_lego_servo * self.T_lego_ee.inverse()
+        self.servo_pose_msg = servo_pose.pose_msg
 
 
         self.skill_steps = [
             {'step_name': 'go_to_approach_pose',
-             'command': lambda: self.robot_commander.go_to_pose_goal(approach_pose, wait=False),
-             'termination_cfg': add_termination_pose(rapid_termination_config, approach_pose)},
+             'command': lambda param: self.robot_commander.go_to_pose_goal(self.approach_pose_msg, wait=False),
+             'termination_cfg': lambda param: add_termination_pose(rapid_termination_config, self.approach_pose_msg)},
             {'step_name': 'engage_brick',
-             'command': lambda: self.robot_commander.go_to_pose_goal(place_pose, wait=False),
-             'termination_cfg': add_termination_pose(engage_termination_config, place_pose)},
+             'command': lambda param: self.robot_commander.go_to_pose_goal(self.place_pose_msg, wait=False),
+             'termination_cfg': lambda param: add_termination_pose(engage_termination_config, self.place_pose_msg)},
             {'step_name': 'pull_up',
-             'command': lambda: self.robot_commander.go_to_pose_goal(servo_pose, wait=False),
-             'termination_cfg': add_termination_pose(servo_termination_config, servo_pose)},
+             'command': lambda param: self.robot_commander.go_to_pose_goal(self.servo_pose_msg, wait=False),
+             'termination_cfg': lambda param: add_termination_pose(servo_termination_config, self.servo_pose_msg)},
             {'step_name': 'reengage_brick',
-             'command': lambda: self.robot_commander.go_to_pose_goal(place_pose, wait=False),
-             'termination_cfg': add_termination_pose(engage_termination_config, place_pose)},
+             'command': lambda param: self.robot_commander.go_to_pose_goal(self.place_pose_msg, wait=False),
+             'termination_cfg': lambda param: add_termination_pose(engage_termination_config, self.place_pose_msg)},
             {'step_name': 'release_brick',
-             'command': lambda: self.robot_commander.go_to_pose_goal(release_pose, wait=False),
-             'termination_cfg': add_termination_pose(release_termination_config, release_pose)},
+             'command': lambda param: self.robot_commander.go_to_pose_goal(self.release_pose_msg, wait=False),
+             'termination_cfg': lambda param: add_termination_pose(release_termination_config, self.release_pose_msg)},
             {'step_name': 'disengage_brick',
-             'command': lambda: self.robot_commander.go_to_pose_goal(approach_pose, wait=False),
-             'termination_cfg': add_termination_pose(rapid_termination_config, approach_pose)}
+             'command': lambda param: self.robot_commander.go_to_pose_goal(self.approach_pose_msg, wait=False),
+             'termination_cfg': lambda param: add_termination_pose(rapid_termination_config, self.approach_pose_msg)}
         ]
+
+    def go_to_approach_pose(self, param):
+        place_perturbation = np.array(params['place_perturbation_mm']) / 1000.0
+        T_place_offset = RigidTransform(
+            translation=place_perturbation, 
+            from_frame='lego', to_frame='lego'
+        )
+        T_place_target = self.T_lego_world * T_place_offset 
+        approach_pose = T_place_target * self.T_lego_approach * self.T_lego_ee.inverse()
+        approach_pose = approach_pose.pose_msg
+        self.robot_commander.go_to_pose_goal(approach_pose, wait=False),
 
 class PickLegoSkill(BaseSkill):
 
@@ -167,8 +179,8 @@ class PickLegoSkill(BaseSkill):
 
         super().__init__(robot_commander)
 
-        T_lego_ee = params['T_lego_ee']
-        T_lego_world = params['T_lego_world']
+        self.T_lego_ee = params['T_lego_ee']
+        self.T_lego_world = params['T_lego_world']
 
         T_lego_approach = RigidTransform(
             translation=np.array([0.0, 0.0, -0.050])

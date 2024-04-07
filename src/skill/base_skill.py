@@ -43,43 +43,52 @@ class BaseSkill:
 
         for skill_step, param in zip(self.skill_steps, params):
             print(f"Executing skill step: \'{skill_step['step_name']}\'")
-            skill_id = rospy.Time.now().secs
-            termination_cfg = skill_step['termination_cfg']
-            termination_cfg['id'] = skill_id
-            if 'termination' in param.keys():
-                termination_cfg.update(param['termination'])
-            skill_param_msg = SkillParams()
-            skill_param_msg.id = skill_id
-            skill_param_msg.skill_name = self.__class__.__name__
-            skill_param_msg.step_name = skill_step['step_name']
-            skill_param_msg.param = json.dumps(param)
-            self.skill_param_pub.publish(skill_param_msg)
 
-            terminal, outcome = self.execute_skill_step(skill_step['command'], param['skill'], termination_cfg)
+            terminal, outcome = self.execute_skill_step(skill_step, param)
             terminals.append(terminal)
             outcomes.append(outcome)
 
         return terminals, outcomes
 
-    def execute_skill_step(self, robot_command, skill_param, termination_config) -> Tuple[TerminationSignal, int]:
+    def execute_skill_step(self, skill_step, param) -> Tuple[TerminationSignal, int]:
         """
         Execute a single skill step
         robot_command: Lambda function of a populated XXRobotCommander method
         termination_config: TerminationConfig for this step
         """
+
+        #1 Do some calculations
+
+        if 'recalculate' in skill_step:
+            skill_step['recalculate'](param['recalculate'])
+
+        skill_id = rospy.Time.now().secs
+        skill_param_msg = SkillParams()
+        skill_param_msg.id = skill_id
+        skill_param_msg.skill_name = self.__class__.__name__
+        skill_param_msg.step_name = skill_step['step_name']
+        skill_param_msg.param = json.dumps(param)
+        self.skill_param_pub.publish(skill_param_msg)
+
+
         # 1. Set the termination config and reset signal
+        termination_cfg = skill_step['termination_cfg'](param['termination'])
+        termination_cfg['id'] = skill_id
         termination_cfg_msg = TerminationConfig()
-        termination_cfg_msg.cfg_json = json.dumps(termination_config)
+        termination_cfg_msg.cfg_json = json.dumps(termination_cfg)
         self.termination_config_pub.publish(termination_cfg_msg)
 
         # 2. Send the robot command
-        robot_command(skill_param)
+        skill_step['robot_command'](param['skill'])
 
         # 3. Wait for termination
         termination_signal = rospy.wait_for_message(self.skill_termination_topic_name, TerminationSignal, rospy.Duration(20))
 
         # 4. Get outcome
-        outcome = 0
+        if 'outcome' in skill_step:
+            outcome = skill_step['outcome'](param['outcome'])
+        else:
+            outcome = None
 
         # 5. Return terminal and outcome
         return termination_signal, outcome
