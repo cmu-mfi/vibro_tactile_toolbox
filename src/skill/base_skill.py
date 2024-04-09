@@ -57,6 +57,8 @@ class BaseSkill:
             terminals.append(terminal)
             outcomes.append(outcome)
 
+            # TODO: If outcome is unsuccessful retry step
+
         return terminals, outcomes
 
     def execute_skill_step(self, skill_step, param) -> Tuple[TerminationSignal, int]:

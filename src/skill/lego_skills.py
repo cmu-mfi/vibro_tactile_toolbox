@@ -13,6 +13,7 @@ from robot_controller.base_robot_commander import BaseRobotCommander
 from skill.base_skill import BaseSkill
 import terminator.utils as t_utils
 
+from vibro_tactile_toolbox.msg import TerminationSignal
 from vibro_tactile_toolbox.srv import *
 from vibro_tactile_toolbox.msg import *
 
@@ -99,51 +100,6 @@ class PlaceLegoSkill(BaseSkill):
     def __init__(self, robot_commander: BaseRobotCommander, namespace: str):
 
         super().__init__(robot_commander, namespace)
-        
-        self.T_lego_ee = params['T_lego_ee']
-        self.T_lego_world = params['T_lego_world']
-        self.approach_height_offset = params['approach_height_offset']
-        self.place_rotation = params['place_rotation']
-
-        self.T_lego_approach = RigidTransform(
-            translation=np.array([0.0, 0.0, self.approach_height_offset]),
-            from_frame='lego', to_frame='lego'
-        )
-        self.T_lego_rotation = RigidTransform(
-            rotation=RigidTransform.y_axis_rotation(np.deg2rad(self.place_rotation)), 
-            translation=np.array([LEGO_BLOCK_WIDTH/2,0,0]), 
-            from_frame='lego', to_frame='lego'
-        )
-        self.T_lego_rotation_point_offset = RigidTransform(
-            translation=np.array([LEGO_BLOCK_WIDTH/2,0,0]), 
-            from_frame='lego', to_frame='lego'
-        )
-        self.T_lego_servo = RigidTransform(
-            translation=np.array([0.0, 0.0, -0.001]),
-            from_frame='lego', to_frame='lego'
-        )
-
-
-        self.T_place_target = self.T_lego_world.copy()
-        if params['place_perturbation']:
-            self.place_perturbation = np.array(params['place_perturbation'])
-            self.T_place_target *= RigidTransform(
-                translation=self.place_perturbation, 
-                from_frame='lego', to_frame='lego'
-            )
-        
-        self.place_pose = self.T_place_target * self.T_lego_ee.inverse()
-        self.place_pose_msg = self.place_pose.pose_msg
-
-        self.approach_pose = self.T_place_target * self.T_lego_approach * self.T_lego_ee.inverse()
-        self.approach_pose_msg = self.approach_pose.pose_msg
-
-        self.release_pose = self.T_place_target * self.T_lego_rotation * self.T_lego_rotation_point_offset.inverse() * self.T_lego_ee.inverse()
-        self.release_pose_msg = self.release_pose.pose_msg
-
-        self.servo_pose = self.T_place_target * self.T_lego_servo * self.T_lego_ee.inverse()
-        self.servo_pose_msg = self.servo_pose.pose_msg
-
 
         self.skill_steps = [
             {'step_name': 'go_to_approach_pose',
@@ -169,13 +125,73 @@ class PlaceLegoSkill(BaseSkill):
              'termination_cfg': lambda param: add_termination_pose(rapid_termination_config, self.approach_pose_msg)}
         ]
 
+    def execute_skill(self, params, place_lego_params) -> Tuple[List[TerminationSignal], List[int]]:
+        # QOL 
+        if 'T_lego_ee' not in place_lego_params:
+            print(f"PlaceLegoSkill expects end effector transform: place_lego_params['T_lego_ee'] = RigidTransform()")
+        if 'T_lego_world' not in place_lego_params:
+            print(f"PlaceLegoSkill expects target brick pose transform: place_lego_params['T_lego_world'] = RigidTransform()")
+        if 'approach_height_offset' not in place_lego_params:
+            print(f"PlaceLegoSkill expects an approach height offset (meters): place_lego_params['approach_height_offset'] = float(0.010 m)")
+        if 'place_rotation' not in place_lego_params:
+            print(f"PlaceLegoSkill expects a release rotation (deg): place_lego_params['place_rotation'] = float(30 deg)")
+
+
+        self.T_lego_ee = place_lego_params['T_lego_ee']
+        self.T_lego_world = place_lego_params['T_lego_world']
+        self.approach_height_offset = place_lego_params['approach_height_offset']
+        self.place_rotation = place_lego_params['place_rotation']
+
+        self.T_lego_approach = RigidTransform(
+            translation=np.array([0.0, 0.0, -abs(self.approach_height_offset)]),
+            from_frame='lego', to_frame='lego'
+        )
+        self.T_lego_rotation = RigidTransform(
+            rotation=RigidTransform.y_axis_rotation(np.deg2rad(self.place_rotation)), 
+            translation=np.array([LEGO_BLOCK_WIDTH/2,0,0]), 
+            from_frame='lego', to_frame='lego'
+        )
+        self.T_lego_rotation_point_offset = RigidTransform(
+            translation=np.array([LEGO_BLOCK_WIDTH/2,0,0]), 
+            from_frame='lego', to_frame='lego'
+        )
+        self.T_lego_servo = RigidTransform(
+            translation=np.array([0.0, 0.0, -0.001]),
+            from_frame='lego', to_frame='lego'
+        )
+
+
+        self.T_place_target = self.T_lego_world.copy()
+        if place_lego_params['place_perturbation']:
+            self.place_perturbation = np.array(place_lego_params['place_perturbation'])
+            self.T_place_target *= RigidTransform(
+                translation=self.place_perturbation, 
+                from_frame='lego', to_frame='lego'
+            )
+        
+        self.place_pose = self.T_place_target * self.T_lego_ee.inverse()
+        self.place_pose_msg = self.place_pose.pose_msg
+
+        self.approach_pose = self.T_place_target * self.T_lego_approach * self.T_lego_ee.inverse()
+        self.approach_pose_msg = self.approach_pose.pose_msg
+
+        self.release_pose = self.T_place_target * self.T_lego_rotation * self.T_lego_rotation_point_offset.inverse() * self.T_lego_ee.inverse()
+        self.release_pose_msg = self.release_pose.pose_msg
+
+        self.servo_pose = self.T_place_target * self.T_lego_servo * self.T_lego_ee.inverse()
+        self.servo_pose_msg = self.servo_pose.pose_msg
+        return super().execute_skill(params)
+
     def send_start_outcome_request(self, param):
+        return -1
         raise NotImplementedError
     
     def send_end_fts_outcome_request(self, param):
+        return -1
         raise NotImplementedError
     
     def send_end_vision_outcome_request(self, param):
+        return -1
         raise NotImplementedError
     
     def calculate_approach_pose(self, param):

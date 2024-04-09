@@ -48,7 +48,7 @@ class TerminatorNode:
     cfg_json = json.loads(cfg_jsons)
     self.id = cfg_json['id']
     self.use_fts_handler = 'fts' in cfg_json
-    self.use_timeout_handler = 'timeout' in cfg_json
+    self.use_timeout_handler = 'time' in cfg_json
     self.use_joint_handler = 'joint' in cfg_json
     self.use_pose_handler = 'pose' in cfg_json
     self.use_audio_handler = 'audio' in cfg_json

@@ -68,11 +68,18 @@ def run():
     place_lego_params = {
         'T_lego_ee': T_lego_ee,
         'T_lego_world': T_lego_world,
-        'place_perturbation_mm': (0, 0, 0)
+        'approach_height_offset': 0.025,
+        'place_rotation': 20.0,
+        'place_perturbation': (0, 0, 0)
     }
 
     place_skill = PlaceLegoSkill(robot_commander, namespace)
-    terminals, outcomes = place_skill.execute_skill(None)
+    terminals, outcomes = place_skill.execute_skill(None, place_lego_params)
+
+    for i in range(len(terminals)):
+        print(f"\n\n=== {place_skill.skill_steps[i]['step_name']} ===" +
+              f"\nTerminated with status:\n'{terminals[i].cause}'" +
+              f"\nAnd outcome:\n{outcomes[i]}")
 
     # 3. End rosbag recording
     rosbag_recorder_process.terminate()
