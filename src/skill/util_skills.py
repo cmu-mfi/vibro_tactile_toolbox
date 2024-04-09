@@ -16,6 +16,6 @@ class GoHomeSkill(BaseSkill):
 
         self.skill_steps = [
              {'step_name': 'go_to_home_joints',
-              'command': lambda param: self.robot_commander.go_to_joints([0, 0, 0, 0, -np.pi/2, 0], wait=False),
+              'robot_command': lambda param: self.robot_commander.go_to_joints([0, 0, 0, 0, -np.pi/2, 0], wait=False),
               'termination_cfg': {'joint': {'position': [0, 0, 0, 0, -np.pi/2, 0]}}}
         ]

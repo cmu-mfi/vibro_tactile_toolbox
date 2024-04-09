@@ -59,8 +59,8 @@ class BaseSkill:
 
         #1 Do some calculations
 
-        if 'recalculate' in skill_step:
-            skill_step['recalculate'](param['recalculate'])
+        if 'calculate' in skill_step and 'calculate' in param:
+            skill_step['calculate'](param['calculate'])
 
         skill_id = rospy.Time.now().secs
         skill_param_msg = SkillParams()
@@ -81,7 +81,7 @@ class BaseSkill:
         # 2. Send the robot command
         skill_step['robot_command'](param['skill'])
 
-        # 3. Wait for termination
+        # 3. Wait for terminationgit
         termination_signal = rospy.wait_for_message(self.skill_termination_topic_name, TerminationSignal, rospy.Duration(20))
 
         # 4. Get outcome
