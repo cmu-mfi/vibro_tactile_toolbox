@@ -171,6 +171,7 @@ catkin_install_python(PROGRAMS
   scripts/terminator_node.py
   scripts/termination_handler_node.py
   scripts/pose_stamped_publisher.py
+  scripts/go_home_task.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

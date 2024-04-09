@@ -20,13 +20,19 @@ def create_skill_publishers(namespace):
     return publishers
 
 class BaseSkill:
-
-    def __init__(self, robot_commander: BaseRobotCommander, namespace: str, publishers: dict):
+    NULL_PARAM = {'skill': None,
+                  'termination': None,
+                  'outcome': None}
+    
+    def __init__(self, robot_commander: BaseRobotCommander, namespace: str):
 
         self.namespace = namespace
 
         self.robot_commander = robot_commander
         self.skill_termination_topic_name = f'/{namespace}/terminator/skill_termination_signal'
+
+        publishers = create_skill_publishers(namespace)
+
         self.skill_param_pub = publishers['skill_param_pub']
         self.termination_config_pub = publishers['termination_config_pub']
         
@@ -40,6 +46,9 @@ class BaseSkill:
         """
         terminals = []
         outcomes = []
+
+        if params == None:
+            params = [BaseSkill.NULL_PARAM] * len(self.skill_steps)
 
         for skill_step, param in zip(self.skill_steps, params):
             print(f"Executing skill step: \'{skill_step['step_name']}\'")

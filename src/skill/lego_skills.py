@@ -96,9 +96,9 @@ def add_termination_pose(termination_config, pose : Pose):
 
 class PlaceLegoSkill(BaseSkill):
 
-    def __init__(self, robot_commander: BaseRobotCommander, params):
+    def __init__(self, robot_commander: BaseRobotCommander, namespace: str):
 
-        super().__init__(robot_commander)
+        super().__init__(robot_commander, namespace)
         
         self.T_lego_ee = params['T_lego_ee']
         self.T_lego_world = params['T_lego_world']
@@ -142,7 +142,7 @@ class PlaceLegoSkill(BaseSkill):
         self.release_pose_msg = self.release_pose.pose_msg
 
         self.servo_pose = self.T_place_target * self.T_lego_servo * self.T_lego_ee.inverse()
-        self.servo_pose_msg = servo_pose.pose_msg
+        self.servo_pose_msg = self.servo_pose.pose_msg
 
 
         self.skill_steps = [
@@ -170,13 +170,16 @@ class PlaceLegoSkill(BaseSkill):
         ]
 
     def send_start_outcome_request(self, param):
-
+        raise NotImplementedError
+    
     def send_end_fts_outcome_request(self, param):
-
+        raise NotImplementedError
+    
     def send_end_vision_outcome_request(self, param):
-
+        raise NotImplementedError
+    
     def calculate_approach_pose(self, param):
-        place_perturbation = np.array(params['place_perturbation_mm']) / 1000.0
+        place_perturbation = np.array(param['place_perturbation_mm']) / 1000.0
         T_place_offset = RigidTransform(
             translation=place_perturbation, 
             from_frame='lego', to_frame='lego'

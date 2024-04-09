@@ -39,3 +39,27 @@ roslaunch testbed_utils lego_moveit_yk.launch namespace:=yk_creator
 
 10. Start Robot Pose Publisher (Some Tmux window)
 rosrun vibro_tactile_toolbox pose_stamped_publisher.py -n yk_creator -f 100
+
+# Revised:
+
+1. Start rosmaster by starting roscore in a "roscore" tmux session. This should always be running on mfi-twin
+- tmux new -t roscore
+- roscore
+
+2. Start the RTC drivers in a "RTC-drivers" tmux session on mfi-twin
+- cd ~
+- bash launch_RTC_drivers.sh
+
+3. Start the yaskawa drivers in a seperate "yk-creator" tmux session. This should ususally be running on mfi-twin
+- tmux new -t yk-creator
+- roslaunch testbed_utils lego_moveit_yk.launch namespace:=yk_creator
+- tmux new-window
+- rosrun vibro_tactile_toolbox pose_stamped_publisher.py -n yk_creator -f 100
+
+4. Start the VTT core drivers in a "VTT-core" tmux session on mfi-twin
+# This will change to a roslaunch file but bash is quick
+- roscd vibro_tactile_toolbox
+- bash launch_VTT_core
+
+5. Launch the desired task script
+- Ex: roslaunch collect_tactile_data.py 

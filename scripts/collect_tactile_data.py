@@ -71,8 +71,8 @@ def run():
         'place_perturbation_mm': (0, 0, 0)
     }
 
-    place_skill = PlaceLegoSkill(robot_commander, params=place_lego_params)
-    terminals, outcomes = place_skill.execute_skill()
+    place_skill = PlaceLegoSkill(robot_commander, namespace)
+    terminals, outcomes = place_skill.execute_skill(None)
 
     # 3. End rosbag recording
     rosbag_recorder_process.terminate()
