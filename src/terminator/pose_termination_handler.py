@@ -91,7 +91,7 @@ class PoseTerminationHandler(BaseTerminationHandler):
             pyq.Quaternion.distance(quat_1, quat_2),
             pyq.Quaternion.distance(quat_1, -quat_2)
         )
-
+        
         if d > self.pos_tolerance:
             cause += f"Position error ({d} m) is greater than the tolerance ({self.pos_tolerance} m). "
         if phi > self.orient_tolerance:

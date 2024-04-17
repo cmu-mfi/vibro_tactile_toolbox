@@ -44,20 +44,46 @@ class BaseSkill:
         """
         Function called by task script to execute all steps of skill and return
         """
+        # Load execution params
+        skill_step_delay = None
+        max_retry_attempts = None
+        skill_step_params = None
+        if params:
+            # delay between skill steps in seconds (float)
+            if 'skill_step_delay' in params:
+                skill_step_delay = params['skill_step_delay']
+            # how many times a skill step can be re-attempted
+            if 'max_retry_attempts' in params:
+                max_retry_attempts = params['max_retry_attempts']
+            # pre-loaded parameters for listed skill step(s) (NULL_PARAM like)
+            if 'skill_step_params' in params:
+                skill_step_params = params['skill_step_params']
+
         terminals = []
         outcomes = []
-
-        if params == None:
-            params = [BaseSkill.NULL_PARAM] * len(self.skill_steps)
-
-        for skill_step, param in zip(self.skill_steps, params):
+        for skill_step in self.skill_steps:
             print(f"Executing skill step: \'{skill_step['step_name']}\'")
 
-            terminal, outcome = self.execute_skill_step(skill_step, param)
+            # Read in any pre-loaded step parameter
+            if skill_step_params and skill_step['step_name'] in skill_step_params:
+                step_param = skill_step_params[skill_step['step_name']]
+            else:
+                step_param = BaseSkill.NULL_PARAM
+
+            # Execute the skill step and record the termination cause and outcome
+            terminal, outcome = self.execute_skill_step(skill_step, step_param)
             terminals.append(terminal)
             outcomes.append(outcome)
 
-            # TODO: If outcome is unsuccessful retry step
+            # TODO: If outcome is unsuccessful:
+            #   Query some policy to get a new step_param
+            #   Retry execute_skill_step with new step_param
+            #   Loop for max_retry_attempts
+            #   If max reached then abort?
+
+            # Delay between steps to make data segmentation easier
+            if skill_step_delay:
+                rospy.sleep(skill_step_delay)
 
         return terminals, outcomes
 

@@ -4,7 +4,7 @@ import argparse
 import rospy
 from vibro_tactile_toolbox.srv import *
 from vibro_tactile_toolbox.msg import BoundingBox
-
+import json
 
 def test_lego_detector(topic_name):
     rospy.wait_for_service('/lego_detector')
@@ -22,7 +22,9 @@ def test_lego_detector(topic_name):
         req.top_bbox = top_bbox
         req.bot_bbox = bot_bbox
         resp = detect_lego(req)
-        print(resp)
+        result = json.loads(resp.result)
+        print("resp result is",resp.result, "resp starting_bottom is", result["starting_bottom"])
+        print("combined",not result["starting_top"] and  not result["starting_bottom"])
         return resp
     except rospy.ServiceException as e:
         print("Service call failed: %s"%e)

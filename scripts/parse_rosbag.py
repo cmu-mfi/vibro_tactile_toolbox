@@ -27,7 +27,7 @@ def get_audio_info(bag, audio_info_topic):
             audio_info['subtype'] = msg.subtype
         else:
             audio_info['subtype'] = None
-        break;
+        break
 
     return audio_info
 
@@ -81,9 +81,9 @@ def save_video(bag, save_dir, filenames=[], image_topics=[]):
     for topic, msg, t in bag.read_messages(topics=image_topics):
         frame = bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
         video_dict[topic].write(frame)
-        cv2.imshow(topic, frame) 
+        # cv2.imshow(topic, frame) 
   
-        cv2.waitKey(1) 
+        # cv2.waitKey(1) 
 
     for image_topic in image_topics:
         if image_topic in video_dict.keys():

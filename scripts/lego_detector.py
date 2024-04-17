@@ -46,7 +46,7 @@ class LegoDetector:
         outputs = self.predictor(cv_image)
 
         outputs_on_cpu = outputs['instances'].to("cpu")
-        print(outputs_on_cpu)
+        # print(outputs_on_cpu)
         bounding_boxes = outputs_on_cpu.pred_boxes
         scores = outputs_on_cpu.scores.numpy()
 
@@ -113,7 +113,7 @@ class LegoDetector:
             print("Starting Bottom : " + str(self.starting_bottom))
             print("Ending Top : " + str(self.ending_top))
             print("Ending Bottom : " + str(self.ending_bottom))
-            print(result)
+            # print(result)
             return resp
                                                         
 def main():

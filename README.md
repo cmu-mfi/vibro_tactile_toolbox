@@ -36,9 +36,30 @@ roslaunch vibro_tactile_toolbox terminators.launch
 
 9. Start Robot (Some Tmux window)
 roslaunch testbed_utils lego_moveit_yk.launch namespace:=yk_creator
+# if prompted need to call robot enable 
+# $ rosservice call /yk_creator/robot_enable
 
 10. Start Robot Pose Publisher (Some Tmux window)
 rosrun vibro_tactile_toolbox pose_stamped_publisher.py -n yk_creator -f 100
+
+11. Start the Lego detector in a docker container.
+roscd vibro_tactile_toolbox
+cd docker
+./run  -i noetic_vibro_tactile_toolbox -c lego_detector -g
+source /ros1_ws/devel/setup.bash
+cd /home/repos/ros1_ws/src/kevin/vibro_tactile_toolbox/
+python3 scripts/lego_detector.py 
+
+# to test that it's running
+# $ python3 test_lego_detector.py -t '/side_camera/color/image_cropped'
+
+12. Start the fts detector.
+roscd vibro_tactile_toolbox
+python3 scripts/fts_detector.py
+
+# to test that it's running
+# $ python3 test_fts_detector.py -t "fts"
+
 
 # Revised:
 
@@ -46,7 +67,7 @@ rosrun vibro_tactile_toolbox pose_stamped_publisher.py -n yk_creator -f 100
 - tmux new -t roscore
 - roscore
 
-2. Start the RTC drivers in a "RTC-drivers" tmux session on mfi-twin
+2. Start the RTC drivers in a "RTC-drivers" tmux session on mfi-twin; this starts the fts, dummy screen, realsense, femtobolt, femtoboltcropped, audio
 - cd ~
 - bash launch_RTC_drivers.sh
 
@@ -61,5 +82,20 @@ rosrun vibro_tactile_toolbox pose_stamped_publisher.py -n yk_creator -f 100
 - roscd vibro_tactile_toolbox
 - bash launch_VTT_core
 
+
 5. Launch the desired task script
-- Ex: roslaunch collect_tactile_data.py 
+- Ex: roslaunch vibro_tactile_toolbox collect_tactile_data.launch 
+- Ex: roslaunch vibro_tactile_toolbox go_home_skill.launch
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,19 +1,16 @@
 #!/usr/bin/env python3
 
 import rospy
-import copy
-import numpy as np
-import subprocess
-import signal
 import os
-
-from geometry_msgs.msg import Pose, Twist
 
 from robot_controller.yk_controller import YaskawaRobotController
 
 from autolab_core import RigidTransform
 
 from skill.lego_skills import PlaceLegoSkill, PickLegoSkill
+
+from data_recorder.rosbag_data_recorder import RosbagDataRecorder
+
 
 STUD_WIDTH = 0.008 # mm
 LEGO_BLOCK_HEIGHT=0.0096 #z
@@ -22,7 +19,7 @@ LEGO_BLOCK_HEIGHT=0.0096 #z
 LEGO_BLOCK_WIDTH=1*STUD_WIDTH #x    #0.0158 (with clearance)
 LEGO_BLOCK_LENGTH=2*STUD_WIDTH #y   #0.0318 (with clearance)
 
-results_dir = "/home/mfi/repo/ros1_ws/src/vibro_tactile_toolbox/results"
+results_dir = "/home/mfi/repos/ros1_ws/src/kevin/vibro_tactile_toolbox/results"
 
 def run():
     # Start Node
@@ -45,36 +42,37 @@ def run():
     ### Skill Routine ###
 
     # 1. Begin rosbag recording
-    # side camera
-    # wrist camera
-    # joint states
-    # FTS
-    # vibrophone
-    rosbag_name = f"name_me.bag"
+    rosbag_name = f"name_me"
     rosbag_path = os.path.join(results_dir, rosbag_name)
-    command = f"exec rosbag record -O {rosbag_path} " + \
-                f"/side_camera/color/image_cropped " + \
-                f"/camera/color/image_raw " + \
-                f"/{namespace}/joint_states " + \
-                f"/fts " + \
-                f"/audio " + \
-                f"/audio_info "
-    print(command)
-    print(f"Starting ROSbag recording ...")
-    rosbag_t_start = rospy.Time.now()
-    rosbag_recorder_process = subprocess.Popen(command, stdin=subprocess.PIPE, shell=True)
+
+    data_recorder = RosbagDataRecorder()
+
+    recording_params = {
+        'topics': [f"/side_camera/color/image_cropped",
+                   f"/camera/color/image_raw",
+                   f"/{namespace}/joint_states",
+                   f"/fts",
+                   f"/audio",
+                   f"/audio_info"]
+    }
+
+    data_recorder.start_recording(rosbag_path, recording_params)
 
     # 2. Begin Skill
     place_lego_params = {
         'T_lego_ee': T_lego_ee,
         'T_lego_world': T_lego_world,
         'approach_height_offset': 0.025,
-        'place_rotation': 20.0,
+        'place_rotation': 25.0,
         'place_perturbation': (0, 0, 0)
     }
 
+    execution_params = {
+        'skill_step_delay': 2.0
+    }
+
     place_skill = PlaceLegoSkill(robot_commander, namespace)
-    terminals, outcomes = place_skill.execute_skill(None, place_lego_params)
+    terminals, outcomes = place_skill.execute_skill(execution_params, place_lego_params)
 
     for i in range(len(terminals)):
         print(f"\n\n=== {place_skill.skill_steps[i]['step_name']} ===" +
@@ -82,11 +80,7 @@ def run():
               f"\nAnd outcome:\n{outcomes[i]}")
 
     # 3. End rosbag recording
-    rosbag_recorder_process.terminate()
-    print(f"Ending ROSbag recording.")
-    rosbag_t_end = rospy.Time.now()
-    duration = rosbag_t_end - rosbag_t_start
-    print(f"ROSbag duration: {duration.to_sec():0.2f}")
+    data_recorder.stop_recording()
 
 
 if __name__ == "__main__":
