@@ -4,6 +4,7 @@ import rosbag
 import cv2
 import numpy as np
 from cv_bridge import CvBridge
+import pickle
 
 import soundfile as sf
 from sounddevice_ros.msg import AudioInfo, AudioData
@@ -11,7 +12,7 @@ from sounddevice_ros.msg import AudioInfo, AudioData
 AUDIO_TOPIC = '/audio'
 CAMERA_1_COLOR_TOPIC = '/camera/color/image_raw'
 CAMERA_2_COLOR_TOPIC = '/side_camera/color/image_cropped'
-
+FTS_TOPIC = '/fts'
 
 def create_dir_if_not_exists(dir_path):
     if not os.path.exists(dir_path):
@@ -35,6 +36,13 @@ def get_audio_info(bag, audio_info_topic):
 def save_audio(bag, save_dir, audio_file_name, audio_info, audio_topic):
 
     audio_file_path = os.path.join(save_dir, audio_file_name)
+
+    try:
+        os.remove(audio_file_path)
+    except OSError:
+        pass
+
+
     sound_file = sf.SoundFile(audio_file_path, mode='x', 
                               samplerate=audio_info['sample_rate'],
                               channels=audio_info['num_channels'], 
@@ -88,6 +96,41 @@ def save_video(bag, save_dir, filenames=[], image_topics=[]):
     for image_topic in image_topics:
         if image_topic in video_dict.keys():
             video_dict[image_topic].release()
+
+def save_fts(bag, save_dir, filename, fts_topics=[], use_pkl=False):
+    '''
+    Save force torque data into a .npy or .pkl file 
+
+    save_dir: Path to dir where data is saved
+    topics: List of topics for which FTS data should be saved. [FTS_TOPIC] is sufficent.
+    Return: None
+    '''
+    fts_data = []
+    # [t, fx, fy, fz, tx, ty, tz].T
+    filepath = os.path.join(save_dir, filename)
+
+    for topic, msg, t in bag.read_messages(topics=fts_topics):
+        t = msg.header.stamp.to_sec()
+        fx = msg.wrench.force.x
+        fy = msg.wrench.force.y
+        fz = msg.wrench.force.z
+        tx = msg.wrench.torque.x
+        ty = msg.wrench.torque.y
+        tz = msg.wrench.torque.z
+        
+        fts_data.append([t, fx, fy, fz, tx, ty, tz])
+
+    fts_data = np.array(fts_data, dtype=float).T
+    # shift time to 0 to tf [s]
+    fts_data[0, :] -= fts_data[0, 0]
+
+    print(f"{fts_topics[0]}")
+    print(f"{fts_data.shape}, t0: {fts_data[0, 0]}, tf: {fts_data[0, -1]}")
+
+    if use_pkl:
+        pickle.dump(fts_data, filepath)
+    else:
+        np.save(filepath, fts_data)
     
 def main(args):
     assert os.path.exists(args.bagfile), "Rosbag does not exist"
@@ -110,6 +153,10 @@ def main(args):
         audio_info = get_audio_info(bag, AUDIO_TOPIC + '_info')
         save_audio_dir = os.path.join(args.save_dir, 'audio')
         save_audio(bag, save_folder, 'audio.wav', audio_info, AUDIO_TOPIC)
+    
+    if args.save_fts:
+        fts_topics = [FTS_TOPIC]
+        save_fts(bag, save_folder, 'fts', fts_topics)
 
 
 if __name__ == '__main__':
@@ -122,6 +169,8 @@ if __name__ == '__main__':
                         help='True if save audio else False. Default True.')
     parser.add_argument('--save_video', '-v', type=bool, default=True,
                         help='True if save videos else False. Default True.')
+    parser.add_argument('--save_fts', '-f', type=bool, default=True,
+                        help='True if save fts else False. Default True.')
     args = parser.parse_args()
 
     main(args)

@@ -1,4 +1,5 @@
 import sys
+import os
 import argparse
 
 from PyQt5.QtWidgets import *
@@ -10,8 +11,15 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 
+import soundfile as sf
+
 import numpy as np
 import cv2
+
+FTS_FILENAME = 'fts.npy'
+AUDIO_FILENAME = 'audio.wav'
+SIDE_CAM_FILENAME = 'side_camera.mp4'
+WRIST_CAM_FILENAME = 'wrist_camera.mp4'
 
 class MplCanvas(FigureCanvasQTAgg):
 
@@ -31,7 +39,7 @@ class MainWindow(QMainWindow):
 
         self.top = 100
         self.left = 100
-        self.width = 1000
+        self.width = 1600
         self.height = 1000
 
         self.setup_ui()
@@ -72,6 +80,8 @@ class MainWindow(QMainWindow):
 
         # Time
         self.time_slider = QSlider(Qt.Horizontal)
+        self.time_label = QLabel(f"0.00s")
+        self.time_label.setAlignment(Qt.AlignCenter)
 
         # Main layout
         mainLayout = QGridLayout()
@@ -79,6 +89,7 @@ class MainWindow(QMainWindow):
         mainLayout.addWidget(botLeftGroup, 1, 0)
         mainLayout.addWidget(botRightGroup, 1, 1)
         mainLayout.addWidget(self.time_slider, 2, 0, 1, 2)
+        mainLayout.addWidget(self.time_label, 3, 0, 1, 2)
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -86,12 +97,19 @@ class MainWindow(QMainWindow):
 
     def load_data(self):
         # Load your data here
-        self.force_data = np.random.rand(100)
-        self.torque_data = np.random.rand(100)
-        self.audio_data = np.random.rand(100)
-        self.t_fts = np.arange(len(self.force_data))
-        self.side_video = "results/name_me/side_camera.mp4"
-        self.wrist_video = "results/name_me/wrist_camera.mp4"
+        fts_data = np.load(os.path.join(self.data_path, FTS_FILENAME))
+        self.force_data = fts_data[1:4, :]
+        self.torque_data = fts_data[4:7, :]
+        self.t_fts = fts_data[0, :]
+
+        self.side_video = os.path.join(self.data_path, SIDE_CAM_FILENAME)
+        self.wrist_video = os.path.join(self.data_path, WRIST_CAM_FILENAME)
+
+        self.audio_data, sample_rate = sf.read(os.path.join(self.data_path, AUDIO_FILENAME))
+        # Get first channel
+        self.audio_data = self.audio_data[:, 0]
+        self.t_audio = np.linspace(0, len(self.audio_data) / sample_rate, len(self.audio_data))
+
 
     def make_camera_group(self):
         cameraGroup = QGroupBox("Camera Group")
@@ -133,20 +151,38 @@ class MainWindow(QMainWindow):
         return tactileGroup
 
     def setup_plots(self):
-        FMAX = 30
-        self.force_line = self.force_canvas.axes.plot(self.t_fts, self.force_data)
-        force_data_idx = int((self.time_slider.value() / 100) * len(self.t_fts))
-        self.force_time = self.force_canvas.axes.vlines(force_data_idx, -FMAX, FMAX)
+        self.force_line = self.force_canvas.axes.plot(self.t_fts, self.force_data[0], 'r-',
+                                                      self.t_fts, self.force_data[1], 'g-',
+                                                      self.t_fts, self.force_data[2], 'b-')
+        self.force_canvas.axes.legend(['fx', 'fy', 'fz'], loc='upper center', bbox_to_anchor=(0.5, 1.18), ncol=3)
+        self.force_canvas.axes.set_xlim(0, self.t_fts[-1])
+        self.force_time = self.force_canvas.axes.vlines(
+            0,
+            self.force_canvas.axes.get_ylim()[0],
+            self.force_canvas.axes.get_ylim()[1], 
+            'k'
+        )
 
-        TMAX = 8
-        self.torque_line = self.torque_canvas.axes.plot(self.torque_data)
-        torque_data_idx = int((self.time_slider.value() / 100) * len(self.t_fts))
-        self.torque_time = self.torque_canvas.axes.vlines(torque_data_idx, -TMAX, TMAX)
+        self.torque_line = self.torque_canvas.axes.plot(self.t_fts, self.torque_data[0], 'r-',
+                                                        self.t_fts, self.torque_data[1], 'g-',
+                                                        self.t_fts, self.torque_data[2], 'b-')
+        self.torque_canvas.axes.legend(['tx', 'ty', 'tz'], loc='upper center', bbox_to_anchor=(0.5, 1.18), ncol=3)
+        self.torque_canvas.axes.set_xlim(0, self.t_fts[-1])
+        self.torque_time = self.torque_canvas.axes.vlines(
+            0,
+            self.torque_canvas.axes.get_ylim()[0],
+            self.torque_canvas.axes.get_ylim()[1], 
+            'k'
+        )
 
-        AMAX = max(self.audio_data)
-        self.audio_line = self.audio_canvas.axes.plot(self.audio_data)
-        audio_data_idx = int((self.time_slider.value() / 100) * len(self.audio_data))
-        self.audio_time = self.audio_canvas.axes.vlines(audio_data_idx, -AMAX, AMAX)
+        self.audio_line = self.audio_canvas.axes.plot(self.t_audio, self.audio_data)
+        self.audio_canvas.axes.set_xlim(0, self.t_audio[-1])
+        self.audio_time = self.audio_canvas.axes.vlines(
+            0,
+            self.audio_canvas.axes.get_ylim()[0],
+            self.audio_canvas.axes.get_ylim()[1], 
+            'k'
+        )
         # self.fig.tight_layout()
 
     def setup_video_players(self):
@@ -176,26 +212,35 @@ class MainWindow(QMainWindow):
 
 
     def setup_slider(self):
-        self.time_slider.setRange(0, 100)
+        tf = self.t_fts[-1]
+        self.time_slider_max = 100
+        self.time_slider.setRange(0, self.time_slider_max)
         self.time_slider.valueChanged.connect(self.update_display)
+        self.time_slider.setTickPosition(QSlider.TicksBelow)
+        self.time_slider.setTickInterval(int(self.time_slider_max / tf))
 
     def update_display(self):
-        time_step = self.time_slider.value()
+        # percentage of trial time
+        time_portion = self.time_slider.value() / self.time_slider_max
+        t_val = time_portion * self.t_fts[-1]
+
+        # Update time
+        self.time_label.setText(f"{t_val:0.2f} s")
 
         # Update plots
-        FMAX = 30
-        force_data_idx = int((self.time_slider.value() / 100) * len(self.t_fts))
-        vertecies = np.array([[force_data_idx, -FMAX], [force_data_idx, FMAX]])
+        #force_data_t = time_portion * self.t_fts[-1]
+        vertecies = np.array([[t_val, self.force_canvas.axes.get_ylim()[0]], 
+                              [t_val, self.force_canvas.axes.get_ylim()[1]]])
         self.force_time.set_segments([vertecies])
 
-        TMAX = 8
-        torque_data_idx = int((self.time_slider.value() / 100) * len(self.t_fts))
-        vertecies = np.array([[torque_data_idx, -TMAX], [torque_data_idx, TMAX]])
+        #torque_data_t = time_portion * self.t_fts[-1]
+        vertecies = np.array([[t_val, self.torque_canvas.axes.get_ylim()[0]], 
+                              [t_val, self.torque_canvas.axes.get_ylim()[1]]])
         self.torque_time.set_segments([vertecies])
-        
-        AMAX = 100
-        audio_data_idx = int((self.time_slider.value() / 100) * len(self.audio_data))
-        vertecies = np.array([[audio_data_idx, -AMAX], [audio_data_idx, AMAX]])
+
+        #audio_data_t = time_portion * self.t_audio[-1]
+        vertecies = np.array([[t_val, self.audio_canvas.axes.get_ylim()[0]], 
+                              [t_val, self.audio_canvas.axes.get_ylim()[1]]])
         self.audio_time.set_segments([vertecies])
 
         self.force_canvas.draw()
@@ -203,8 +248,11 @@ class MainWindow(QMainWindow):
         self.audio_canvas.draw()
 
         # Update videos
-        self.side_cap.set(cv2.CAP_PROP_POS_FRAMES, time_step)
-        self.wrist_cap.set(cv2.CAP_PROP_POS_FRAMES, time_step)
+        side_frame_idx = int(time_portion * self.side_cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        self.side_cap.set(cv2.CAP_PROP_POS_FRAMES, side_frame_idx)
+
+        wrist_frame_idx = int(time_portion * self.wrist_cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        self.wrist_cap.set(cv2.CAP_PROP_POS_FRAMES, wrist_frame_idx)
 
         ret_side, frame_side = self.side_cap.read()
         ret_wrist, frame_wrist = self.wrist_cap.read()
