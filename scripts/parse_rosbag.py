@@ -4,14 +4,18 @@ import rosbag
 import cv2
 import numpy as np
 from cv_bridge import CvBridge
+import pickle
 
 import soundfile as sf
 from sounddevice_ros.msg import AudioInfo, AudioData
 
+namespace = "yk_creator"
 AUDIO_TOPIC = '/audio'
 CAMERA_1_COLOR_TOPIC = '/camera/color/image_raw'
 CAMERA_2_COLOR_TOPIC = '/side_camera/color/image_cropped'
-
+FTS_TOPIC = '/fts'
+JOINT_STATE_TOPIC = f'/{namespace}/joint_states'
+SKILL_TERMINATION_TOPIC = f'/{namespace}/terminator/skill_termination_signal'
 
 def create_dir_if_not_exists(dir_path):
     if not os.path.exists(dir_path):
@@ -35,6 +39,13 @@ def get_audio_info(bag, audio_info_topic):
 def save_audio(bag, save_dir, audio_file_name, audio_info, audio_topic):
 
     audio_file_path = os.path.join(save_dir, audio_file_name)
+
+    try:
+        os.remove(audio_file_path)
+    except OSError:
+        pass
+
+
     sound_file = sf.SoundFile(audio_file_path, mode='x', 
                               samplerate=audio_info['sample_rate'],
                               channels=audio_info['num_channels'], 
@@ -88,7 +99,97 @@ def save_video(bag, save_dir, filenames=[], image_topics=[]):
     for image_topic in image_topics:
         if image_topic in video_dict.keys():
             video_dict[image_topic].release()
-    
+
+def save_fts(bag, save_dir, filename, fts_topics=[], use_pkl=False):
+    '''
+    Save force torque data into a .npy or .pkl file 
+
+    save_dir: Path to dir where data is saved
+    topics: List of topics for which FTS data should be saved. [FTS_TOPIC] is sufficent.
+    Return: None
+    '''
+    fts_data = []
+    # [t, fx, fy, fz, tx, ty, tz].T
+    filepath = os.path.join(save_dir, filename)
+
+    for topic, msg, t in bag.read_messages(topics=fts_topics):
+        t = msg.header.stamp.to_sec()
+        fx = msg.wrench.force.x
+        fy = msg.wrench.force.y
+        fz = msg.wrench.force.z
+        tx = msg.wrench.torque.x
+        ty = msg.wrench.torque.y
+        tz = msg.wrench.torque.z
+        
+        fts_data.append([t, fx, fy, fz, tx, ty, tz])
+
+    fts_data = np.array(fts_data, dtype=float).T
+    # shift time to 0 to tf [s]
+    fts_data[0, :] -= fts_data[0, 0]
+
+    print(f"{fts_topics[0]}")
+    print(f"{fts_data.shape}, t0: {fts_data[0, 0]}, tf: {fts_data[0, -1]}")
+    print(f"formatting: [t, fx, fy, fz, tx, ty, tz]")
+
+    if use_pkl:
+        pickle.dump(fts_data, filepath)
+    else:
+        np.save(filepath, fts_data)
+
+def save_joint_states(bag, save_dir, filename, joint_state_topics=[], use_pkl=False):
+    '''    
+    Save force torque data into a .npy or .pkl file 
+
+    save_dir: Path to dir where data is saved
+    topics: List of topics for which FTS data should be saved. [FTS_TOPIC] is sufficent.
+    Return: None
+    '''
+    joint_state_data = []
+    # [t, p1, p2, p3, p4, p5, p6, v1, v2, v3, v4, v5, v6, u1, u2, u3, u4, u5, u6]
+    filepath = os.path.join(save_dir, filename)
+
+    joint_names = None
+    for topic, msg, t in bag.read_messages(topics=joint_state_topics):
+        if joint_names is None:
+            joint_names = msg.name
+        t = [msg.header.stamp.to_sec()]
+        pos = list(msg.position)
+        vel = list(msg.velocity)
+        eff = list(msg.effort)
+        if len(eff) != len(pos):
+            eff = [0] * len(pos)
+
+        joint_state_data.append(t + pos + vel + eff)
+
+    joint_state_data = np.array(joint_state_data, dtype=float).T
+    # shift time to 0 to tf [s]
+    joint_state_data[0, :] -= joint_state_data[0, 0]
+
+    print(f"{joint_state_topics[0]}")
+    print(f"joint names: {joint_names}")
+    print(f"{joint_state_data.shape}, t0: {joint_state_data[0, 0]}, tf: {joint_state_data[0, -1]}")
+    print(f"formatting: [t, p1, p2, p3, p4, p5, p6, v1, v2, v3, v4, v5, v6, u1, u2, u3, u4, u5, u6]")
+
+    if use_pkl:
+        pickle.dump(joint_state_data, filepath)
+    else:
+        np.save(filepath, joint_state_data)
+
+def save_termination_signals(bag, save_dir, filename, termination_topics=[]):
+    '''    
+    Save termination messsages as a .pkl file 
+
+    save_dir: Path to dir where data is saved
+    topics: List of topics for which FTS data should be saved. [FTS_TOPIC] is sufficent.
+    Return: None
+    '''    
+    termination_data = []
+
+    filepath = os.path.join(save_dir, filename)
+    for topic, msg, t in bag.read_messages(topics=termination_topics):
+        print(f"Termination message at time {t.to_sec()}")
+        print(f"{msg}")
+
 def main(args):
     assert os.path.exists(args.bagfile), "Rosbag does not exist"
 
@@ -110,6 +211,18 @@ def main(args):
         audio_info = get_audio_info(bag, AUDIO_TOPIC + '_info')
         save_audio_dir = os.path.join(args.save_dir, 'audio')
         save_audio(bag, save_folder, 'audio.wav', audio_info, AUDIO_TOPIC)
+    
+    if args.save_fts:
+        fts_topics = [FTS_TOPIC]
+        save_fts(bag, save_folder, 'fts', fts_topics)
+
+    if args.save_joints:
+        joint_state_topics = [JOINT_STATE_TOPIC]
+        save_joint_states(bag, save_folder, 'joint_states', joint_state_topics)
+
+    if args.save_termination:
+        termination_topics = [SKILL_TERMINATION_TOPIC]
+        save_termination_signals(bag, save_folder, 'termination_signals', termination_topics)
 
 
 if __name__ == '__main__':
@@ -122,6 +235,12 @@ if __name__ == '__main__':
                         help='True if save audio else False. Default True.')
     parser.add_argument('--save_video', '-v', type=bool, default=True,
                         help='True if save videos else False. Default True.')
+    parser.add_argument('--save_fts', '-f', type=bool, default=True,
+                        help='True if save fts else False. Default True.')
+    parser.add_argument('--save_joints', '-j', type=bool, default=True,
+                        help='True if save joint states else False. Default True.')
+    parser.add_argument('--save_termination', '-t', type=bool, default=True,
+                        help='True if save termination signals, else False. Default True.')
     args = parser.parse_args()
 
     main(args)

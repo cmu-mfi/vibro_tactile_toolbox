@@ -35,6 +35,8 @@ class LegoDetector:
         self.starting_bottom = 0
         self.service = rospy.Service('lego_detector', LegoOutcome, self.detect_lego)
 
+        self.service_response_pub = rospy.Publisher('/outcome/lego_detector', Image, queue_size=1)
+
     def detect_lego(self, req):
 
         img_msg = rospy.wait_for_message(req.topic_name, Image)
@@ -49,6 +51,15 @@ class LegoDetector:
         # print(outputs_on_cpu)
         bounding_boxes = outputs_on_cpu.pred_boxes
         scores = outputs_on_cpu.scores.numpy()
+
+        # Publish an annotated image for rosbag recording purposes
+        print(bounding_boxes)
+        image_ann = cv_image.copy()
+        for bbox in bounding_boxes:
+            cv2.rectangle(image_ann, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 255, 0), 2)
+        image_ann_msg = self.bridge.cv2_to_imgmsg(image_ann)
+        self.service_response_pub.publish(image_ann_msg)
+
 
         if req.start:
 

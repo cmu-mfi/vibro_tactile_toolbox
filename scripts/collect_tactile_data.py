@@ -53,7 +53,9 @@ def run():
                    f"/{namespace}/joint_states",
                    f"/fts",
                    f"/audio",
-                   f"/audio_info"]
+                   f"/audio_info",
+                   f"/{namespace}/terminator/skill_termination_signal",
+                   f"/outcome/lego_detector"]
     }
 
     data_recorder.start_recording(rosbag_path, recording_params)
