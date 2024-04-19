@@ -56,7 +56,8 @@ class LegoDetector:
         print(bounding_boxes)
         image_ann = cv_image.copy()
         for bbox in bounding_boxes.tensor.numpy():
-            cv2.rectangle(image_ann, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 255, 0), 2)
+            cv2.rectangle(image_ann, (int(bbox[0]), int(bbox[1])), 
+                          (int(bbox[2]), int(bbox[3])), (0, 255, 0), 2)
         image_ann_msg = self.bridge.cv2_to_imgmsg(image_ann)
         self.service_response_pub.publish(image_ann_msg)
 
