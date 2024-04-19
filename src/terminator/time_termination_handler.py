@@ -11,7 +11,7 @@ class TimeTerminationHandler(BaseTerminationHandler):
     Termination handler to stop on a time condition
     """
     def __init__(self):
-        self.id = -1
+        super().__init__()
         self.input_data_class = None
         self.check_rate_ns = 10E6 # 10ms default
 
@@ -26,13 +26,15 @@ class TimeTerminationHandler(BaseTerminationHandler):
         cfg_jsons = cfg.cfg_json
         cfg_json = json.loads(cfg_jsons)
         if 'time' in cfg_json:
+            self.live = True
             self.id = cfg_json['id']
             time_cfg = cfg_json['time']
             if 'duration' in time_cfg:
                 self.duration = time_cfg['duration']
             # Always reset the time if a time termination is requested
             self.start_time = rospy.get_time()
-
+        else:
+            self.live = False
     
     def update_input_data(self, input_signal):
         """

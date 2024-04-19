@@ -22,6 +22,8 @@ class FTSDetector:
         self.wrench_threshold = Wrench()
         self.service = rospy.Service('fts_detector', FTSOutcome, self.detect_fts)
 
+        self.outcome_pub = rospy.Publisher('/outcome/fts_detector', Wrench, queue_size=1)
+
     def detect_fts(self, req):
         print("Received Request")
         current_wrench = rospy.wait_for_message(req.topic_name, WrenchStamped).wrench
@@ -29,6 +31,16 @@ class FTSDetector:
         resp = FTSOutcomeResponse()
         resp.wrench = current_wrench
         self.wrench_threshold = req.threshold
+
+        # For rosbag record purposes
+        outcome_msg = Wrench()
+        outcome_msg.force.x = current_wrench.force.x
+        outcome_msg.force.y = current_wrench.force.y
+        outcome_msg.force.z = current_wrench.force.z
+        outcome_msg.torque.x = current_wrench.torque.x
+        outcome_msg.torque.y = current_wrench.torque.y
+        outcome_msg.torque.z = current_wrench.torque.z
+        self.outcome_pub.publish(outcome_msg)
 
         if req.start:
             self.starting_wrench = current_wrench
@@ -85,6 +97,7 @@ class FTSDetector:
             print("Starting Forces : " + str([self.starting_wrench.force.x, self.starting_wrench.force.y, self.starting_wrench.force.z]))
             print("Ending Forces : " + str([current_wrench.force.x, current_wrench.force.y, current_wrench.force.z]))
             print(result)
+
             return resp
                                                         
 def main():

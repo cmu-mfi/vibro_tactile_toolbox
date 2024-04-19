@@ -10,8 +10,10 @@ class BaseTerminationHandler(object, metaclass=abc.ABCMeta):
     """
 
     def __init__(self):
+        self.id = -1
         self.input_data_class = None
         self.check_rate_ns = 10E6
+        self.live = False
 
     def update_config(self, cfg: TerminationConfig):
         """

@@ -121,6 +121,13 @@ class BaseSkill:
         # 3. Wait for terminationgit
         termination_signal = rospy.wait_for_message(self.skill_termination_topic_name, TerminationSignal, rospy.Duration(20))
 
+        # 3.1 Stop terminators (this prevents the terminator node from filling with wasted messages)
+        termination_cfg = {}
+        termination_cfg['id'] = rospy.Time.now().secs
+        termination_cfg_msg = TerminationConfig()
+        termination_cfg_msg.cfg_json = json.dumps(termination_cfg)
+        self.termination_config_pub.publish(termination_cfg_msg)
+
         # 4. Get outcome
         if 'outcome' in skill_step:
             outcome = skill_step['outcome'](param['outcome'])

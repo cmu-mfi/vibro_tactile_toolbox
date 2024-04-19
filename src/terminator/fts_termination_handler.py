@@ -11,7 +11,7 @@ import terminator.utils as t_utils
 
 class FTSTerminationHandler(BaseTerminationHandler):
     def __init__(self):
-        self.id = -1
+        super().__init__()
         self.input_data_class = WrenchStamped
         self.check_rate_ns = 10E6 # 10 ms default
 
@@ -36,13 +36,15 @@ class FTSTerminationHandler(BaseTerminationHandler):
         cfg_jsons = cfg.cfg_json
         cfg_json = json.loads(cfg_jsons)
         if 'FTS' in cfg_json:
+            self.live = True
             self.id = cfg_json['id']
             FTS_cfg = cfg_json['FTS']
             if 'check_rate_ns' in FTS_cfg:
                 self.check_rate_ns = FTS_cfg['check_rate_ns']
             if 'threshold' in FTS_cfg:
                 self.wrench_thresh = t_utils.dict_to_wrench(FTS_cfg['threshold'])
-
+        else:
+            self.live = False
     
     def update_input_data(self, input_signal: WrenchStamped):
         """

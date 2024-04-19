@@ -8,6 +8,7 @@ from robot_controller.yk_controller import YaskawaRobotController
 from autolab_core import RigidTransform
 
 from skill.lego_skills import PlaceLegoSkill, PickLegoSkill
+from skill.util_skills import GoHomeSkill
 
 from data_recorder.rosbag_data_recorder import RosbagDataRecorder
 
@@ -40,49 +41,72 @@ def run():
     T_lego_world = RigidTransform.load(root_pwd+'/config/yk_creator_lego_pose.tf')
 
     ### Skill Routine ###
-
-    # 1. Begin rosbag recording
-    rosbag_name = f"name_me"
-    rosbag_path = os.path.join(results_dir, rosbag_name)
-
-    data_recorder = RosbagDataRecorder()
-
-    recording_params = {
-        'topics': [f"/side_camera/color/image_cropped",
-                   f"/camera/color/image_raw",
-                   f"/{namespace}/joint_states",
-                   f"/fts",
-                   f"/audio",
-                   f"/audio_info",
-                   f"/{namespace}/terminator/skill_termination_signal",
-                   f"/outcome/lego_detector"]
-    }
-
-    data_recorder.start_recording(rosbag_path, recording_params)
-
-    # 2. Begin Skill
-    place_lego_params = {
-        'T_lego_ee': T_lego_ee,
-        'T_lego_world': T_lego_world,
-        'approach_height_offset': 0.025,
-        'place_rotation': 25.0,
-        'place_perturbation': (0, 0, 0)
-    }
-
-    execution_params = {
-        'skill_step_delay': 2.0
-    }
+    perturbations = [(0, 0, 0),
+                     (0, 0.5, 0),
+                     (0, -0.5, 0),
+                     (0.5, 0, 0),
+                     (-0.5, 0, 0),
+                     (0.5, 0.5, 0),
+                     (-0.5, -0.5, 0),
+                     (0, 0, 0),
+                     (0, 1, 0),
+                     (0, -1, 0),
+                     (1, 0, 0),
+                     (-1, 0, 0),
+                     (1, 1, 0),
+                     (-1, -1, 0)]
 
     place_skill = PlaceLegoSkill(robot_commander, namespace)
-    terminals, outcomes = place_skill.execute_skill(execution_params, place_lego_params)
+    home_skill = GoHomeSkill(robot_commander, namespace)
+    data_recorder = RosbagDataRecorder()
+    recording_params = {
+        'topics': [f"/side_camera/color/image_cropped",
+                f"/camera/color/image_raw",
+                f"/{namespace}/joint_states",
+                f"/fts",
+                f"/audio",
+                f"/audio_info",
+                f"/{namespace}/terminator/skill_termination_signal",
+                f"/outcome/lego_detector",
+                f"/outcome/fts_detector"]
+    }
 
-    for i in range(len(terminals)):
-        print(f"\n\n=== {place_skill.skill_steps[i]['step_name']} ===" +
-              f"\nTerminated with status:\n'{terminals[i].cause}'" +
-              f"\nAnd outcome:\n{outcomes[i]}")
+    # Tasks to do
+    for p in perturbations:
+        p_m = (p[0] / 1000, p[1] / 1000, p[2] / 1000)
+        # 1. Begin rosbag recording
+        rosbag_name = f"1x4/place-p_{p[0]:0.1f}_{p[1]:0.1f}_{p[2]:0.1f}"
+        rosbag_path = os.path.join(results_dir, rosbag_name)
 
-    # 3. End rosbag recording
-    data_recorder.stop_recording()
+        data_recorder.start_recording(rosbag_path, recording_params)
+
+        # 2. Begin Skill
+        place_lego_params = {
+            'T_lego_ee': T_lego_ee,
+            'T_lego_world': T_lego_world,
+            'approach_height_offset': 0.020,
+            'place_rotation': 25.0,
+            'place_perturbation': p_m
+        }
+
+        execution_params = {
+            'skill_step_delay': 2.0
+        }
+
+
+        terminals, outcomes = place_skill.execute_skill(execution_params, place_lego_params)
+
+        for i in range(len(terminals)):
+            print(f"\n\n=== {place_skill.skill_steps[i]['step_name']} ===" +
+                f"\nTerminated with status:\n'{terminals[i].cause}'" +
+                f"\nAnd outcome:\n{outcomes[i]}")
+
+        # 3. End rosbag recording
+        data_recorder.stop_recording()
+
+        terminals, outcomes = home_skill.execute_skill(None)
+
+        input(f"Reset Lego on arm. Press [Enter] when ready for next trial")
 
 
 if __name__ == "__main__":

@@ -12,7 +12,7 @@ import terminator.utils as t_utils
 
 class JointTerminationHandler(BaseTerminationHandler):
     def __init__(self):
-        self.id = -1
+        super().__init__()
         self.input_data_class = JointState
         self.check_rate_ns = 10E6 # 10 ms default
         self.tolerance = 0.001
@@ -35,6 +35,7 @@ class JointTerminationHandler(BaseTerminationHandler):
         cfg_jsons = cfg.cfg_json
         cfg_json = json.loads(cfg_jsons)
         if 'joint' in cfg_json:
+            self.live = True
             self.id = cfg_json['id']
             joint_cfg = cfg_json['joint']
             if 'check_rate_ns' in joint_cfg:
@@ -43,7 +44,9 @@ class JointTerminationHandler(BaseTerminationHandler):
                 self.tolerance = joint_cfg['tolerance']
             if 'position' in joint_cfg:
                 self.goal_joints = t_utils.dict_to_joint_state(joint_cfg)
-    
+        else:
+            self.live = False
+
     def update_input_data(self, input_signal: JointState):
         """
         Set the current JointState

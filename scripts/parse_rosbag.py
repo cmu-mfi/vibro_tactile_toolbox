@@ -16,6 +16,8 @@ CAMERA_2_COLOR_TOPIC = '/side_camera/color/image_cropped'
 FTS_TOPIC = '/fts'
 JOINT_STATE_TOPIC = f'/{namespace}/joint_states'
 SKILL_TERMINATION_TOPIC = f'/{namespace}/terminator/skill_termination_signal'
+LEGO_OUTCOME_TOPIC = f'/outcome/lego_detector'
+FTS_OUTCOME_TOPIC = f'/outcome/fts_detector'
 
 def create_dir_if_not_exists(dir_path):
     if not os.path.exists(dir_path):
@@ -190,6 +192,23 @@ def save_termination_signals(bag, save_dir, filename, termination_topics=[]):
         print(f"Termination message at time {t.to_sec()}")
         print(f"{msg}")
 
+def save_outcomes(bag, save_dir, filename, outcome_topics=[]):
+    '''    
+    Save outcome messsages as a .pkl file 
+    Note these are NOT the direct service calls, but a republished outcome message
+
+    save_dir: Path to dir where data is saved
+    topics: List of topics for which FTS data should be saved. [FTS_TOPIC] is sufficent.
+    Return: None
+    '''   
+    outcome_data = []
+
+    filepath = os.path.join(save_dir, filename)
+    for topic, msg, t in bag.read_messages(topics=outcome_topics):
+        print(f"Outcome message at time {t.to_sec()}")
+        print(f"[PLACEHOLDER] (printing images sucks)")
+        #print(f"{msg}")
+
 def main(args):
     assert os.path.exists(args.bagfile), "Rosbag does not exist"
 
@@ -224,6 +243,10 @@ def main(args):
         termination_topics = [SKILL_TERMINATION_TOPIC]
         save_termination_signals(bag, save_folder, 'termination_signals', termination_topics)
 
+    if args.save_outcome:
+        outcome_topics = [LEGO_OUTCOME_TOPIC,
+                          FTS_OUTCOME_TOPIC]
+        save_outcomes(bag, save_folder, 'outcomes')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Creates audio files and videos from bagfile.')
@@ -241,6 +264,8 @@ if __name__ == '__main__':
                         help='True if save joint states else False. Default True.')
     parser.add_argument('--save_termination', '-t', type=bool, default=True,
                         help='True if save termination signals, else False. Default True.')
+    parser.add_argument('--save_outcome', '-o', type=bool, default=True,
+                        help='True if save outcome responses, else False. Default True.')
     args = parser.parse_args()
 
     main(args)

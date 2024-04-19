@@ -17,7 +17,7 @@ def pose_to_list(pose: Pose):
 
 class PoseTerminationHandler(BaseTerminationHandler):
     def __init__(self):
-        self.id = -1
+        super().__init__()
         self.input_data_class = PoseStamped
         self.check_rate_ns = 10E6 # 10 ms default
         self.pos_tolerance = 0.001
@@ -55,6 +55,7 @@ class PoseTerminationHandler(BaseTerminationHandler):
         cfg_jsons = cfg.cfg_json
         cfg_json = json.loads(cfg_jsons)
         if 'pose' in cfg_json:
+            self.live = True
             self.id = cfg_json['id']
             pose_cfg = cfg_json['pose']
             if 'check_rate_ns' in pose_cfg:
@@ -65,7 +66,8 @@ class PoseTerminationHandler(BaseTerminationHandler):
                 self.orient_tolerance = pose_cfg['orient_tolerance']
             if 'pose' in pose_cfg:
                 self.goal_pose = t_utils.dict_to_pose(pose_cfg['pose'])
-
+        else:
+            self.live = False
     
     def update_input_data(self, input_signal: PoseStamped):
         """

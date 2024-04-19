@@ -48,6 +48,7 @@ cd docker
 ./run  -i noetic_vibro_tactile_toolbox -c lego_detector -g
 source /ros1_ws/devel/setup.bash
 cd /home/repos/ros1_ws/src/kevin/vibro_tactile_toolbox/
+git pull
 python3 scripts/lego_detector.py 
 
 # to test that it's running
@@ -73,11 +74,13 @@ python3 scripts/fts_detector.py
 
 3. Start the yaskawa drivers in a seperate "yk-creator" tmux session. This should ususally be running on mfi-twin
 - tmux new -t yk-creator
+# Don't put moveit in tmux if you want to use RVIZ
+- tmux new-window -n moveit
 - roslaunch testbed_utils lego_moveit_yk.launch namespace:=yk_creator
-- tmux new-window
+- tmux new-window -n pose_stamped_publisher
 - rosrun vibro_tactile_toolbox pose_stamped_publisher.py -n yk_creator -f 100
 
-4. Start the VTT core drivers in a "VTT-core" tmux session on mfi-twin
+4. Start the VTT core drivers (terminator, outcomer) in a "VTT-core" tmux session on mfi-twin
 # This will change to a roslaunch file but bash is quick
 - roscd vibro_tactile_toolbox
 - bash launch_VTT_core
