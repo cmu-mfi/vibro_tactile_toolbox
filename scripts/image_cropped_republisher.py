@@ -5,8 +5,8 @@ from std_msgs.msg import String
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 
-x_offset = 150
-y_offset = 1750
+x_offset = 200
+y_offset = 1950
 
 
 class ImageCroppedRepublisher:
