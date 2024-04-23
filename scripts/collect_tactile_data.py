@@ -7,7 +7,7 @@ from robot_controller.yk_controller import YaskawaRobotController
 
 from autolab_core import RigidTransform
 
-from skill.lego_skills import PlaceLegoSkill, PickLegoSkill
+from skill.lego_skills import PlaceLegoSkill, PickLegoSkill, PlaceLegoHardcodedCorrectionSkill
 from skill.util_skills import GoHomeSkill
 
 from data_recorder.rosbag_data_recorder import RosbagDataRecorder
@@ -41,22 +41,16 @@ def run():
     T_lego_world = RigidTransform.load(root_pwd+'/config/yk_creator_lego_pose.tf')
 
     ### Skill Routine ###
-    perturbations = [(0, 0, 0),
-                     (0, 0.5, 0),
-                     (0, -0.5, 0),
-                     (0.5, 0, 0),
-                     (-0.5, 0, 0),
-                     (0.5, 0.5, 0),
-                     (-0.5, -0.5, 0),
-                     (0, 0, 0),
-                     (0, 1, 0),
-                     (0, -1, 0),
-                     (1, 0, 0),
-                     (-1, 0, 0),
-                     (1, 1, 0),
-                     (-1, -1, 0)]
+    perturbations = [(0, 0, -LEGO_BLOCK_HEIGHT/2),
+                     (0, STUD_WIDTH/2, 0),
+                     (0, -STUD_WIDTH/2, 0),
+                     (STUD_WIDTH/2, 0, 0),
+                     (-STUD_WIDTH/2, 0, 0),
+                     (STUD_WIDTH/2, STUD_WIDTH/2, 0),
+                     (-STUD_WIDTH/2, -STUD_WIDTH/2, 0)]
 
     place_skill = PlaceLegoSkill(robot_commander, namespace)
+    place_correction_skill = PlaceLegoHardcodedCorrectionSkill(robot_commander, namespace)
     home_skill = GoHomeSkill(robot_commander, namespace)
     data_recorder = RosbagDataRecorder()
     recording_params = {
@@ -73,9 +67,10 @@ def run():
 
     # Tasks to do
     for p in perturbations:
-        p_m = (p[0] / 1000, p[1] / 1000, p[2] / 1000)
+        #p_m = (p[0] / 1000, p[1] / 1000, p[2] / 1000)
+        p_m = p
         # 1. Begin rosbag recording
-        rosbag_name = f"1x4/place-p_{p[0]:0.1f}_{p[1]:0.1f}_{p[2]:0.1f}"
+        rosbag_name = f"1x4/place-correct-p_{p_m[0]:0.4f}_{p_m[1]:0.4f}_{p_m[2]:0.4f}"
         rosbag_path = os.path.join(results_dir, rosbag_name)
 
         data_recorder.start_recording(rosbag_path, recording_params)
@@ -93,11 +88,11 @@ def run():
             'skill_step_delay': 2.0
         }
 
-
-        terminals, outcomes = place_skill.execute_skill(execution_params, place_lego_params)
+        terminals, outcomes = place_correction_skill.execute_skill(execution_params, place_lego_params)
+        #terminals, outcomes = place_skill.execute_skill(execution_params, place_lego_params)
 
         for i in range(len(terminals)):
-            print(f"\n\n=== {place_skill.skill_steps[i]['step_name']} ===" +
+            print(f"\n\n=== {place_correction_skill.skill_steps[i]['step_name']} ===" +
                 f"\nTerminated with status:\n'{terminals[i].cause}'" +
                 f"\nAnd outcome:\n{outcomes[i]}")
 

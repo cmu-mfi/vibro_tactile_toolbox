@@ -14,10 +14,10 @@ y_offset = 2000
 class ImageCroppedRepublisher:
 
   def __init__(self):
-    self.image_pub = rospy.Publisher("/side_camera/color/image_cropped",Image)
+    self.image_pub = rospy.Publisher("/side_camera/color/image_cropped",Image, queue_size=10)
 
     self.bridge = CvBridge()
-    self.image_sub = rospy.Subscriber("/side_camera/color/image_raw",Image,self.callback)
+    self.image_sub = rospy.Subscriber("/side_camera/color/image_raw",Image,self.callback, queue_size=10)
 
   def callback(self,data):
     try:

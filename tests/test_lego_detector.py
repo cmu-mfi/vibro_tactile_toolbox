@@ -13,12 +13,12 @@ def test_lego_detector(topic_name):
         req = LegoOutcomeRequest()
         req.id = 0
         req.topic_name = topic_name
-        req.start = False
+        req.start = True
         req.score_threshold = 0.8
         top_bbox = BoundingBox()
-        top_bbox.coords = [800, 200, 1100, 350]
+        top_bbox.coords = [900, 150, 1100, 350]
         bot_bbox = BoundingBox()
-        bot_bbox.coords = [800, 350, 1100, 500]
+        bot_bbox.coords = [900, 425, 1100, 575]
         req.top_bbox = top_bbox
         req.bot_bbox = bot_bbox
         resp = detect_lego(req)

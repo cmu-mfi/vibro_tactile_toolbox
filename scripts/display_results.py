@@ -51,6 +51,9 @@ class MainWindow(QMainWindow):
         self.width = 1600
         self.height = 1000
 
+        self.vid_width = 640
+        self.vid_height = 480
+
         self.setup_ui()
         self.load_data()
         self.setup_plots()
@@ -188,7 +191,7 @@ class MainWindow(QMainWindow):
                 height, width, channel = img_ann.shape
                 bytesPerLine = 3 * width
                 qimg_ann = QtGui.QImage(img_ann.data, width, height, bytesPerLine, QtGui.QImage.Format_RGB888)
-                qpixmap_ann = QPixmap.fromImage(qimg_ann).scaledToWidth(640)
+                qpixmap_ann = QPixmap.fromImage(qimg_ann).scaledToWidth(self.vid_width)
                 self.outcome_data.append((t_trial, 'lego_detector', lego_outcome, qpixmap_ann))
         
         with open(os.path.join(self.data_path, FTS_OUTCOME_FILENAME), 'r') as f:
@@ -224,7 +227,7 @@ class MainWindow(QMainWindow):
         cameraLayout.addWidget(QLabel("Wrist Camera"))
         cameraLayout.addWidget(self.wrist_cam)
 
-        grey = QPixmap(640, 480)
+        grey = QPixmap(self.vid_width, self.vid_height)
         grey.fill(QColor('darkGray'))
 
         self.side_cam.setPixmap(grey)
@@ -375,7 +378,7 @@ class MainWindow(QMainWindow):
                 height, width, channel = frame_side.shape
                 bytesPerLine = 3 * width
                 qImg_side = QtGui.QImage(frame_side.data, width, height, bytesPerLine, QtGui.QImage.Format_RGB888)
-                self.side_pixmaps.append(QPixmap.fromImage(qImg_side).scaledToWidth(640))
+                self.side_pixmaps.append(QPixmap.fromImage(qImg_side).scaledToWidth(self.vid_width))
 
         for i_wrist in range(0, n_wrist):
             self.wrist_cap.set(cv2.CAP_PROP_POS_FRAMES, i_wrist)
@@ -385,15 +388,16 @@ class MainWindow(QMainWindow):
                 height, width, channel = frame_wrist.shape
                 bytesPerLine = 3 * width
                 qImg_side = QtGui.QImage(frame_wrist.data, width, height, bytesPerLine, QtGui.QImage.Format_RGB888)
-                self.wrist_pixmaps.append(QPixmap.fromImage(qImg_side).scaledToWidth(640))
+                self.wrist_pixmaps.append(QPixmap.fromImage(qImg_side).scaledToWidth(self.vid_width))
 
         self.side_cam.setPixmap(self.side_pixmaps[0])
         self.wrist_cam.setPixmap(self.wrist_pixmaps[0])
 
 
     def setup_slider(self):
+        self.last_paused_for_outcome = 0.0
         tf = self.t_fts[-1]
-        self.time_slider_max = 200
+        self.time_slider_max = 1000
         self.time_slider.setRange(0, self.time_slider_max)
         self.time_slider.valueChanged.connect(self.update_display)
         self.time_slider.setTickPosition(QSlider.TicksBelow)
@@ -410,10 +414,14 @@ class MainWindow(QMainWindow):
 
     def playTick(self):
         timestep = time.time() - self.t_last_ticked
+        #timestep = 1/self.play_freq
         self.t_last_ticked = time.time()
         self.curr_time = self.curr_time + timestep
         new_val = self.curr_time * (self.time_slider_max / self.t_fts[-1])
+        new_val_pre_mod = np.floor(new_val)
         new_val = int(new_val) % self.time_slider_max 
+        if new_val < new_val_pre_mod:
+            self.last_paused_for_outcome = 0.0
         self.time_slider.setValue(new_val)
 
     def update_display(self):
@@ -421,6 +429,9 @@ class MainWindow(QMainWindow):
         time_portion = self.time_slider.value() / self.time_slider_max
         t_val = time_portion * self.t_fts[-1]
         self.curr_time = t_val
+
+        if not self.play_button_pressed:
+            self.last_paused_for_outcome = self.curr_time
 
         # Update time
         self.time_label.setText(f"{t_val:0.2f} s")
@@ -453,14 +464,15 @@ class MainWindow(QMainWindow):
         self.outcome_label.setText(outcome_msg)
 
         # Update videos
+        # TODO speed this up, it's super laggy
         side_frame_idx = int(time_portion * self.side_cap.get(cv2.CAP_PROP_FRAME_COUNT))
         wrist_frame_idx = int(time_portion * self.wrist_cap.get(cv2.CAP_PROP_FRAME_COUNT))
-
         if prev_outcome and \
-           prev_outcome[1] == 'lego_detector' and \
-           (t_val - prev_outcome[0]) > 0.0 and \
-           (t_val - prev_outcome[0]) < 2/self.play_freq:
-            self.side_cam.setPixmap(prev_outcome[-1])
+           (self.last_paused_for_outcome) < prev_outcome[0] and \
+           (self.curr_time) > prev_outcome[0]:
+            
+            self.last_paused_for_outcome = self.curr_time
+            if prev_outcome[1] == 'lego_detector': self.side_cam.setPixmap(prev_outcome[-1])
             if self.play_button_pressed: self.playButton.click()
         else:
             self.side_cam.setPixmap(self.side_pixmaps[side_frame_idx])
