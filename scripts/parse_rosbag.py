@@ -9,6 +9,8 @@ import pickle
 import soundfile as sf
 from sounddevice_ros.msg import AudioInfo, AudioData
 
+from pathlib import Path
+
 namespace = "yk_creator"
 AUDIO_TOPIC = '/audio'
 CAMERA_1_COLOR_TOPIC = '/camera/color/image_raw'
@@ -179,35 +181,78 @@ def save_joint_states(bag, save_dir, filename, joint_state_topics=[], use_pkl=Fa
 
 def save_termination_signals(bag, save_dir, filename, termination_topics=[]):
     '''    
-    Save termination messsages as a .pkl file 
+    Save termination messsages as a .txt file
 
     save_dir: Path to dir where data is saved
     topics: List of topics for which FTS data should be saved. [FTS_TOPIC] is sufficent.
     Return: None
     '''    
-    termination_data = []
 
     filepath = os.path.join(save_dir, filename)
-    for topic, msg, t in bag.read_messages(topics=termination_topics):
-        print(f"Termination message at time {t.to_sec()}")
-        print(f"{msg}")
+    text_file = os.path.join(save_dir, "termination_signals.txt")
+    with open(text_file, 'w') as f:
+        f.write(f"# fts_detector.py outcomes\n")
+        f.write(f"# file: '{bag.filename}'\n")
+        f.write(f"# timestamp termination_cause\n")
+        for topic, msg, t in bag.read_messages(topics=termination_topics):
+            t_trial = t.to_sec() - bag.get_start_time()
+            print(f"Termination message at time {t_trial}")
+            termination_cause = msg.cause
+            f.write(f"{t_trial}, {termination_cause}\n")
 
-def save_outcomes(bag, save_dir, filename, outcome_topics=[]):
+def save_outcomes(bag, save_dir, filenames=[], outcome_topics=[]):
     '''    
-    Save outcome messsages as a .pkl file 
+    Save outcome messsages as a .txt file with annotated images to lego_detections/
     Note these are NOT the direct service calls, but a republished outcome message
 
     save_dir: Path to dir where data is saved
     topics: List of topics for which FTS data should be saved. [FTS_TOPIC] is sufficent.
     Return: None
     '''   
+    bridge = CvBridge()
+
     outcome_data = []
 
-    filepath = os.path.join(save_dir, filename)
-    for topic, msg, t in bag.read_messages(topics=outcome_topics):
-        print(f"Outcome message at time {t.to_sec()}")
-        print(f"[PLACEHOLDER] (printing images sucks)")
-        #print(f"{msg}")
+    lego_detections_dir = os.path.join(save_dir, "lego_detections")
+    if not os.path.exists(lego_detections_dir):
+        os.mkdir(lego_detections_dir)
+
+    for i, outcome_topic in enumerate(outcome_topics):
+        if "fts" in outcome_topic:
+            text_file = os.path.join(save_dir, "fts_outcomes.txt")
+            with open(text_file, 'w') as f:
+                f.write(f"# fts_detector.py outcomes\n")
+                f.write(f"# file: '{bag.filename}'\n")
+                f.write(f"# timestamp ???\n")
+                for topic, msg, t in bag.read_messages(topics=outcome_topic):
+                    t_trial = t.to_sec() - bag.get_start_time()
+                    print(f"fts_detector outcome message at time {t_trial}")
+                    termination_cause = "TODO: MAKE FTS_OUTCOME MSG MORE INFORMATIVE" # msg.outcome
+                    f.write(f"{t_trial}, {termination_cause}\n")
+
+        elif "lego" in outcome_topic:
+            text_file = os.path.join(save_dir, "lego_outcomes.txt")
+            with open(text_file, 'w') as f:
+                f.write(f"# lego_detector.py outcomes\n")
+                f.write(f"# file: '{bag.filename}'\n")
+                f.write(f"# timestamp filename\n")
+                for topic, msg, t in bag.read_messages(topics=outcome_topic):
+                    t_trial = t.to_sec() - bag.get_start_time()
+                    print(f"lego_detector outcome message at time {t_trial}")
+                    lego_outcome = "TODO: MAKE LEGO_OUTCOME MSG MORE INFORMATIVE" # msg.outcome
+                    img_ann = bridge.imgmsg_to_cv2(msg)
+                    img_name = f"{t_trial}.png" 
+                    img_path = os.path.join(lego_detections_dir, img_name)
+                    print(f"Saving annotated image to {img_path}")
+                    cv2.imwrite(img_path, img_ann)
+                    f.write(f"{t_trial}, {lego_outcome}, lego_detections/{img_name}\n")
+                
+
+        else:
+            print(f"Unhandled outcome topic requested for parsing: {outcome_topic}")
+            continue
+
+
 
 def main(args):
     assert os.path.exists(args.bagfile), "Rosbag does not exist"
@@ -246,7 +291,7 @@ def main(args):
     if args.save_outcome:
         outcome_topics = [LEGO_OUTCOME_TOPIC,
                           FTS_OUTCOME_TOPIC]
-        save_outcomes(bag, save_folder, 'outcomes')
+        save_outcomes(bag, save_folder, 'outcomes', outcome_topics)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Creates audio files and videos from bagfile.')

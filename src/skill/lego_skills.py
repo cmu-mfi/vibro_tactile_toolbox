@@ -266,7 +266,7 @@ class PlaceLegoSkill(BaseSkill):
             
             resp = detect_fts(req)
             print("FTS Detector Response:", resp.result)
-            return resp.result
+            return resp.result>req.threshold.force.z
         except rospy.ServiceException as e:
             print("Service call failed:", e)
             return None

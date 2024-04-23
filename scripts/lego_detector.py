@@ -53,7 +53,6 @@ class LegoDetector:
         scores = outputs_on_cpu.scores.numpy()
 
         # Publish an annotated image for rosbag recording purposes
-        print(bounding_boxes)
         image_ann = cv_image.copy()
         for bbox in bounding_boxes.tensor.numpy():
             cv2.rectangle(image_ann, (int(bbox[0]), int(bbox[1])), 
