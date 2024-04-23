@@ -430,7 +430,7 @@ class MainWindow(QMainWindow):
         t_val = time_portion * self.t_fts[-1]
         self.curr_time = t_val
 
-        if not self.play_button_pressed:
+        if not self.playing:
             self.last_paused_for_outcome = self.curr_time
 
         # Update time
@@ -464,7 +464,6 @@ class MainWindow(QMainWindow):
         self.outcome_label.setText(outcome_msg)
 
         # Update videos
-        # TODO speed this up, it's super laggy
         side_frame_idx = int(time_portion * self.side_cap.get(cv2.CAP_PROP_FRAME_COUNT))
         wrist_frame_idx = int(time_portion * self.wrist_cap.get(cv2.CAP_PROP_FRAME_COUNT))
         if prev_outcome and \
