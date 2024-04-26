@@ -214,7 +214,7 @@ class PlaceLegoHardcodedCorrectionSkill(BaseSkill):
             fts_req.threshold = Wrench()
             fts_req.threshold.force.x = 10
             fts_req.threshold.force.y = 10
-            fts_req.threshold.force.z = 2.0
+            fts_req.threshold.force.z = 10
             fts_req.threshold.torque.x = 10
             fts_req.threshold.torque.y = 10
             fts_req.threshold.torque.z = 10
@@ -232,8 +232,10 @@ class PlaceLegoHardcodedCorrectionSkill(BaseSkill):
             lego_req.start = True
             lego_req.score_threshold = 0.8
             
-            top_bbox = BoundingBox(coords=[800, 200, 1100, 350])
-            bot_bbox = BoundingBox(coords=[800, 350, 1100, 500])
+            top_bbox = BoundingBox()
+            top_bbox.coords = [900, 150, 1100, 350]
+            bot_bbox = BoundingBox()
+            bot_bbox.coords = [900, 425, 1100, 575]
             lego_req.top_bbox = top_bbox
             lego_req.bot_bbox = bot_bbox
 
@@ -269,7 +271,7 @@ class PlaceLegoHardcodedCorrectionSkill(BaseSkill):
        
             req.threshold.force.x = 10
             req.threshold.force.y = 10
-            req.threshold.force.z =2.0
+            req.threshold.force.z =10
             req.threshold.torque.x = 10
             req.threshold.torque.y = 10
             req.threshold.torque.z = 10
@@ -301,9 +303,9 @@ class PlaceLegoHardcodedCorrectionSkill(BaseSkill):
             req.score_threshold = 0.8  
             
             top_bbox = BoundingBox()
-            top_bbox.coords = [800, 200, 1100, 350]  
+            top_bbox.coords = [900, 150, 1100, 350]
             bot_bbox = BoundingBox()
-            bot_bbox.coords = [800, 350, 1100, 500] 
+            bot_bbox.coords = [900, 425, 1100, 575]
             req.top_bbox = top_bbox
             req.bot_bbox = bot_bbox
             

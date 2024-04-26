@@ -61,7 +61,7 @@ def save_audio(bag, save_dir, audio_file_name, audio_info, audio_topic):
     sound_file.close()
         
 
-def save_video(bag, save_dir, filenames=[], image_topics=[]):
+def save_video(bag, save_dir, filenames=[], image_topics=[], video_latency=0.0):
     '''Save videos for each image topic.
 
     save_img_dir: Path to dir where images will be saved.
@@ -93,12 +93,30 @@ def save_video(bag, save_dir, filenames=[], image_topics=[]):
                                           video_freq, (video_width, video_height)) 
                 break
 
+    timestamps = {f'{image_topics[0]}': [], f'{image_topics[1]}': []}
+    last_frame = {image_topics[0]: None, image_topics[1]: None}
+    skipped_frames = {image_topics[0]: 0, image_topics[1]: 0}
     for topic, msg, t in bag.read_messages(topics=image_topics):
+        t = t.to_sec() - bag.get_start_time() - video_latency
+        if t < 0 and topic == '/side_camera/color/image_cropped':
+            skipped_frames[topic] += 1
+            continue
+        timestamps[topic].append(t)
         frame = bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
         video_dict[topic].write(frame)
+
+        last_frame[topic] = frame
+    
+    for topic in image_topics:
+        for i in range(skipped_frames[topic]):
+            timestamps[topic].append(timestamps[topic][-1])
+            video_dict[topic].write(last_frame[topic])
         # cv2.imshow(topic, frame) 
   
         # cv2.waitKey(1) 
+ 
+    
+    print(f"/SIDE_CAMERA t0: {timestamps['/side_camera/color/image_cropped'][0]}, tf: {timestamps['/side_camera/color/image_cropped'][-1]}")
 
     for image_topic in image_topics:
         if image_topic in video_dict.keys():
@@ -116,8 +134,11 @@ def save_fts(bag, save_dir, filename, fts_topics=[], use_pkl=False):
     # [t, fx, fy, fz, tx, ty, tz].T
     filepath = os.path.join(save_dir, filename)
 
+    timestamps = []
     for topic, msg, t in bag.read_messages(topics=fts_topics):
-        t = msg.header.stamp.to_sec()
+        t = t.to_sec() - bag.get_start_time()
+        timestamps.append(t)
+        # t = msg.header.time.to_sec()
         fx = msg.wrench.force.x
         fy = msg.wrench.force.y
         fz = msg.wrench.force.z
@@ -128,13 +149,12 @@ def save_fts(bag, save_dir, filename, fts_topics=[], use_pkl=False):
         fts_data.append([t, fx, fy, fz, tx, ty, tz])
 
     fts_data = np.array(fts_data, dtype=float).T
-    # shift time to 0 to tf [s]
-    fts_data[0, :] -= fts_data[0, 0]
 
     print(f"{fts_topics[0]}")
-    print(f"{fts_data.shape}, t0: {fts_data[0, 0]}, tf: {fts_data[0, -1]}")
+    print(f"{fts_data.shape}")
     print(f"formatting: [t, fx, fy, fz, tx, ty, tz]")
 
+    print(f"/FTS t0: {timestamps[0]}, tf: {timestamps[-1]}")
     if use_pkl:
         pickle.dump(fts_data, filepath)
     else:
@@ -156,7 +176,8 @@ def save_joint_states(bag, save_dir, filename, joint_state_topics=[], use_pkl=Fa
     for topic, msg, t in bag.read_messages(topics=joint_state_topics):
         if joint_names is None:
             joint_names = msg.name
-        t = [msg.header.stamp.to_sec()]
+        #t = [msg.header.stamp.to_sec()]
+        t = [t.to_sec() - bag.get_start_time()]
         pos = list(msg.position)
         vel = list(msg.velocity)
         eff = list(msg.effort)
@@ -166,14 +187,12 @@ def save_joint_states(bag, save_dir, filename, joint_state_topics=[], use_pkl=Fa
         joint_state_data.append(t + pos + vel + eff)
 
     joint_state_data = np.array(joint_state_data, dtype=float).T
-    # shift time to 0 to tf [s]
-    joint_state_data[0, :] -= joint_state_data[0, 0]
 
     print(f"{joint_state_topics[0]}")
     print(f"joint names: {joint_names}")
-    print(f"{joint_state_data.shape}, t0: {joint_state_data[0, 0]}, tf: {joint_state_data[0, -1]}")
+    print(f"{joint_state_data.shape}")
     print(f"formatting: [t, p1, p2, p3, p4, p5, p6, v1, v2, v3, v4, v5, v6, u1, u2, u3, u4, u5, u6]")
-
+    print(f"/JOINTS t0: {joint_state_data[0, 0]}, tf: {joint_state_data[0, -1]}")
     if use_pkl:
         pickle.dump(joint_state_data, filepath)
     else:
@@ -200,7 +219,7 @@ def save_termination_signals(bag, save_dir, filename, termination_topics=[]):
             termination_cause = msg.cause
             f.write(f"{t_trial}, {termination_cause}\n")
 
-def save_outcomes(bag, save_dir, filenames=[], outcome_topics=[]):
+def save_outcomes(bag, save_dir, filenames=[], outcome_topics=[], outcome_latency=0.0):
     '''    
     Save outcome messsages as a .txt file with annotated images to lego_detections/
     Note these are NOT the direct service calls, but a republished outcome message
@@ -258,6 +277,7 @@ def main(args):
     assert os.path.exists(args.bagfile), "Rosbag does not exist"
 
     bag = rosbag.Bag(args.bagfile)
+    print(f"BAG: t0: {bag.get_start_time()}, tf: {bag.get_end_time()}")
 
     create_dir_if_not_exists(args.save_dir)
     short_bag_name = args.bagfile[(args.bagfile.rfind('/')+1):args.bagfile.rfind('.bag')]
@@ -269,7 +289,7 @@ def main(args):
                       CAMERA_2_COLOR_TOPIC]
         file_names = ['wrist_camera',
                       'side_camera']
-        save_video(bag, save_folder, file_names, img_topics)
+        save_video(bag, save_folder, file_names, img_topics, video_latency=args.video_latency)
 
     if args.save_audio:
         audio_info = get_audio_info(bag, AUDIO_TOPIC + '_info')
@@ -291,7 +311,7 @@ def main(args):
     if args.save_outcome:
         outcome_topics = [LEGO_OUTCOME_TOPIC,
                           FTS_OUTCOME_TOPIC]
-        save_outcomes(bag, save_folder, 'outcomes', outcome_topics)
+        save_outcomes(bag, save_folder, 'outcomes', outcome_topics, outcome_latency=args.lego_detector_latency)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Creates audio files and videos from bagfile.')
@@ -311,6 +331,10 @@ if __name__ == '__main__':
                         help='True if save termination signals, else False. Default True.')
     parser.add_argument('--save_outcome', '-o', type=bool, default=True,
                         help='True if save outcome responses, else False. Default True.')
+    parser.add_argument('--video_latency', type=float, default=0.0,
+                        help='Specify the video latency in seconds (float). Default 0.0s')
+    parser.add_argument('--lego_detector_latency', type=float, default=0.0,
+                        help='Specify the lego detector latency in seconds(float). Default 0.0s')
     args = parser.parse_args()
 
     main(args)

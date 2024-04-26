@@ -127,7 +127,7 @@ class BaseSkill:
         termination_cfg_msg = TerminationConfig()
         termination_cfg_msg.cfg_json = json.dumps(termination_cfg)
         self.termination_config_pub.publish(termination_cfg_msg)
-
+        rospy.sleep(0.5) # sleep 500ms to allow for inertia to stop
         # 4. Get outcome
         if 'outcome' in skill_step:
             outcome = skill_step['outcome'](param['outcome'])
