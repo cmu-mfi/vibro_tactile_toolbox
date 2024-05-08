@@ -19,7 +19,7 @@ from detectron2.engine import DefaultPredictor
 from detectron2.config import get_cfg
 
 from vibro_tactile_toolbox.srv import LegoOutcome, LegoOutcomeResponse
-from vibro_tactile_toolbox.msg import BoundingBox
+from vibro_tactile_toolbox.msg import BoundingBox, VisionOutcomeRepub
 
 class LegoDetector:
 
@@ -35,7 +35,7 @@ class LegoDetector:
         self.starting_bottom = 0
         self.service = rospy.Service('lego_detector', LegoOutcome, self.detect_lego)
 
-        self.service_response_pub = rospy.Publisher('/outcome/lego_detector', Image, queue_size=1)
+        self.outcome_repub = rospy.Publisher('/outcome/lego_detector', VisionOutcomeRepub, queue_size=1)
 
     def detect_lego(self, req):
 
@@ -51,20 +51,6 @@ class LegoDetector:
         # print(outputs_on_cpu)
         bounding_boxes = outputs_on_cpu.pred_boxes
         scores = outputs_on_cpu.scores.numpy()
-
-        # Publish an annotated image for rosbag recording purposes
-        image_ann = cv_image.copy()
-        ind = 0
-        for i in bounding_boxes.__iter__():
-            current_score = scores[ind]
-            ind += 1
-            if current_score >= req.score_threshold:
-                bbox = i.numpy()
-                cv2.rectangle(image_ann, (int(bbox[0]), int(bbox[1])), 
-                                         (int(bbox[2]), int(bbox[3])), (0, 255, 0), 2)
-        image_ann_msg = self.bridge.cv2_to_imgmsg(image_ann)
-        self.service_response_pub.publish(image_ann_msg)
-
 
         if req.start:
 
@@ -89,7 +75,6 @@ class LegoDetector:
             resp.result = json.dumps({'starting_top' : str(self.starting_top), 'starting_bottom' : str(self.starting_bottom)})
             print("Starting Top : " + str(self.starting_top))
             print("Starting Bottom : " + str(self.starting_bottom))
-            return resp
 
         else:
             ind = 0
@@ -130,7 +115,27 @@ class LegoDetector:
             print("Ending Top : " + str(self.ending_top))
             print("Ending Bottom : " + str(self.ending_bottom))
             # print(result)
-            return resp
+
+        # Publish an annotated image for rosbag recording purposes
+        image_ann = cv_image.copy()
+        ind = 0
+        for i in bounding_boxes.__iter__():
+            current_score = scores[ind]
+            ind += 1
+            if current_score >= req.score_threshold:
+                bbox = i.numpy()
+                cv2.rectangle(image_ann, (int(bbox[0]), int(bbox[1])), 
+                                         (int(bbox[2]), int(bbox[3])), (0, 255, 0), 2)
+        image_ann_msg = self.bridge.cv2_to_imgmsg(image_ann)
+        outcome_repub_msg = VisionOutcomeRepub()
+        outcome_repub_msg.id = resp.id
+        outcome_repub_msg.img = image_ann_msg
+        outcome_repub_msg.result = resp.result
+        outcome_repub_msg.obj_bboxes = resp.obj_bboxes.copy()
+        outcome_repub_msg.obj_ids = resp.obj_ids.copy()
+        self.outcome_repub.publish(outcome_repub_msg)
+
+        return resp
                                                         
 def main():
     rospy.init_node('lego_detector_server')

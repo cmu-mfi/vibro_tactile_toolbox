@@ -13,6 +13,7 @@ import json
 from geometry_msgs.msg import Wrench, WrenchStamped
 
 from vibro_tactile_toolbox.srv import FTSOutcome, FTSOutcomeResponse
+from vibro_tactile_toolbox.msg import FtsOutcomeRepub
 
 class FTSDetector:
 
@@ -22,7 +23,7 @@ class FTSDetector:
         self.wrench_threshold = Wrench()
         self.service = rospy.Service('fts_detector', FTSOutcome, self.detect_fts)
 
-        self.outcome_pub = rospy.Publisher('/outcome/fts_detector', Wrench, queue_size=1)
+        self.outcome_repub = rospy.Publisher('/outcome/fts_detector', FtsOutcomeRepub, queue_size=1)
 
     def detect_fts(self, req):
         print("Received Request")
@@ -32,22 +33,11 @@ class FTSDetector:
         resp.wrench = current_wrench
         self.wrench_threshold = req.threshold
 
-        # For rosbag record purposes
-        outcome_msg = Wrench()
-        outcome_msg.force.x = current_wrench.force.x
-        outcome_msg.force.y = current_wrench.force.y
-        outcome_msg.force.z = current_wrench.force.z
-        outcome_msg.torque.x = current_wrench.torque.x
-        outcome_msg.torque.y = current_wrench.torque.y
-        outcome_msg.torque.z = current_wrench.torque.z
-        self.outcome_pub.publish(outcome_msg)
-
         if req.start:
             self.starting_wrench = current_wrench
 
             resp.result = json.dumps({'starting_forces' : [current_wrench.force.x, current_wrench.force.y, current_wrench.force.z]})
             print("Starting Forces : " + str([current_wrench.force.x, current_wrench.force.y, current_wrench.force.z]))
-            return resp
 
         else:
             
@@ -101,7 +91,14 @@ class FTSDetector:
             print("Ending Forces : " + str([current_wrench.force.x, current_wrench.force.y, current_wrench.force.z]))
             print(result)
 
-            return resp
+        # For rosbag record purposes
+        outcome_repub_msg = FtsOutcomeRepub()
+        outcome_repub_msg.id = resp.id
+        outcome_repub_msg.wrench = resp.wrench
+        outcome_repub_msg.result = resp.result
+        self.outcome_repub.publish(outcome_repub_msg)
+
+        return resp
                                                         
 def main():
     rospy.init_node('fts_detector_server')
