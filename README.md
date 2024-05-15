@@ -1,104 +1,154 @@
-# vibro_tactile_toolbox
+# Vibro Tactile Toolbox
 
-## How to run
+## How to Run
 
-1. Start Rosmaster (First Tmux window)
-roscore
+### Step-by-Step Instructions
 
-2. Start FT Sensor publisher (Second Tmux window)
-ssh yk-god
-rosrun fts_serial fts_serial_node
+1. **Start rosmaster**:
+   - Open a new tmux window named `roscore` and run:
+     ```sh
+     tmux new -t roscore
+     roscore
+     ```
 
-3. Start Dummy screen (if screen not connected)
-ssh yk-god
-start_dummy_screen
+2. **Start FT Sensor Publisher**:
+   - Open a second tmux window and connect to `yk-god`:
+     ```sh
+     ssh yk-god
+     rosrun fts_serial fts_serial_node
+     ```
 
-4. Start Realsense Wrist Camera
-ssh -X yk-god
-export DISPLAY=:0
-roslaunch realsense2_camera rs_aligned_depth.launch 
+3. **Start Dummy Screen** (if screen is not connected):
+   - In the same tmux window, run:
+     ```sh
+     ssh yk-god
+     start_dummy_screen
+     ```
 
-5. Start Femto Bolt
-ssh -X yk-god
-export DISPLAY=:0
-roslaunch vibro_tactile_toolbox femto_bolt.launch
+4. **Start Realsense Wrist Camera**:
+   - Connect to `yk-god` with X11 forwarding:
+     ```sh
+     ssh -X yk-god
+     export DISPLAY=:0
+     roslaunch realsense2_camera rs_aligned_depth.launch
+     ```
 
-6. Start Femto Bolt cropped
-ssh yk-god
-rosrun vibro_tactile_toolbox image_cropped_republisher.py
+5. **Start Femto Bolt**:
+   - In the same tmux window, run:
+     ```sh
+     ssh -X yk-god
+     export DISPLAY=:0
+     roslaunch vibro_tactile_toolbox femto_bolt.launch
+     ```
 
-7. Start Microphones
-ssh yk-god
-rosrun sounddevice_ros sounddevice_ros_publisher_node.py -d 2 -c 2
+6. **Start Femto Bolt Cropped**:
+   - Run the following command:
+     ```sh
+     ssh yk-god
+     rosrun vibro_tactile_toolbox image_cropped_republisher.py
+     ```
 
-8. Start Terminators
-roslaunch vibro_tactile_toolbox terminators.launch
+7. **Start Microphones**:
+   - Run the following command:
+     ```sh
+     ssh yk-god
+     rosrun sounddevice_ros sounddevice_ros_publisher_node.py -d 2 -c 2
+     ```
 
-9. Start Robot (Some Tmux window)
-roslaunch testbed_utils lego_moveit_yk.launch namespace:=yk_creator
-# if prompted need to call robot enable 
-# $ rosservice call /yk_creator/robot_enable
+8. **Start Terminators**:
+   - Run the following command:
+     ```sh
+     roslaunch vibro_tactile_toolbox terminators.launch
+     ```
 
-10. Start Robot Pose Publisher (Some Tmux window)
-rosrun vibro_tactile_toolbox pose_stamped_publisher.py -n yk_creator -f 100
+9. **Start Robot**:
+   - In a new tmux window, run:
+     ```sh
+     roslaunch testbed_utils lego_moveit_yk.launch namespace:=yk_creator
+     ```
+   - If prompted, enable the robot:
+     ```sh
+     rosservice call /yk_creator/robot_enable
+     ```
 
-11. Start the Lego detector in a docker container.
-roscd vibro_tactile_toolbox
-cd docker
-./run  -i noetic_vibro_tactile_toolbox -c lego_detector -g
-source /ros1_ws/devel/setup.bash
-cd /home/repos/ros1_ws/src/kevin/vibro_tactile_toolbox/
-git pull
-python3 scripts/lego_detector.py 
+10. **Start Robot Pose Publisher**:
+    - In another tmux window, run:
+      ```sh
+      rosrun vibro_tactile_toolbox pose_stamped_publisher.py -n yk_creator -f 100
+      ```
 
-# to test that it's running
-# $ python3 test_lego_detector.py -t '/side_camera/color/image_cropped'
+11. **Start the Lego Detector in a Docker Container**:
+    - Navigate to the vibro_tactile_toolbox directory and run:
+      ```sh
+      roscd vibro_tactile_toolbox
+      cd docker
+      ./run -i noetic_vibro_tactile_toolbox -c lego_detector -g
+      source /ros1_ws/devel/setup.bash
+      cd /home/repos/ros1_ws/src/kevin/vibro_tactile_toolbox/
+      git pull
+      python3 scripts/lego_detector.py
+      ```
+    - To test that it's running:
+      ```sh
+      python3 test_lego_detector.py -t '/side_camera/color/image_cropped'
+      ```
 
-12. Start the fts detector.
-roscd vibro_tactile_toolbox
-python3 scripts/fts_detector.py
+12. **Start the FTS Detector**:
+    - Navigate to the vibro_tactile_toolbox directory and run:
+      ```sh
+      roscd vibro_tactile_toolbox
+      python3 scripts/fts_detector.py
+      ```
+    - To test that it's running:
+      ```sh
+      python3 test_fts_detector.py -t "fts"
+      ```
 
-# to test that it's running
-# $ python3 test_fts_detector.py -t "fts"
+### Revised Procedure
 
+1. **Start rosmaster**:
+   - Open a new tmux session named `roscore` on `mfi-twin`:
+     ```sh
+     tmux new -t roscore
+     roscore
+     ```
 
-# Revised:
+2. **Start RTC Drivers**:
+   - In a new tmux session named `RTC-drivers` on `mfi-twin`, run:
+     ```sh
+     cd ~
+     bash launch_RTC_drivers.sh
+     ```
 
-1. Start rosmaster by starting roscore in a "roscore" tmux session. This should always be running on mfi-twin
-- tmux new -t roscore
-- roscore
+3. **Start Yaskawa Drivers**:
+   - Open a new tmux session named `yk-creator` on `mfi-twin`:
+     ```sh
+     tmux new -t yk-creator
+     ```
+   - Start MoveIt in a new tmux window (don't use tmux if you want to use RViz):
+     ```sh
+     tmux new-window -n moveit
+     roslaunch testbed_utils lego_moveit_yk.launch namespace:=yk_creator
+     ```
+   - Start Pose Stamped Publisher in another new tmux window:
+     ```sh
+     tmux new-window -n pose_stamped_publisher
+     rosrun vibro_tactile_toolbox pose_stamped_publisher.py -n yk_creator -f 100
+     ```
 
-2. Start the RTC drivers in a "RTC-drivers" tmux session on mfi-twin; this starts the fts, dummy screen, realsense, femtobolt, femtoboltcropped, audio
-- cd ~
-- bash launch_RTC_drivers.sh
+4. **Start VTT Core Drivers**:
+   - Open a new tmux session named `VTT-core` on `mfi-twin` and run:
+     ```sh
+     roscd vibro_tactile_toolbox
+     bash launch_VTT_core.sh
+     ```
 
-3. Start the yaskawa drivers in a seperate "yk-creator" tmux session. This should ususally be running on mfi-twin
-- tmux new -t yk-creator
-# Don't put moveit in tmux if you want to use RVIZ
-- tmux new-window -n moveit
-- roslaunch testbed_utils lego_moveit_yk.launch namespace:=yk_creator
-- tmux new-window -n pose_stamped_publisher
-- rosrun vibro_tactile_toolbox pose_stamped_publisher.py -n yk_creator -f 100
-
-4. Start the VTT core drivers (terminator, outcomer) in a "VTT-core" tmux session on mfi-twin
-# This will change to a roslaunch file but bash is quick
-- roscd vibro_tactile_toolbox
-- bash launch_VTT_core
-
-
-5. Launch the desired task script
-- Ex: roslaunch vibro_tactile_toolbox collect_tactile_data.launch 
-- Ex: roslaunch vibro_tactile_toolbox go_home_skill.launch
-
-
-
-
-
-
-
-
-
-
-
-
-
+5. **Launch the Desired Task Script**:
+   - Example to collect tactile data:
+     ```sh
+     roslaunch vibro_tactile_toolbox collect_tactile_data.launch
+     ```
+   - Example to go home:
+     ```sh
+     roslaunch vibro_tactile_toolbox go_home_skill.launch
+     ```
