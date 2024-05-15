@@ -9,8 +9,6 @@ import pickle
 import soundfile as sf
 from sounddevice_ros.msg import AudioInfo, AudioData
 
-from pathlib import Path
-
 namespace = "yk_creator"
 AUDIO_TOPIC = '/audio'
 CAMERA_1_COLOR_TOPIC = '/camera/color/image_raw'
