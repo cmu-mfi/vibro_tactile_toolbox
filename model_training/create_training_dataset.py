@@ -123,16 +123,20 @@ def segment_trial(dataset_dir, lagging_buffer=0.5, leading_buffer=0.5):
 
     # Produce segments
     segments = []
-    for outcome in outcomes:
-        # Get timestamp for a labelled outcome
-        t_outcome = float(outcome[0])
+    for i, outcome in enumerate(outcomes):
+        OUTCOME_TERMINAL_MAP = {0: 1, 1:3, 2:6}
+        # # Get timestamp for a labelled outcome
+        # t_outcome = float(outcome[0])
 
-        # Find nearest terminal prior to outcome
-        t_terminal = terminals[-1][0]
-        for terminal in terminals[::-1]:
-            t_terminal = float(terminal[0])
-            if t_terminal < t_outcome:
-                break
+        # # Find nearest terminal prior to outcome
+        # t_terminal = terminals[-1][0]
+        # for terminal in terminals[::-1]:
+        #     t_terminal = float(terminal[0])
+        #     if t_terminal < t_outcome:
+        #         break
+
+        # TODO: Make outcome ids to match corresponding terminal/skill step ids
+        t_terminal = float(terminals[OUTCOME_TERMINAL_MAP[i]][0])
 
         # Segment data based on the terminal timestamp and lag/lead buffers
         t_start = t_terminal - lagging_buffer
@@ -209,7 +213,7 @@ def main(args):
         for segment in segments:
             audio_pth = os.path.join(audio_dir, f'seg_{segment_num}.wav')
             audio_spec_pth = os.path.join(audio_dir, f'seg_{segment_num}.png')
-            fts_pth = os.path.join(fts_dir, 'fts.npy')
+            fts_pth = os.path.join(fts_dir, f'seg_{segment_num}.npy')
             side_cam_pth = os.path.join(vision_dir, f'side_cam_{segment_num}.png')
             wrist_cam_pth = os.path.join(vision_dir, f'wrist_cam_{segment_num}.png')
             outcome_ann_pth = os.path.join(vision_dir, f'outcome_ann_{segment_num}.png')
