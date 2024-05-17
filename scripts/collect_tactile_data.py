@@ -50,8 +50,10 @@ def run():
                      (-STUD_WIDTH/2, -STUD_WIDTH/2, 0)]
     perturbations = [(0.0000, 0.0040, 0.000)]
 
-    place_skill = PlaceLegoSkill(robot_commander, namespace)
-    place_correction_skill = PlaceLegoHardcodedCorrectionSkill(robot_commander, namespace)
+    params = {'T_lego_ee': T_lego_ee}
+
+    #place_skill = PlaceLegoSkill(robot_commander, namespace)
+    place_correction_skill = PlaceLegoHardcodedCorrectionSkill(robot_commander, namespace, params)
     home_skill = GoHomeSkill(robot_commander, namespace)
     data_recorder = RosbagDataRecorder()
     recording_params = {
@@ -71,14 +73,13 @@ def run():
         #p_m = (p[0] / 1000, p[1] / 1000, p[2] / 1000)
         p_m = p
         # 1. Begin rosbag recording
-        rosbag_name = f"1x4/place-correct-p_{p_m[0]:0.4f}_{p_m[1]:0.4f}_{p_m[2]:0.4f}"
+        rosbag_name = f"testing/place-correct-p_{p_m[0]:0.4f}_{p_m[1]:0.4f}_{p_m[2]:0.4f}"
         rosbag_path = os.path.join(results_dir, rosbag_name)
 
         data_recorder.start_recording(rosbag_path, recording_params)
 
         # 2. Begin Skill
         place_lego_params = {
-            'T_lego_ee': T_lego_ee,
             'T_lego_world': T_lego_world,
             'approach_height_offset': 0.020,
             'place_rotation': 25.0,

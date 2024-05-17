@@ -107,9 +107,12 @@ class LegoDetector:
             else:
                 result = 'Some error has occurred.'
 
+            success = ('success' in result.lower())
+
             resp.result = json.dumps({'starting_top' : str(self.starting_top), 'starting_bottom' : str(self.starting_bottom), 
                                       'ending_top' : str(self.ending_top), 'ending_bottom' : str(self.ending_bottom),
-                                      'result' : result})
+                                      'result' : result,
+                                      'success': success})
             print("Starting Top : " + str(self.starting_top))
             print("Starting Bottom : " + str(self.starting_bottom))
             print("Ending Top : " + str(self.ending_top))

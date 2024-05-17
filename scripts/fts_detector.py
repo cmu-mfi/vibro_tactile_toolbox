@@ -84,9 +84,11 @@ class FTSDetector:
                 if (current_wrench.torque.z - self.starting_wrench.torque.z) < self.wrench_threshold.torque.z:
                     result += f"Fz diff ({(current_wrench.torque.z - self.starting_wrench.torque.z):0.2f}) exceeds threshold ({self.wrench_threshold.torque.z:0.2f})\n"
 
+            success = (len(result) > 0)
             resp.result = json.dumps({'starting_forces' : [self.starting_wrench.force.x, self.starting_wrench.force.y, self.starting_wrench.force.z], 
                                       'ending_forces' : [current_wrench.force.x, current_wrench.force.y, current_wrench.force.z], 
-                                      'result' : result})
+                                      'result' : result,
+                                      'success': success})
             print("Starting Forces : " + str([self.starting_wrench.force.x, self.starting_wrench.force.y, self.starting_wrench.force.z]))
             print("Ending Forces : " + str([current_wrench.force.x, current_wrench.force.y, current_wrench.force.z]))
             print(result)

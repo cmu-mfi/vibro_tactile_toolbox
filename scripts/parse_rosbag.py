@@ -244,8 +244,8 @@ def save_outcomes(bag, save_dir, filenames=[], outcome_topics=[], outcome_latenc
                 for topic, msg, t in bag.read_messages(topics=outcome_topic):
                     t_trial = t.to_sec() - bag.get_start_time()
                     print(f"fts_detector outcome message at time {t_trial}")
-                    termination_cause = "TODO: MAKE FTS_OUTCOME MSG MORE INFORMATIVE" # msg.outcome
-                    f.write(f"{t_trial}, {termination_cause}\n")
+                    outcome = msg.result # msg.outcome
+                    f.write(f"{t_trial}, {outcome}\n")
 
         elif "lego" in outcome_topic:
             text_file = os.path.join(save_dir, "lego_outcomes.txt")
@@ -256,8 +256,8 @@ def save_outcomes(bag, save_dir, filenames=[], outcome_topics=[], outcome_latenc
                 for topic, msg, t in bag.read_messages(topics=outcome_topic):
                     t_trial = t.to_sec() - bag.get_start_time()
                     print(f"lego_detector outcome message at time {t_trial}")
-                    lego_outcome = "TODO: MAKE LEGO_OUTCOME MSG MORE INFORMATIVE" # msg.outcome
-                    img_ann = bridge.imgmsg_to_cv2(msg)
+                    lego_outcome = msg.result
+                    img_ann = bridge.imgmsg_to_cv2(msg.img)
                     img_name = f"{t_trial}.png" 
                     img_path = os.path.join(lego_detections_dir, img_name)
                     print(f"Saving annotated image to {img_path}")
