@@ -80,4 +80,19 @@ training_dataset/
 ```
 
 ## Loading Training Datasets with Torch
-Datasets created using our model_training/create_training_dataset.py script can be 
+TODO: Adapt Kevin's script from [RobotAlert](https://github.com/RobotAlert/ModelTraining)
+
+## Training
+TODO: Get a general training procedure (not urgent)
+
+### Audio Models
+TODO: Adapt Kevin's script from [RobotAlert](https://github.com/RobotAlert/ModelTraining)
+
+### Vision Models
+TODO: Add docs for fine tuning detectron models (not urgent [detectron tutorial](https://detectron2.readthedocs.io/en/latest/tutorials/getting_started.html))
+
+### FTS Models
+Placeholder
+
+### Multi-Modal Models
+Placeholder
