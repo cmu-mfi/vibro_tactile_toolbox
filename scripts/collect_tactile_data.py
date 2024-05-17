@@ -48,7 +48,7 @@ def run():
                      (-STUD_WIDTH/2, 0, 0),
                      (STUD_WIDTH/2, STUD_WIDTH/2, 0),
                      (-STUD_WIDTH/2, -STUD_WIDTH/2, 0)]
-    perturbations = [(0.0000, 0.0040, 0.000)]
+    #perturbations = [(0.0000, 0.0040, 0.000)]
 
     params = {'T_lego_ee': T_lego_ee}
 

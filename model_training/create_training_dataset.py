@@ -3,6 +3,7 @@ import argparse
 import os
 import shutil
 
+import json
 import numpy as np
 from scipy import signal
 from scipy.io import wavfile
@@ -17,7 +18,16 @@ FTS_NAME = 'fts.npy'
 SIDE_CAM_NAME = 'side_camera.mp4'
 WRIST_CAM_NAME = 'wrist_camera.mp4'
 TERMINATIONS_NAME = 'termination_signals.txt'
-OUTCOMES_NAME = 'lego_outcomes.txt'
+VISION_OUTCOMES_NAME = 'lego_outcomes.txt'
+FTS_OUTCOMES_NAME = 'fts_outcomes.txt'
+
+def string_to_bool(s: str) -> bool:
+    if s.lower() == 'true':
+        return True
+    if s.lower() == 'false':
+        return False
+    else:
+        return None
 
 def is_valid_dataset(dataset_dir):
     """
@@ -26,7 +36,7 @@ def is_valid_dataset(dataset_dir):
     if not os.path.isdir(dataset_dir):
         return False
     print(f"Checking {dataset_dir}")
-    expected_files = [AUDIO_NAME, FTS_NAME, SIDE_CAM_NAME, WRIST_CAM_NAME, TERMINATIONS_NAME, OUTCOMES_NAME]
+    expected_files = [AUDIO_NAME, FTS_NAME, SIDE_CAM_NAME, WRIST_CAM_NAME, TERMINATIONS_NAME, VISION_OUTCOMES_NAME, FTS_OUTCOMES_NAME]
     existing_files = os.listdir(dataset_dir)
     for f in expected_files:
         if f not in existing_files:
@@ -105,35 +115,37 @@ def segment_trial(dataset_dir, lagging_buffer=0.5, leading_buffer=0.5):
             if line.startswith('#'): continue
             entries = line.split(',')
             entries = [e.strip() for e in entries]
-            timestamp, termination_cause = entries[0], entries[1]
+            timestamp, termination_cause = float(entries[0]), entries[1]
             terminals.append((timestamp, termination_cause))
     terminals.sort(key=lambda x: x[0])
 
-    # Load outcomes.txt
+    # Load *_outcomes.txt
     outcomes = []
-    with open(os.path.join(dataset_dir, OUTCOMES_NAME), 'r') as f:
+    with open(os.path.join(dataset_dir, VISION_OUTCOMES_NAME), 'r') as f:
         lines = f.readlines()
         for line in lines:
             if line.startswith('#'): continue
             entries = line.split(',')
             entries = [e.strip() for e in entries]
-            timestamp, outcome, outcome_ann = entries[0], entries[1], entries[2]
-            outcomes.append((timestamp, outcome, outcome_ann))
+            timestamp, result, success, outcome_ann = float(entries[0]), entries[1], entries[2], entries[3]
+            if string_to_bool(success) is not None:
+                outcomes.append((timestamp, success, outcome_ann))
+    with open(os.path.join(dataset_dir, FTS_OUTCOMES_NAME), 'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            if line.startswith('#'): continue
+            entries = line.split(',')
+            entries = [e.strip() for e in entries]
+            timestamp, result, success = float(entries[0]), entries[1], entries[2]     
+            if string_to_bool(success) is not None:
+                outcomes.append((timestamp, success, None))
     outcomes.sort(key=lambda x: x[0])
 
     # Produce segments
     segments = []
-    for i, outcome in enumerate(outcomes):
-        OUTCOME_TERMINAL_MAP = {0: 1, 1:3, 2:6}
-        # # Get timestamp for a labelled outcome
-        # t_outcome = float(outcome[0])
 
-        # # Find nearest terminal prior to outcome
-        # t_terminal = terminals[-1][0]
-        # for terminal in terminals[::-1]:
-        #     t_terminal = float(terminal[0])
-        #     if t_terminal < t_outcome:
-        #         break
+    for i, outcome in enumerate(outcomes):
+        OUTCOME_TERMINAL_MAP = {0: 1, 1:4, 2:7}
 
         # TODO: Make outcome ids to match corresponding terminal/skill step ids
         t_terminal = float(terminals[OUTCOME_TERMINAL_MAP[i]][0])
@@ -147,7 +159,10 @@ def segment_trial(dataset_dir, lagging_buffer=0.5, leading_buffer=0.5):
         side_cam_seg = segment_video(side_cam, t_terminal)
         wrist_cam_seg = segment_video(wrist_cam, t_terminal)
 
-        outcome_ann = Image.open(os.path.join(dataset_dir, outcome[2]), 'r')
+        if outcome[2]:
+            outcome_ann = Image.open(os.path.join(dataset_dir, outcome[2]), 'r')
+        else:
+            outcome_ann = None
 
         # Fill seg_data with the segmented data for saving later
         seg_data = {'audio':(sample_rate, audio_seg),

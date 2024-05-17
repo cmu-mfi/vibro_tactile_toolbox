@@ -24,7 +24,7 @@ class BaseSkill:
                   'termination': None,
                   'outcome': None}
     
-    def __init__(self, robot_commander: BaseRobotCommander, namespace: str):
+    def __init__(self, robot_commander: BaseRobotCommander, namespace: str, params=None):
 
         self.namespace = namespace
 
@@ -39,6 +39,7 @@ class BaseSkill:
         self.outcome_srv = None
 
         self.skill_steps = []
+        self.params = params
 
     def execute_skill(self, params) -> Tuple[List[TerminationSignal], List[int]]:
         """

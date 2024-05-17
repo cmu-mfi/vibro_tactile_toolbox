@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 from cv_bridge import CvBridge
 import pickle
+import json
 
 import soundfile as sf
 from sounddevice_ros.msg import AudioInfo, AudioData
@@ -240,29 +241,34 @@ def save_outcomes(bag, save_dir, filenames=[], outcome_topics=[], outcome_latenc
             with open(text_file, 'w') as f:
                 f.write(f"# fts_detector.py outcomes\n")
                 f.write(f"# file: '{bag.filename}'\n")
-                f.write(f"# timestamp ???\n")
+                f.write(f"# timestamp, result, success\n")
                 for topic, msg, t in bag.read_messages(topics=outcome_topic):
                     t_trial = t.to_sec() - bag.get_start_time()
                     print(f"fts_detector outcome message at time {t_trial}")
-                    outcome = msg.result # msg.outcome
-                    f.write(f"{t_trial}, {outcome}\n")
+                    outcome = json.loads(msg.result)
+                    result = outcome['result'].strip()
+                    success = outcome['success']
+
+                    f.write(f"{t_trial}, {result}, {success}\n")
 
         elif "lego" in outcome_topic:
             text_file = os.path.join(save_dir, "lego_outcomes.txt")
             with open(text_file, 'w') as f:
                 f.write(f"# lego_detector.py outcomes\n")
                 f.write(f"# file: '{bag.filename}'\n")
-                f.write(f"# timestamp filename\n")
+                f.write(f"# timestamp, result, success, filename\n")
                 for topic, msg, t in bag.read_messages(topics=outcome_topic):
                     t_trial = t.to_sec() - bag.get_start_time()
                     print(f"lego_detector outcome message at time {t_trial}")
-                    lego_outcome = msg.result
+                    outcome = json.loads(msg.result)
+                    result = outcome['result'].strip()
+                    success = outcome['success']
                     img_ann = bridge.imgmsg_to_cv2(msg.img)
                     img_name = f"{t_trial}.png" 
                     img_path = os.path.join(lego_detections_dir, img_name)
                     print(f"Saving annotated image to {img_path}")
                     cv2.imwrite(img_path, img_ann)
-                    f.write(f"{t_trial}, {lego_outcome}, lego_detections/{img_name}\n")
+                    f.write(f"{t_trial}, {result}, {success}, lego_detections/{img_name}\n")
                 
 
         else:

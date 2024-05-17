@@ -10,9 +10,9 @@ from typing import Tuple, List
 
 class GoHomeSkill(BaseSkill):
 
-    def __init__(self, robot_commander: BaseRobotCommander, namespace: str):
+    def __init__(self, robot_commander: BaseRobotCommander, namespace: str, params=None):
 
-        super().__init__(robot_commander, namespace)
+        super().__init__(robot_commander, namespace, params)
 
         self.skill_steps = [
              {'step_name': 'go_to_home_joints',
