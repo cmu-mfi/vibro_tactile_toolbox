@@ -72,7 +72,9 @@ class LegoDetector:
                     if bbox[0] >= req.bot_bbox.coords[0] and bbox[1] >= req.bot_bbox.coords[1] and bbox[2] <= req.bot_bbox.coords[2] and bbox[3] <= req.bot_bbox.coords[3]:
                         self.starting_bottom += 1
 
-            resp.result = json.dumps({'starting_top' : str(self.starting_top), 'starting_bottom' : str(self.starting_bottom)})
+            resp.result = json.dumps({'starting_top' : str(self.starting_top), 'starting_bottom' : str(self.starting_bottom),
+                                      'result': 'Recording brick locations before next action',
+                                      'success': None})
             print("Starting Top : " + str(self.starting_top))
             print("Starting Bottom : " + str(self.starting_bottom))
 

@@ -36,7 +36,10 @@ class FTSDetector:
         if req.start:
             self.starting_wrench = current_wrench
 
-            resp.result = json.dumps({'starting_forces' : [current_wrench.force.x, current_wrench.force.y, current_wrench.force.z]})
+            resp.result = json.dumps({'starting_forces' : [current_wrench.force.x, current_wrench.force.y, current_wrench.force.z],
+                                      'result': 'Measuring FTS before next action',
+                                      'success': None})
+            
             print("Starting Forces : " + str([current_wrench.force.x, current_wrench.force.y, current_wrench.force.z]))
 
         else:
