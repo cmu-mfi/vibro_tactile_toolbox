@@ -36,6 +36,8 @@ rapid_termination_config = {
                 'pose': None},
 }
 # Engaging a brick on the build plate
+# Terminate if Fz exceeds force to join legos with good alignment
+# 10N is an estimate
 engage_termination_config = {
     'time': {'duration': 10.0},
     'pose': {'pos_tolerance': 0.0001,
@@ -44,16 +46,17 @@ engage_termination_config = {
     'fts': {'check_rate_ns': 1E6,
             'threshold': {
                 'force': {
-                    'x': 10,
-                    'y': 10,
-                    'z': 20},
+                    'x': [-10, 10],
+                    'y': [-10, 10],
+                    'z': [-10, 10]},
                 'torque': {
-                    'x': 1.0,
-                    'y': 1.0,
-                    'z': 1.0}
+                    'x': [-1, 1],
+                    'y': [-1, 1],
+                    'z': [-1, 1]}
             }}
 }
 # Releasing a brick through rotation
+# Try not to terminate from fts unless the readings may cause an E-stop
 release_termination_config = {
     'time': {'duration': 10.0},
     'pose': {'pos_tolerance': 0.001,
@@ -62,16 +65,18 @@ release_termination_config = {
     'fts': {'check_rate_ns': 1E6,
             'threshold': {
                 'force': {
-                    'x': 10,
-                    'y': 10,
-                    'z': 20},
+                    'x': [-50, 50],
+                    'y': [-50, 50],
+                    'z': [-100, 100]},
                 'torque': {
-                    'x': 1.0,
-                    'y': 1.0,
-                    'z': 1.0}
+                    'x': [-2, 2],
+                    'y': [-2, 1],
+                    'z': [-2, 2]}
             }}
 }
 # Pulling up on a brick to check if connected
+# Terminate if z goes positive
+# Terminate if any substantial reaction otherwise
 servo_termination_config = {
     'time': {'duration': 10.0},
     'pose': {'pos_tolerance': 0.001,
@@ -80,13 +85,13 @@ servo_termination_config = {
     'fts': {'check_rate_ns': 1E6,
             'threshold': {
                 'force': {
-                    'x': 10,
-                    'y': 10,
-                    'z': 20},
+                    'x': [-10, 10],               # any substantial reaction force in x-y
+                    'y': [-10, 10],
+                    'z': [-float('inf'), 2]},   # reaction force pulling away in z
                 'torque': {
-                    'x': 1.0,
-                    'y': 1.0,
-                    'z': 1.0}
+                    'x': [-1, 1],               # any substantial reaction torque
+                    'y': [-1, 1],
+                    'z': [-1, 1]}
             }}
 }
 
@@ -225,7 +230,7 @@ class PlaceLegoHardcodedCorrectionSkill(BaseSkill):
              'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.place_pose_bad_msg, wait=False),
              'termination_cfg': lambda param: add_termination_pose(engage_termination_config, self.place_pose_bad_msg)},
             {'step_name': 'pull_up',
-             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.servo_pose_bad_msg, wait=False),
+             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.servo_pose_bad_msg, wait=False, velocity_scaling=0.001),
              'termination_cfg': lambda param: add_termination_pose(servo_termination_config, self.servo_pose_bad_msg),
              'outcome': lambda param: send_end_fts_outcome_request(param)},
             {'step_name': 'reset_to_approach_pose',
@@ -236,7 +241,7 @@ class PlaceLegoHardcodedCorrectionSkill(BaseSkill):
              'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.place_pose_msg, wait=False),
              'termination_cfg': lambda param: add_termination_pose(engage_termination_config, self.place_pose_msg)},
             {'step_name': 'pull_up',
-             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.servo_pose_msg, wait=False),
+             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.servo_pose_msg, wait=False, velocity_scaling=0.001),
              'termination_cfg': lambda param: add_termination_pose(servo_termination_config, self.servo_pose_msg),
              'outcome': lambda param: send_end_fts_outcome_request(param)},
             {'step_name': 'reengage_brick',
@@ -282,8 +287,9 @@ class PlaceLegoHardcodedCorrectionSkill(BaseSkill):
             translation=np.array([LEGO_BLOCK_WIDTH/2,0,0]), 
             from_frame='lego', to_frame='lego'
         )
+        # A lego stud is 1.7 mm tall
         self.T_lego_servo = RigidTransform(
-            translation=np.array([0.0, 0.0, -0.001]),
+            translation=np.array([0.0, 0.0, -0.010]),
             from_frame='lego', to_frame='lego'
         )
         self.T_lego_disengage = RigidTransform(

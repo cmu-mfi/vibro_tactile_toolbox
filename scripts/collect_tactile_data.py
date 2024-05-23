@@ -48,7 +48,7 @@ def run():
                      (-STUD_WIDTH/2, 0, 0),
                      (STUD_WIDTH/2, STUD_WIDTH/2, 0),
                      (-STUD_WIDTH/2, -STUD_WIDTH/2, 0)]
-    #perturbations = [(0.0000, 0.0040, 0.000)]
+    perturbations = [(0.0000, 0.0040, 0.000)]
 
     params = {'T_lego_ee': T_lego_ee}
 
@@ -74,6 +74,7 @@ def run():
         p_m = p
         # 1. Begin rosbag recording
         rosbag_name = f"testing/place-correct-p_{p_m[0]:0.4f}_{p_m[1]:0.4f}_{p_m[2]:0.4f}"
+        rosbag_name = f"testing/tmp"
         rosbag_path = os.path.join(results_dir, rosbag_name)
 
         data_recorder.start_recording(rosbag_path, recording_params)

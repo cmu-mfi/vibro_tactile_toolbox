@@ -12,6 +12,8 @@ from geometry_msgs.msg import Wrench, Pose
 from sensor_msgs.msg import JointState
 from vibro_tactile_toolbox.msg import TerminationConfig
 
+from typing import Tuple, List
+
 def get_handler_from_name(handler_name: str):
     if handler_name == 'AbstractBase':
         return BaseTerminationHandler()
@@ -31,11 +33,22 @@ TerminationConfig Example
 {
     'id': int 0,
     'time': {
-        'duration': float 10.0
+        'duration':         (float) - timeout duration in seconds
     },
-    'fts': {
-        'check_rate_ns': int 1E6
-        'threshold': Wrench(force={30, 30, 30}, torque={1.5, 1.5, 1.5})
+    'fts':  {
+        'check_rate_ns':    (int) - rate in ns to check the fts for termination
+        'threshold': {      (dict) - bilateral range for non-terminal values
+            'force: {       (dict) - force ramges
+                'x':        (List[float]) - x range
+                'y':        (List[float]) - y range 
+                'z':        (List[float]) - z range
+            }
+            'torque: {      (dict) - torque ranges
+                'x':        (List[float]) - x range
+                'y':        (List[float]) - y range 
+                'z':        (List[float]) - z range        
+            }
+        }
     },
     'joint': {
         'tolerance': 0.001
@@ -101,6 +114,29 @@ def dict_to_wrench(msg_dict: dict) -> Wrench:
     msg.torque.y = msg_dict['torque']['y']
     msg.torque.z = msg_dict['torque']['z']
     return msg
+
+def dict_to_wrench_bilateral(msg_dict: dict) -> Tuple[Wrench]:
+    msg_lo = Wrench()
+    msg_hi = Wrench()
+
+    msg_lo.force.x = min(msg_dict['force']['x'])
+    msg_hi.force.x = max(msg_dict['force']['x'])
+
+    msg_lo.force.y = min(msg_dict['force']['y'])
+    msg_hi.force.y = max(msg_dict['force']['y'])
+
+    msg_lo.force.z = min(msg_dict['force']['z'])
+    msg_hi.force.z = max(msg_dict['force']['z'])
+
+    msg_lo.torque.x = min(msg_dict['torque']['x'])
+    msg_hi.torque.x = max(msg_dict['torque']['x'])
+
+    msg_lo.torque.y = min(msg_dict['torque']['y'])
+    msg_hi.torque.y = max(msg_dict['torque']['y'])
+
+    msg_lo.torque.z = min(msg_dict['torque']['z'])
+    msg_hi.torque.z = max(msg_dict['torque']['z'])
+    return msg_lo, msg_hi
 
 def joint_state_to_dict(msg: JointState):
     # Convert ROS message to dictionary

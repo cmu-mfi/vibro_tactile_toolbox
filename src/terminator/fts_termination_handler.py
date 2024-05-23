@@ -8,6 +8,24 @@ from vibro_tactile_toolbox.msg import TerminationSignal, TerminationConfig
 
 import terminator.utils as t_utils
 
+"""
+=== FTS COMPONENT OF TERMINATION CONFIG ===
+'fts':  {
+    'check_rate_ns':    (int) - rate in ns to check the fts for termination
+    'threshold': {      (dict) - bilateral range for non-terminal values
+        'force: {       (dict) - force ramges
+            'x':        (List[float]) - x range
+            'y':        (List[float]) - y range 
+            'z':        (List[float]) - z range
+        }
+        'torque: {      (dict) - torque ranges
+            'x':        (List[float]) - x range
+            'y':        (List[float]) - y range 
+            'z':        (List[float]) - z range        
+        }
+    }
+}
+"""
 
 class FTSTerminationHandler(BaseTerminationHandler):
     def __init__(self):
@@ -17,14 +35,23 @@ class FTSTerminationHandler(BaseTerminationHandler):
 
         self.fts_wrench = Wrench()
 
-        # Termination condition: Magnitude threshold
-        self.wrench_thresh = Wrench()
-        self.wrench_thresh.force.x = 30
-        self.wrench_thresh.force.y = 30
-        self.wrench_thresh.force.z = 30
-        self.wrench_thresh.torque.x = 2
-        self.wrench_thresh.torque.y = 2
-        self.wrench_thresh.torque.z = 2
+        # Termination condition: Bilateral threshold
+        # 30 N and 2 N-m is a good safe default for preventing E-stop on the yk-gp4
+        self.wrench_thresh_lo = Wrench()
+        self.wrench_thresh_lo.force.x = -30
+        self.wrench_thresh_lo.force.y = -30
+        self.wrench_thresh_lo.force.z = -30
+        self.wrench_thresh_lo.torque.x = -2
+        self.wrench_thresh_lo.torque.y = -2
+        self.wrench_thresh_lo.torque.z = -2
+
+        self.wrench_thresh_hi = Wrench()
+        self.wrench_thresh_hi.force.x = 30
+        self.wrench_thresh_hi.force.y = 30
+        self.wrench_thresh_hi.force.z = 30
+        self.wrench_thresh_hi.torque.x = 2
+        self.wrench_thresh_hi.torque.y = 2
+        self.wrench_thresh_hi.torque.z = 2
 
     def update_config(self, cfg: TerminationConfig):
         """
@@ -35,14 +62,14 @@ class FTSTerminationHandler(BaseTerminationHandler):
         """
         cfg_jsons = cfg.cfg_json
         cfg_json = json.loads(cfg_jsons)
-        if 'FTS' in cfg_json:
+        if 'fts' in cfg_json:
             self.live = True
             self.id = cfg_json['id']
-            FTS_cfg = cfg_json['FTS']
+            FTS_cfg = cfg_json['fts']
             if 'check_rate_ns' in FTS_cfg:
                 self.check_rate_ns = FTS_cfg['check_rate_ns']
             if 'threshold' in FTS_cfg:
-                self.wrench_thresh = t_utils.dict_to_wrench(FTS_cfg['threshold'])
+                self.wrench_thresh_lo, self.wrench_thresh_hi = t_utils.dict_to_wrench_bilateral(FTS_cfg['threshold'])
         else:
             self.live = False
     
@@ -57,46 +84,51 @@ class FTSTerminationHandler(BaseTerminationHandler):
         Create the termination signal and add causes based on fts_wrench magnitude and the threshold
         """
         terminate = False
-        cause = "FTS termination handler caused by:\n"
+        cause_header = "FTS termination handler caused by:"
+        causes = []
 
-        if self.wrench_thresh.force.x > 0:
-            if self.fts_wrench.force.x > self.wrench_thresh.force.x:
-                cause += f"Fx ({self.fts_wrench.force.x:0.2f}) exceeds threshold ({self.wrench_thresh.force.x:0.2f})\n"
-        else:
-            if self.fts_wrench.force.x < self.wrench_thresh.force.x:
-                cause += f"Fx ({self.fts_wrench.force.x:0.2f}) exceeds threshold ({self.wrench_thresh.force.x:0.2f})\n"
-        if self.wrench_thresh.force.y > 0:
-            if self.fts_wrench.force.y > self.wrench_thresh.force.y:
-                cause += f"Fy ({self.fts_wrench.force.y:0.2f}) exceeds threshold ({self.wrench_thresh.force.y:0.2f})\n"
-        else:
-            if self.fts_wrench.force.y < self.wrench_thresh.force.y:
-                cause += f"Fy ({self.fts_wrench.force.y:0.2f}) exceeds threshold ({self.wrench_thresh.force.y:0.2f})\n"
-        if self.wrench_thresh.force.z > 0:
-            if self.fts_wrench.force.z > self.wrench_thresh.force.z:
-                cause += f"Fz ({self.fts_wrench.force.z:0.2f}) exceeds threshold ({self.wrench_thresh.force.z:0.2f})\n"
-        else:
-            if self.fts_wrench.force.z < self.wrench_thresh.force.z:
-                cause += f"Fz ({self.fts_wrench.force.z:0.2f}) exceeds threshold ({self.wrench_thresh.force.z:0.2f})\n"
+        # Fx-
+        if (self.fts_wrench.force.x < self.wrench_thresh_lo.force.x):
+            causes.append(f"Fx ({self.fts_wrench.force.x:0.2f}) exceeds threshold ({self.wrench_thresh_lo.force.x:0.2f})")
+        # Fx+
+        if (self.fts_wrench.force.x > self.wrench_thresh_hi.force.x):
+            causes.append(f"Fx ({self.fts_wrench.force.x:0.2f}) exceeds threshold ({self.wrench_thresh_hi.force.x:0.2f})")
+            terminate = True
+        # Fy-
+        if (self.fts_wrench.force.y < self.wrench_thresh_lo.force.y):
+            causes.append(f"Fy ({self.fts_wrench.force.y:0.2f}) exceeds threshold ({self.wrench_thresh_lo.force.y:0.2f})")
+        # Fy+
+        if (self.fts_wrench.force.y > self.wrench_thresh_hi.force.y):
+            causes.append(f"Fy ({self.fts_wrench.force.y:0.2f}) exceeds threshold ({self.wrench_thresh_hi.force.y:0.2f})")
+        # Fz-
+        if (self.fts_wrench.force.z < self.wrench_thresh_lo.force.z):
+            causes.append(f"Fz ({self.fts_wrench.force.z:0.2f}) exceeds threshold ({self.wrench_thresh_lo.force.z:0.2f})")
+        # Fz+
+        if (self.fts_wrench.force.z > self.wrench_thresh_hi.force.z):
+            causes.append(f"Fz ({self.fts_wrench.force.z:0.2f}) exceeds threshold ({self.wrench_thresh_hi.force.z:0.2f})")
 
-        if self.wrench_thresh.torque.x > 0:
-            if self.fts_wrench.torque.x > self.wrench_thresh.torque.x:
-                cause += f"Fx ({self.fts_wrench.torque.x:0.2f}) exceeds threshold ({self.wrench_thresh.torque.x:0.2f})\n"
-        else:
-            if self.fts_wrench.torque.x < self.wrench_thresh.torque.x:
-                cause += f"Fx ({self.fts_wrench.torque.x:0.2f}) exceeds threshold ({self.wrench_thresh.torque.x:0.2f})\n"
-        if self.wrench_thresh.torque.y > 0:
-            if self.fts_wrench.torque.y > self.wrench_thresh.torque.y:
-                cause += f"Fy ({self.fts_wrench.torque.y:0.2f}) exceeds threshold ({self.wrench_thresh.torque.y:0.2f})\n"
-        else:
-            if self.fts_wrench.torque.y < self.wrench_thresh.torque.y:
-                cause += f"Fy ({self.fts_wrench.torque.y:0.2f}) exceeds threshold ({self.wrench_thresh.torque.y:0.2f})\n"
-        if self.wrench_thresh.torque.z > 0:
-            if self.fts_wrench.torque.z > self.wrench_thresh.torque.z:
-                cause += f"Fz ({self.fts_wrench.torque.z:0.2f}) exceeds threshold ({self.wrench_thresh.torque.z:0.2f})\n"
-        else:
-            if self.fts_wrench.torque.z < self.wrench_thresh.torque.z:
-                cause += f"Fz ({self.fts_wrench.torque.z:0.2f}) exceeds threshold ({self.wrench_thresh.torque.z:0.2f})\n"
+        # Tx-
+        if (self.fts_wrench.torque.x < self.wrench_thresh_lo.torque.x):
+            causes.append(f"Tx ({self.fts_wrench.torque.x:0.2f}) exceeds threshold ({self.wrench_thresh_lo.torque.x:0.2f})")
+        # Tx+
+        if (self.fts_wrench.torque.x > self.wrench_thresh_hi.torque.x):
+            causes.append(f"Tx ({self.fts_wrench.torque.x:0.2f}) exceeds threshold ({self.wrench_thresh_hi.torque.x:0.2f})")
+        # Ty-
+        if (self.fts_wrench.torque.y < self.wrench_thresh_lo.torque.y):
+            causes.append(f"Ty ({self.fts_wrench.torque.y:0.2f}) exceeds threshold ({self.wrench_thresh_lo.torque.y:0.2f})")
+        # Ty+
+        if (self.fts_wrench.torque.y > self.wrench_thresh_hi.torque.y):
+            causes.append(f"Ty ({self.fts_wrench.torque.y:0.2f}) exceeds threshold ({self.wrench_thresh_hi.torque.y:0.2f})")
+        # Tz-
+        if (self.fts_wrench.torque.z < self.wrench_thresh_lo.torque.z):
+            causes.append(f"Tz ({self.fts_wrench.torque.z:0.2f}) exceeds threshold ({self.wrench_thresh_lo.torque.z:0.2f})")
+        # Tz+
+        if (self.fts_wrench.torque.z > self.wrench_thresh_hi.torque.z):
+            causes.append(f"Tz ({self.fts_wrench.torque.z:0.2f}) exceeds threshold ({self.wrench_thresh_hi.torque.z:0.2f})")
         
+        terminate = len(causes)  > 0
+        cause = "\n".join([cause_header] + causes)
+
         termination_signal = TerminationSignal()
         termination_signal.id = self.id
         termination_signal.terminate = terminate
