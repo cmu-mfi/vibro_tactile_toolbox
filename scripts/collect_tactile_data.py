@@ -23,6 +23,7 @@ LEGO_BLOCK_LENGTH=2*STUD_WIDTH #y   #0.0318 (with clearance)
 results_dir = "/home/mfi/repos/ros1_ws/src/kevin/vibro_tactile_toolbox/results"
 
 def run():
+    print("PLEASE NOTE THAT IN collect_tactile_data.py LINES 52 AND 78 HAVE ARTIFACTS FROM TESTING")
     # Start Node
     rospy.init_node("collect_tactile_data")
 
