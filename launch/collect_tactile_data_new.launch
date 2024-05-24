@@ -1,0 +1,9 @@
+<launch>
+    <arg name="namespace" default="yk_creator"/>
+    <group ns="$(arg namespace)">
+        <node pkg="vibro_tactile_toolbox" name="collect_tactile_data_new" type="collect_tactile_data_new.py" output="screen">
+            <param name="namespace" value="$(arg namespace)"/>
+            <param name="root_pwd" value="$(find vibro_tactile_toolbox)"/>
+        </node>
+    </group>
+</launch>

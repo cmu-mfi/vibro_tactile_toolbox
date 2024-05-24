@@ -48,7 +48,7 @@ engage_termination_config = {
                 'force': {
                     'x': [-10, 10],
                     'y': [-10, 10],
-                    'z': [-10, 10]},
+                    'z': [-3, 10]},
                 'torque': {
                     'x': [-1, 1],
                     'y': [-1, 1],
@@ -156,13 +156,11 @@ def send_end_fts_outcome_request(param):
       
         detect_fts = rospy.ServiceProxy('/fts_detector', FTSOutcome)
         
-        
         req = FTSOutcomeRequest()
         req.id = 0  
         req.topic_name ='fts'
         req.start = False  
         req.threshold = Wrench()
-        
    
         req.threshold.force.x = 10
         req.threshold.force.y = 10
@@ -540,11 +538,11 @@ class MoveToPerturbLegoPose(BaseSkill):
             from_frame='lego', to_frame='lego'
         )
 
-        self.approach_pose = self.T_place_target * self.place_perturb_pose * self.T_lego_approach * self.T_lego_ee.inverse()
-        self.approach_pose_msg = self.approach_pose.pose_msg
-
         self.place_perturb_pose = RigidTransform(translation=self.place_perturbation,
                                                from_frame='lego', to_frame='lego')
+
+        self.approach_pose = self.T_place_target * self.place_perturb_pose * self.T_lego_approach * self.T_lego_ee.inverse()
+        self.approach_pose_msg = self.approach_pose.pose_msg
 
         self.place_perturb_pose = self.T_place_target * self.place_perturb_pose * self.T_lego_ee.inverse()
         self.place_perturb_pose_msg = self.place_perturb_pose.pose_msg

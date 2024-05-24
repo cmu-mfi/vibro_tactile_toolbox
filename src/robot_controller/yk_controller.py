@@ -14,8 +14,8 @@ import std_msgs.msg
 from geometry_msgs.msg import Pose, PoseStamped, Twist
 from sensor_msgs.msg import JointState
 
-from yk_tasks.srv import *
-from yk_tasks.msg import *
+from yk_msgs.srv import *
+from yk_msgs.msg import *
 from std_srvs.srv import Trigger, TriggerRequest
 
 from robot_controller.base_robot_commander import BaseRobotCommander
