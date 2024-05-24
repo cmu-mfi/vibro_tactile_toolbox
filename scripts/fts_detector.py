@@ -45,7 +45,6 @@ class FTSDetector:
         else:
             
             result = ''
-            result+= f"self.starting_wrench.force.z - current_wrench.force.z  is {self.starting_wrench.force.z - current_wrench.force.z }"
             if self.wrench_threshold.force.x > 0:
                 if (current_wrench.force.x - self.starting_wrench.force.x) > self.wrench_threshold.force.x:
                     result += f"Fx diff ({(current_wrench.force.x - self.starting_wrench.force.x):0.2f}) exceeds threshold ({self.wrench_threshold.force.x:0.2f})\n"
@@ -59,10 +58,7 @@ class FTSDetector:
                 if (current_wrench.force.y - self.starting_wrench.force.y) < self.wrench_threshold.force.y:
                     result += f"Fy diff ({(current_wrench.force.y - self.starting_wrench.force.y):0.2f}) exceeds threshold ({self.wrench_threshold.force.y:0.2f})\n"
             if self.wrench_threshold.force.z > 0:
-                #FTS Detector Response: {"starting_forces": [0.2314610481262207, 0.05043131113052368, 1.7198001146316528], 
-                # "ending_forces": [2.0330357551574707, 7.523490905761719, -81.6221694946289], "result": ""}
-                result+= f"self.starting_wrench.force.z - current_wrench.force.z  is {self.starting_wrench.force.z - current_wrench.force.z }"
-                if (self.starting_wrench.force.z - current_wrench.force.z ) > self.wrench_threshold.force.z:
+                if (current_wrench.force.z  - self.starting_wrench.force.z) > self.wrench_threshold.force.z:
                     result += f"Fz diff ({(current_wrench.force.z - self.starting_wrench.force.z):0.2f}) exceeds threshold ({self.wrench_threshold.force.z:0.2f})\n"
             else:
                 if (current_wrench.force.z - self.starting_wrench.force.z) < self.wrench_threshold.force.z:

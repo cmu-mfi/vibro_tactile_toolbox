@@ -164,7 +164,7 @@ def send_end_fts_outcome_request(param):
    
         req.threshold.force.x = 10
         req.threshold.force.y = 10
-        req.threshold.force.z = 10
+        req.threshold.force.z = 1
         req.threshold.torque.x = 10
         req.threshold.torque.y = 10
         req.threshold.torque.z = 10
@@ -639,8 +639,7 @@ class MoveDown(BaseSkill):
         self.skill_steps = [
             {'step_name': 'move_down',
              'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.move_down_pose_msg, wait=False),
-             'termination_cfg': lambda param: add_termination_pose(engage_termination_config, self.move_down_pose_msg),
-             'outcome': lambda param: send_end_fts_outcome_request(param)},
+             'termination_cfg': lambda param: add_termination_pose(engage_termination_config, self.move_down_pose_msg)},
         ]
 
     def execute_skill(self, execution_params, skill_params) -> Tuple[List[TerminationSignal], List[int]]:
@@ -719,7 +718,7 @@ class PlaceLego(BaseSkill):
         self.lift_pose = current_pose * self.T_ee_lift
         self.lift_pose_msg = self.lift_pose.pose_msg
 
-        self.rotate_pose = current_pose * self.T_lego_rotation * self.T_lego_rotation_point_offset.inverse() * self.T_lego_ee.inverse()
+        self.rotate_pose = current_pose * self.T_lego_ee * self.T_lego_rotation * self.T_lego_rotation_point_offset.inverse() * self.T_lego_ee.inverse()
         self.rotate_pose_msg = self.rotate_pose.pose_msg
 
         return super().execute_skill(execution_params)

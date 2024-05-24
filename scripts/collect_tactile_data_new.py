@@ -51,7 +51,7 @@ def run():
 
     params = {'T_lego_ee': T_lego_ee}
 
-    move_to_lego_skill = MoveToLegoPose(robot_commander, namespace, params)
+    move_to_lego_pose_skill = MoveToLegoPose(robot_commander, namespace, params)
     move_to_perturb_lego_skill = MoveToPerturbLegoPose(robot_commander, namespace, params)
     pull_up_skill = PullUp(robot_commander, namespace, params)
     move_down_skill = MoveDown(robot_commander, namespace, params)
@@ -94,11 +94,11 @@ def run():
         }
 
         pull_up_params = {
-            'lift_height_offset': 0.001
+            'lift_height_offset': 0.01
         }
 
         move_down_params = {
-            'height_offset': 0.001
+            'height_offset': 0.01
         }
 
         execution_params = {
@@ -119,14 +119,41 @@ def run():
 
         terminals, outcomes = pull_up_skill.execute_skill(execution_params, pull_up_params)
 
-        if outcomes[-1] == False:
+        for i in range(len(terminals)):
+            print(f"\n\n=== {move_to_perturb_lego_skill.skill_steps[i]['step_name']} ===" +
+                f"\nTerminated with status:\n'{terminals[i].cause}'" +
+                f"\nAnd outcome:\n{outcomes[i]}")
+
+        if outcomes[-1]['success'] == False:
             terminals, outcomes = move_to_lego_pose_skill.execute_skill(execution_params, move_to_lego_params)
+
+            for i in range(len(terminals)):
+                print(f"\n\n=== {move_to_perturb_lego_skill.skill_steps[i]['step_name']} ===" +
+                    f"\nTerminated with status:\n'{terminals[i].cause}'" +
+                    f"\nAnd outcome:\n{outcomes[i]}")
+
             terminals, outcomes = pull_up_skill.execute_skill(execution_params, pull_up_params)
 
+            for i in range(len(terminals)):
+                print(f"\n\n=== {move_to_perturb_lego_skill.skill_steps[i]['step_name']} ===" +
+                    f"\nTerminated with status:\n'{terminals[i].cause}'" +
+                    f"\nAnd outcome:\n{outcomes[i]}")
+
         terminals, outcomes = move_down_skill.execute_skill(execution_params, move_down_params)
+
+        for i in range(len(terminals)):
+            print(f"\n\n=== {move_to_perturb_lego_skill.skill_steps[i]['step_name']} ===" +
+                f"\nTerminated with status:\n'{terminals[i].cause}'" +
+                f"\nAnd outcome:\n{outcomes[i]}")
+
         terminals, outcomes = place_lego_skill.execute_skill(execution_params, place_lego_params)
 
-        print('Outcomes:'+outcomes[-1])        
+        for i in range(len(terminals)):
+            print(f"\n\n=== {move_to_perturb_lego_skill.skill_steps[i]['step_name']} ===" +
+                f"\nTerminated with status:\n'{terminals[i].cause}'" +
+                f"\nAnd outcome:\n{outcomes[i]}")
+
+        print('Outcomes:',outcomes[-1])        
 
         # 3. End rosbag recording
         data_recorder.stop_recording()
