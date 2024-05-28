@@ -1,6 +1,6 @@
 lego_ee_tf: "/transforms/lego_ee.tf"
-lego_world_tf: "/transforms/yk_creator_lego_pose.tf"
-results_dif: "/results/"
+lego_world_tf: "/transforms/lego_world.tf"
+results_dir: "/results/"
 block_type: "1x4"
 x_range:
   - -0.005
@@ -11,23 +11,23 @@ y_range:
 theta_range: 
   - -10.0
   - 10.0
-approach_height: 0.02
-lift_height: 0.005
+approach_height: 0.03
+lift_height: 0.01
 place_rotation: 25
 pick_rotation: 25
 fts_detector:
   topic_name: '/fts'
-  force_threshold: 1.0
+  force_threshold: 0.5
 lego_detector:
   topic_name: '/side_camera/color/image_cropped'
   top_bbox:
     - 900
-    - 150
+    - 300
     - 1100
-    - 350
+    - 450
   bot_bbox:
     - 900
-    - 425
+    - 450
     - 1100
     - 575
   detection_threshold: 0.8

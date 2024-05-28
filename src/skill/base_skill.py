@@ -63,7 +63,7 @@ class BaseSkill:
         terminals = []
 
         if self.params['verbose']:
-            print(f"\n=== " + print(type(self).__name__) + " ===")
+            print(f"\n=== " + self.__class__.__name__ + " ===")
 
         for skill_step in self.skill_steps:
             if self.params['verbose']:
@@ -80,7 +80,7 @@ class BaseSkill:
             terminals.append(terminal)
 
             if self.params['verbose']:
-                print(f"\nTerminated with status:\n'{terminals[i].cause}'")
+                print(f"\nTerminated with status:\n'{terminal.cause}'")
 
             # TODO: If outcome is unsuccessful:
             #   Query some policy to get a new step_param

@@ -7,16 +7,14 @@ from vibro_tactile_toolbox.srv import *
 
 from enum import Enum
 
-class LegoOutcome(Enum):
-    """
-    Codes to describe skill outcomes
-    """
-    SUCCESS = 0
-    FAIL = 1
-    CONNECTED = 2
-    DISCONNECTED = 3
-
-
+# class LegoOutcome(Enum):
+#     """
+#     Codes to describe skill outcomes
+#     """
+#     SUCCESS = 0
+#     FAIL = 1
+#     CONNECTED = 2
+#     DISCONNECTED = 3
 
 def send_start_outcome_request(params):
     rospy.wait_for_service('/fts_detector')
@@ -45,7 +43,7 @@ def send_start_outcome_request(params):
         detect_lego = rospy.ServiceProxy('/lego_detector', LegoOutcome)
         lego_req = LegoOutcomeRequest()
         lego_req.id = 0
-        lego_req.topic_name = '/side_camera/color/image_cropped'
+        lego_req.topic_name = params['lego_detector']['topic_name']
         lego_req.start = True
         lego_req.score_threshold = params['lego_detector']['detection_threshold']
         
@@ -81,7 +79,7 @@ def send_end_fts_outcome_request(params):
    
         req.threshold.force.x = 10
         req.threshold.force.y = 10
-        req.threshold.force.z = param['force_threshold']
+        req.threshold.force.z = params['force_threshold']
         req.threshold.torque.x = 10
         req.threshold.torque.y = 10
         req.threshold.torque.z = 10
@@ -105,7 +103,7 @@ def send_end_vision_outcome_request(params):
     
         req = LegoOutcomeRequest()
         req.id = 0  
-        req.topic_name = '/side_camera/color/image_cropped'
+        req.topic_name = params['topic_name']
         req.start = False 
         req.score_threshold = params['detection_threshold']  
         

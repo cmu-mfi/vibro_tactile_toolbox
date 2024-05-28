@@ -1,11 +1,15 @@
 <launch>
     <arg name="namespace" default="yk_creator"/>
-    <arg name="start_trial" default="0"/>
+    <arg name="num_trials" default="10"/>
+    <arg name="verbose" default="true"/>
+    <arg name="config" default="1x4.yaml"/>
     <group ns="$(arg namespace)">
         <node pkg="vibro_tactile_toolbox" name="collect_tactile_data" type="collect_tactile_data.py" output="screen">
             <param name="namespace" value="$(arg namespace)"/>
             <param name="root_pwd" value="$(find vibro_tactile_toolbox)"/>
-            <param name="start_trial" value="$(arg start_trial)"/>
+            <param name="num_trials" value="$(arg num_trials)"/>
+            <param name="verbose" value="$(arg verbose)"/>
+            <param name="config" value="$(arg config)"/>
         </node>
     </group>
 </launch>
