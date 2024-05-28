@@ -26,7 +26,7 @@ def send_start_outcome_request(params):
         detect_fts = rospy.ServiceProxy('/fts_detector', FTSOutcome)
         fts_req = FTSOutcomeRequest()
         fts_req.id = 0
-        fts_req.topic_name = 'fts'  
+        fts_req.topic_name = params['fts_detector']['topic_name']  
         fts_req.start = True
         fts_req.threshold = Wrench()
         fts_req.threshold.force.x = 10
@@ -47,12 +47,12 @@ def send_start_outcome_request(params):
         lego_req.id = 0
         lego_req.topic_name = '/side_camera/color/image_cropped'
         lego_req.start = True
-        lego_req.score_threshold = params['detection_threshold']
+        lego_req.score_threshold = params['lego_detector']['detection_threshold']
         
         top_bbox = BoundingBox()
-        top_bbox.coords = params['top_bbox']
+        top_bbox.coords = params['lego_detector']['top_bbox']
         bot_bbox = BoundingBox()
-        bot_bbox.coords = params['bot_bbox']
+        bot_bbox.coords = params['lego_detector']['bot_bbox']
         lego_req.top_bbox = top_bbox
         lego_req.bot_bbox = bot_bbox
 
@@ -75,7 +75,7 @@ def send_end_fts_outcome_request(params):
         
         req = FTSOutcomeRequest()
         req.id = 0  
-        req.topic_name ='fts'
+        req.topic_name = params['topic_name'] 
         req.start = False  
         req.threshold = Wrench()
    

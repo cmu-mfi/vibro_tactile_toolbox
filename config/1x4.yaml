@@ -16,8 +16,10 @@ lift_height: 0.005
 place_rotation: 25
 pick_rotation: 25
 fts_detector:
+  topic_name: '/fts'
   force_threshold: 1.0
 lego_detector:
+  topic_name: '/side_camera/color/image_cropped'
   top_bbox:
     - 900
     - 150

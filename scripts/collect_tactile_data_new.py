@@ -128,7 +128,7 @@ def run():
 
         terminals = move_to_above_perturb_lego_skill.execute_skill(execution_params, move_to_above_perturb_lego_params)
 
-        outcomes = send_start_outcome_request(config['lego_detector'])
+        outcomes = send_start_outcome_request({k: config[k] for k in ('fts_detector', 'lego_detector')})
 
         if outcomes['starting_top'] == 1 and outcomes['starting_bottom'] == 0:
             skill_type = "place"
