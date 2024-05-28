@@ -1,0 +1,42 @@
+lego_ee_tf: "/transforms/lego_ee.tf"
+lego_world_tf: "/transforms/yk_creator_lego_pose.tf"
+results_dif: "/results/"
+block_type: "1x4"
+x_range:
+  - -0.005
+  - 0.005
+y_range: 
+  - -0.005
+  - 0.005
+theta_range: 
+  - -10.0
+  - 10.0
+approach_height: 0.02
+lift_height: 0.005
+place_rotation: 25
+pick_rotation: 25
+fts_detector:
+  force_threshold: 1.0
+lego_detector:
+  top_bbox:
+    - 900
+    - 150
+    - 1100
+    - 350
+  bot_bbox:
+    - 900
+    - 425
+    - 1100
+    - 575
+  detection_threshold: 0.8
+rosbag_data_recorder:
+  topics:
+    - /side_camera/color/image_cropped
+    - /camera/color/image_raw
+    - /namespace/joint_states
+    - /fts
+    - /audio
+    - /audio_info
+    - /namespace/terminator/skill_termination_signal
+    - /outcome/lego_detector
+    - /outcome/fts_detector

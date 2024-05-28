@@ -61,9 +61,13 @@ class BaseSkill:
                 skill_step_params = params['skill_step_params']
 
         terminals = []
-        outcomes = []
+
+        if self.params['verbose']:
+            print(f"\n=== " + print(type(self).__name__) + " ===")
+
         for skill_step in self.skill_steps:
-            print(f"Executing skill step: \'{skill_step['step_name']}\'")
+            if self.params['verbose']:
+                print(f"Executing skill step: \'{skill_step['step_name']}\'")
 
             # Read in any pre-loaded step parameter
             if skill_step_params and skill_step['step_name'] in skill_step_params:
@@ -71,10 +75,12 @@ class BaseSkill:
             else:
                 step_param = BaseSkill.NULL_PARAM
 
-            # Execute the skill step and record the termination cause and outcome
-            terminal, outcome = self.execute_skill_step(skill_step, step_param)
+            # Execute the skill step and record the termination cause
+            terminal = self.execute_skill_step(skill_step, step_param)
             terminals.append(terminal)
-            outcomes.append(outcome)
+
+            if self.params['verbose']:
+                print(f"\nTerminated with status:\n'{terminals[i].cause}'")
 
             # TODO: If outcome is unsuccessful:
             #   Query some policy to get a new step_param
@@ -86,7 +92,7 @@ class BaseSkill:
             if skill_step_delay:
                 rospy.sleep(skill_step_delay)
 
-        return terminals, outcomes
+        return terminals
 
     def execute_skill_step(self, skill_step, param) -> Tuple[TerminationSignal, int]:
         """
@@ -130,14 +136,9 @@ class BaseSkill:
         termination_cfg_msg.cfg_json = json.dumps(termination_cfg)
         self.termination_config_pub.publish(termination_cfg_msg)
         rospy.sleep(0.5) # sleep 500ms to allow for inertia to stop
-        # 4. Get outcome
-        if 'outcome' in skill_step:
-            outcome = skill_step['outcome'](param['outcome'])
-        else:
-            outcome = None
 
-        # 5. Return terminal and outcome
-        return termination_signal, outcome
+        # 5. Return terminal
+        return termination_signal
 
 
     def stop_robot(self):

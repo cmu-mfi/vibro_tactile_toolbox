@@ -86,7 +86,7 @@
       source /ros1_ws/devel/setup.bash
       cd /home/repos/ros1_ws/src/kevin/vibro_tactile_toolbox/
       git pull
-      python3 scripts/lego_detector.py
+      python3 src/outcome/lego_detector.py
       ```
     - To test that it's running:
       ```sh
@@ -97,7 +97,7 @@
     - Navigate to the vibro_tactile_toolbox directory and run:
       ```sh
       roscd vibro_tactile_toolbox
-      python3 scripts/fts_detector.py
+      python3 src/outcome/fts_detector.py
       ```
     - To test that it's running:
       ```sh

@@ -51,10 +51,10 @@ def run():
     robot_mg = YaskawaRobotCommander(namespace)
     
     # Load End-Effector Kinematics
-    T_lego_ee = RigidTransform.load(root_pwd+'/config/lego_ee.tf')
+    T_lego_ee = RigidTransform.load(root_pwd+'/transforms/lego_ee.tf')
 
     # Load Lego block registration pose 
-    T_lego_world = RigidTransform.load(root_pwd+'/config/yk_creator_lego_pose.tf')
+    T_lego_world = RigidTransform.load(root_pwd+'/transforms/yk_creator_lego_pose.tf')
 
     # Make Skills with Perturbations
     # 1. Approach close point

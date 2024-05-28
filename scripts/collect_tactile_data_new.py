@@ -2,16 +2,19 @@
 
 import rospy
 import os
+import numpy as np
 
 from robot_controller.yk_controller import YaskawaRobotController
 
 from autolab_core import RigidTransform
 
-from skill.lego_skills import PullUp, MoveToLegoPose, MoveToPerturbLegoPose, PlaceLego, MoveDown
+from skill.lego_skills import PullUp, MoveToAboveLegoPose, MoveToAbovePerturbLegoPose, PickLego, PlaceLego, MoveDown
 from skill.util_skills import GoHomeSkill
+from outcome.lego_outcome import *
 
 from data_recorder.rosbag_data_recorder import RosbagDataRecorder
 
+import yaml
 
 STUD_WIDTH = 0.008 # mm
 LEGO_BLOCK_HEIGHT=0.0096 #z
@@ -20,85 +23,93 @@ LEGO_BLOCK_HEIGHT=0.0096 #z
 LEGO_BLOCK_WIDTH=1*STUD_WIDTH #x    #0.0158 (with clearance)
 LEGO_BLOCK_LENGTH=2*STUD_WIDTH #y   #0.0318 (with clearance)
 
-results_dir = "/home/mfi/repos/ros1_ws/src/kevin/vibro_tactile_toolbox/results"
-
 def run():
     # Start Node
-    rospy.init_node("collect_tactile_data")
+    rospy.init_node("collect_tactile_data_new")
 
     # Messaging Namespace
-    namespace = rospy.get_param("collect_tactile_data/namespace")
-    root_pwd = rospy.get_param("collect_tactile_data/root_pwd")
+    namespace = rospy.get_param("collect_tactile_data_new/namespace")
+    root_pwd = rospy.get_param("collect_tactile_data_new/root_pwd")
+    yaml_file = rospy.get_param("collect_tactile_data_new/config")
+    num_trials = rospy.get_param("collect_tactile_data_new/num_trials")
+    verbose = rospy.get_param("collect_tactile_data_new/verbose")
+
+    with open(root_pwd+'/config/'+yaml_file) as stream:
+        try:
+            config = yaml.safe_load(stream)
+        except yaml.YAMLError as error:
+            print(error)
+
+    results_dir = root_pwd+config['results_dir']+config['block_type']+'/'
 
     # Instantiate robot controller for Yaskawa API
     robot_commander = YaskawaRobotController(namespace)
 
     # Load End-Effector Kinematics
-    T_lego_ee = RigidTransform.load(root_pwd+'/config/lego_ee.tf')
+    T_lego_ee = RigidTransform.load(root_pwd+config['lego_ee_tf'])
 
     # Load Lego block registration pose 
-    T_lego_world = RigidTransform.load(root_pwd+'/config/yk_creator_lego_pose.tf')
+    T_lego_world = RigidTransform.load(root_pwd+config['lego_world_tf'])
 
     ### Skill Routine ###
-    perturbations = [(0, 0, -LEGO_BLOCK_HEIGHT/2),
-                     (0, STUD_WIDTH/2, 0),
-                     (0, -STUD_WIDTH/2, 0),
-                     (STUD_WIDTH/2, 0, 0),
-                     (-STUD_WIDTH/2, 0, 0),
-                     (STUD_WIDTH/2, STUD_WIDTH/2, 0),
-                     (-STUD_WIDTH/2, -STUD_WIDTH/2, 0)]
-    perturbations = [(0.0000, 0.0040, 0.000)]
+    params = {'T_lego_ee': T_lego_ee, 
+              'verbose': verbose}
 
-    params = {'T_lego_ee': T_lego_ee}
-
-    move_to_lego_pose_skill = MoveToLegoPose(robot_commander, namespace, params)
-    move_to_perturb_lego_skill = MoveToPerturbLegoPose(robot_commander, namespace, params)
+    move_to_above_lego_pose_skill = MoveToAboveLegoPose(robot_commander, namespace, params)
+    move_to_above_perturb_lego_skill = MoveToAbovePerturbLegoPose(robot_commander, namespace, params)
     pull_up_skill = PullUp(robot_commander, namespace, params)
     move_down_skill = MoveDown(robot_commander, namespace, params)
     place_lego_skill = PlaceLego(robot_commander, namespace, params)
+    pick_lego_skill = PickLego(robot_commander, namespace, params)
     home_skill = GoHomeSkill(robot_commander, namespace, params)
     data_recorder = RosbagDataRecorder()
+
+    topics = []
+
+    for topic in config['rosbag_data_recorder']['topics']:
+        if 'namespace' in topic:
+            topic = topic.replace("namespace", namespace)
+        topics.append(topic)
+
     recording_params = {
-        'topics': [f"/side_camera/color/image_cropped",
-                f"/camera/color/image_raw",
-                f"/{namespace}/joint_states",
-                f"/fts",
-                f"/audio",
-                f"/audio_info",
-                f"/{namespace}/terminator/skill_termination_signal",
-                f"/outcome/lego_detector",
-                f"/outcome/fts_detector"]
+        'topics': topics
     }
 
     # Tasks to do
-    for p in perturbations:
-        #p_m = (p[0] / 1000, p[1] / 1000, p[2] / 1000)
-        p_m = p
+    for trial_num in range(num_trials):
+        x_perturb = np.random.uniform(config['x_range'][0], config['x_range'][1])
+        y_perturb = np.random.uniform(config['y_range'][0], config['y_range'][1])
+        theta_perturb = np.random.uniform(config['theta_range'][0], config['theta_range'][1])
+
+
         # 1. Begin rosbag recording
-        #rosbag_name = f"1x4/place-correct-p_{p_m[0]:0.4f}_{p_m[1]:0.4f}_{p_m[2]:0.4f}"
-        rosbag_name = f"1x4/test"
+        rosbag_name = f"trial_{trial_num}-p_{x_perturb:0.4f}_{y_perturb:0.4f}_{theta_perturb:0.4f}.bag"
         rosbag_path = os.path.join(results_dir, rosbag_name)
 
         data_recorder.start_recording(rosbag_path, recording_params)
 
-        # 2. Begin Skill
-        move_to_perturb_lego_params = {
+        # 2. Determine Skill Parameters
+        move_to_above_perturb_lego_params = {
             'T_lego_world': T_lego_world,
-            'approach_height_offset': 0.020,
-            'place_perturbation': p_m
+            'approach_height_offset': config['approach_height_offset'],
+            'place_perturbation': [x_perturb, y_perturb, theta_perturb]
         }
 
-        move_to_lego_params = {
+        move_to_above_lego_params = {
             'T_lego_world': T_lego_world,
-            'approach_height_offset': 0.020,
+            'approach_height_offset': config['approach_height_offset'],
         }
 
         pull_up_params = {
-            'lift_height_offset': 0.01
+            'lift_height_offset': config['lift_height']
         }
 
-        move_down_params = {
-            'height_offset': 0.01
+        move_down_to_block_params = {
+            'height_offset': config['approach_height_offset']
+        }
+
+        move_down_to_reconnect_params = {
+            'height_offset': config['lift_height']
         }
 
         execution_params = {
@@ -106,65 +117,104 @@ def run():
         }
 
         place_lego_params = {
-            'place_rotation': 25.0,
-            'lift_height_offset': 0.020,
+            'place_rotation': config['place_rotation'],
+            'lift_height_offset': config['approach_height_offset'],
         }
 
-        terminals, outcomes = move_to_perturb_lego_skill.execute_skill(execution_params, move_to_perturb_lego_params)
+        pick_lego_params = {
+            'pick_rotation': config['pick_rotation'],
+            'lift_height_offset': config['approach_height_offset'],
+        }
 
-        for i in range(len(terminals)):
-            print(f"\n\n=== {move_to_perturb_lego_skill.skill_steps[i]['step_name']} ===" +
-                f"\nTerminated with status:\n'{terminals[i].cause}'" +
-                f"\nAnd outcome:\n{outcomes[i]}")
+        terminals = move_to_above_perturb_lego_skill.execute_skill(execution_params, move_to_above_perturb_lego_params)
 
-        terminals, outcomes = pull_up_skill.execute_skill(execution_params, pull_up_params)
+        outcomes = send_start_outcome_request(config['lego_detector'])
 
-        for i in range(len(terminals)):
-            print(f"\n\n=== {move_to_perturb_lego_skill.skill_steps[i]['step_name']} ===" +
-                f"\nTerminated with status:\n'{terminals[i].cause}'" +
-                f"\nAnd outcome:\n{outcomes[i]}")
+        if outcomes['starting_top'] == 1 and outcomes['starting_bottom'] == 0:
+            skill_type = "place"
+        elif outcomes['starting_top'] == 0 and outcomes['starting_bottom'] == 1:
+            skill_type = "pick"
+        else:
+            print("Error in skill type. Skipping trial")
+            data_recorder.stop_recording()
 
-        if outcomes[-1]['success'] == False:
-            terminals, outcomes = move_to_lego_pose_skill.execute_skill(execution_params, move_to_lego_params)
+            labeled_rosbag_path = rosbag_path.split(".")[0] + f"_vision_error." + rosbag_path.split(".")[1]
+            os.rename(rosbag_path, labeled_rosbag_path)
 
-            for i in range(len(terminals)):
-                print(f"\n\n=== {move_to_perturb_lego_skill.skill_steps[i]['step_name']} ===" +
-                    f"\nTerminated with status:\n'{terminals[i].cause}'" +
-                    f"\nAnd outcome:\n{outcomes[i]}")
+            terminals = home_skill.execute_skill(None)
+            break
 
-            terminals, outcomes = pull_up_skill.execute_skill(execution_params, pull_up_params)
+        terminals = move_down_skill.execute_skill(execution_params, move_down_to_block_params)
 
-            for i in range(len(terminals)):
-                print(f"\n\n=== {move_to_perturb_lego_skill.skill_steps[i]['step_name']} ===" +
-                    f"\nTerminated with status:\n'{terminals[i].cause}'" +
-                    f"\nAnd outcome:\n{outcomes[i]}")
+        terminals = pull_up_skill.execute_skill(execution_params, pull_up_params)
 
-        terminals, outcomes = move_down_skill.execute_skill(execution_params, move_down_params)
+        outcomes = send_end_fts_outcome_request()
 
-        for i in range(len(terminals)):
-            print(f"\n\n=== {move_to_perturb_lego_skill.skill_steps[i]['step_name']} ===" +
-                f"\nTerminated with status:\n'{terminals[i].cause}'" +
-                f"\nAnd outcome:\n{outcomes[i]}")
+        if outcomes['success'] == False:
+            terminals = move_to_above_lego_pose_skill.execute_skill(execution_params, move_to_above_lego_params)
 
-        terminals, outcomes = place_lego_skill.execute_skill(execution_params, place_lego_params)
+            outcomes = send_start_outcome_request()
 
-        for i in range(len(terminals)):
-            print(f"\n\n=== {move_to_perturb_lego_skill.skill_steps[i]['step_name']} ===" +
-                f"\nTerminated with status:\n'{terminals[i].cause}'" +
-                f"\nAnd outcome:\n{outcomes[i]}")
+            if outcomes['starting_top'] == 1 and outcomes['starting_bottom'] == 0:
+                skill_type = "place"
+            elif outcomes['starting_top'] == 0 and outcomes['starting_bottom'] == 1:
+                skill_type = "pick"
+            else:
+                print("Error in skill type. Skipping trial")
+                data_recorder.stop_recording()
 
-        print('Outcomes:',outcomes[-1])        
+                labeled_rosbag_path = rosbag_path.split(".")[0] + f"_vision_error." + rosbag_path.split(".")[1]
+                os.rename(rosbag_path, labeled_rosbag_path)
+
+                terminals = home_skill.execute_skill(None)
+                break
+
+            terminals = move_down_skill.execute_skill(execution_params, move_down_to_block_params)
+
+            terminals = pull_up_skill.execute_skill(execution_params, pull_up_params)
+
+            outcomes = send_end_fts_outcome_request(config['fts_detector'])
+
+        if outcomes['success'] == False:
+            print("Failed to pull up lego. Skipping trial")
+            data_recorder.stop_recording()
+
+            labeled_rosbag_path = rosbag_path.split(".")[0] + f"_connection_failure." + rosbag_path.split(".")[1]
+            os.rename(rosbag_path, labeled_rosbag_path)
+
+            terminals = home_skill.execute_skill(None)
+            continue
+        else:
+            terminals = move_down_skill.execute_skill(execution_params, move_down_to_reconnect_params)
+
+        if skill_type == "place":
+            terminals = place_lego_skill.execute_skill(execution_params, place_lego_params)
+        elif skill_type == "pick":
+            terminals = pick_lego_skill.execute_skill(execution_params, pick_lego_params)
+
+        outcomes = send_end_vision_outcome_request(config['lego_detector'])
 
         # 3. End rosbag recording
         data_recorder.stop_recording()
 
-        terminals, outcomes = home_skill.execute_skill(None)
+        if outcomes['starting_top'] + outcomes['starting_bottom'] == outcomes['ending_top'] + outcomes['ending_bottom']:
+            if outcomes['success']:
+                labeled_rosbag_path = rosbag_path.split(".")[0] + "_" + skill_type + "_success." + rosbag_path.split(".")[1]
+                os.rename(rosbag_path, labeled_rosbag_path)
+            else:
+                labeled_rosbag_path = rosbag_path.split(".")[0] + "_" + skill_type + "_failure." + rosbag_path.split(".")[1]
+                os.rename(rosbag_path, labeled_rosbag_path)
+        else:
+            labeled_rosbag_path = rosbag_path.split(".")[0] + "_" + skill_type + "_error." + rosbag_path.split(".")[1]
+            os.rename(rosbag_path, labeled_rosbag_path)
+            break
 
-        input(f"Reset Lego on arm. Press [Enter] when ready for next trial")
-
+        if outcomes['ending_top'] == 1:
+            pass
+        elif outcomes['ending_bottom'] == 1:
+            pass
+        
+        terminals = home_skill.execute_skill(None)
 
 if __name__ == "__main__":
-    # original_sigint = signal.getsignal(signal.SIGINT)
-    # signal.signal(signal.SIGINT, exit_gracefully)
-
     run()
