@@ -32,6 +32,7 @@ def run():
     root_pwd = rospy.get_param("collect_tactile_data/root_pwd")
     yaml_file = rospy.get_param("collect_tactile_data/config")
     num_trials = rospy.get_param("collect_tactile_data/num_trials")
+    start_num = rospy.get_param("collect_tactile_data/start_num")
     verbose = rospy.get_param("collect_tactile_data/verbose")
 
     with open(root_pwd+'/config/'+yaml_file) as stream:
@@ -40,7 +41,7 @@ def run():
         except yaml.YAMLError as error:
             print(error)
 
-    results_dir = root_pwd+config['results_dir']+config['block_type']+'/'
+    data_dir = root_pwd+config['data_dir']+config['block_type']+'/'
 
     # Instantiate robot controller for Yaskawa API
     robot_commander = YaskawaRobotController(namespace)
@@ -76,7 +77,7 @@ def run():
     }
 
     # Tasks to do
-    for trial_num in range(num_trials):
+    for trial_num in range(start_num, start_num+num_trials):
         x_perturb = np.random.uniform(config['x_range'][0], config['x_range'][1])
         y_perturb = np.random.uniform(config['y_range'][0], config['y_range'][1])
         theta_perturb = np.random.uniform(config['theta_range'][0], config['theta_range'][1])
@@ -84,7 +85,7 @@ def run():
 
         # 1. Begin rosbag recording
         rosbag_name = f"trial_{trial_num}-p_{x_perturb:0.4f}_{y_perturb:0.4f}_{theta_perturb:0.4f}.bag"
-        rosbag_path = os.path.join(results_dir, rosbag_name)
+        rosbag_path = os.path.join(data_dir, rosbag_name)
 
         data_recorder.start_recording(rosbag_path, recording_params)
 
@@ -101,15 +102,13 @@ def run():
         }
 
         pull_up_params = {
-            'lift_height_offset': config['lift_height']
+            'lift_height_offset': config['lift_height'],
+            'velocity_scaling': config['pull_up_velocity_scaling']
         }
 
-        move_down_to_block_params = {
-            'height_offset': config['approach_height']
-        }
-
-        move_down_to_reconnect_params = {
-            'height_offset': config['lift_height']
+        move_down_params = {
+            'height_offset': config['approach_height'],
+            'velocity_scaling': config['move_down_velocity_scaling']
         }
 
         execution_params = {
@@ -130,8 +129,6 @@ def run():
 
         outcomes = send_start_outcome_request({k: config[k] for k in ('fts_detector', 'lego_detector')})
 
-        print(outcomes)
-
         if outcomes['starting_top'] == 1 and outcomes['starting_bottom'] == 0:
             skill_type = "place"
         elif outcomes['starting_top'] == 0 and outcomes['starting_bottom'] == 1:
@@ -148,7 +145,7 @@ def run():
             terminals = home_skill.execute_skill(None)
             break
 
-        terminals = move_down_skill.execute_skill(execution_params, move_down_to_block_params)
+        terminals = move_down_skill.execute_skill(execution_params, move_down_params)
 
         terminals = pull_up_skill.execute_skill(execution_params, pull_up_params)
 
@@ -175,7 +172,7 @@ def run():
                 terminals = home_skill.execute_skill(None)
                 break
 
-            terminals = move_down_skill.execute_skill(execution_params, move_down_to_block_params)
+            terminals = move_down_skill.execute_skill(execution_params, move_down_params)
 
             terminals = pull_up_skill.execute_skill(execution_params, pull_up_params)
 

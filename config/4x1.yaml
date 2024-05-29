@@ -1,7 +1,7 @@
 lego_ee_tf: "/transforms/lego_ee.tf"
 lego_world_tf: "/transforms/lego_world.tf"
-results_dir: "/results/"
-block_type: "1x4"
+data_dir: "/data/"
+block_type: "4x1"
 x_range:
   - -0.005
   - 0.005
@@ -12,7 +12,9 @@ theta_range:
   - -10.0
   - 10.0
 approach_height: 0.03
+move_down_velocity_scaling: 0.01
 lift_height: 0.01
+pull_up_velocity_scaling: 0.001
 place_rotation: 25
 pick_rotation: 25
 fts_detector:

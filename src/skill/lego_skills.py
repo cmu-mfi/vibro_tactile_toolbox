@@ -193,15 +193,19 @@ class PullUp(BaseSkill):
 
         self.skill_steps = [
             {'step_name': 'pull_up',
-             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.pull_up_pose_msg, wait=False, velocity_scaling=0.001),
-             'termination_cfg': lambda param: add_termination_pose(servo_termination_config, self.pull_up_pose_msg),
-             'outcome': lambda param: send_end_fts_outcome_request(param)},
+             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.pull_up_pose_msg, wait=False, velocity_scaling=self.velocity_scaling),
+             'termination_cfg': lambda param: add_termination_pose(servo_termination_config, self.pull_up_pose_msg)},
         ]
 
     def execute_skill(self, execution_params, skill_params) -> Tuple[List[TerminationSignal], List[int]]:
         # QOL 
         if 'lift_height_offset' not in skill_params:
             print(f"PullUp expects an lift height offset (meters): skill_params['lift_height_offset'] = float(0.001 m)")
+        if 'velocity_scaling' not in skill_params:
+            self.velocity_scaling = 0.001
+            print(f"No initial velocity scaling specified, using: {self.velocity_scaling}")
+        else:
+            self.velocity_scaling = skill_params['velocity_scaling']
 
         current_pose_msg = self.robot_commander.get_current_pose()
         current_pose = RigidTransform.from_pose_msg(current_pose_msg, from_frame='ee')
@@ -227,7 +231,7 @@ class MoveDown(BaseSkill):
 
         self.skill_steps = [
             {'step_name': 'move_down',
-             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.move_down_pose_msg, wait=False, velocity_scaling=0.01),
+             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.move_down_pose_msg, wait=False, velocity_scaling=self.velocity_scaling),
              'termination_cfg': lambda param: add_termination_pose(engage_termination_config, self.move_down_pose_msg)},
         ]
 
@@ -235,6 +239,11 @@ class MoveDown(BaseSkill):
         # QOL 
         if 'height_offset' not in skill_params:
             print(f"MoveDown expects a height offset (meters): skill_params['height_offset'] = float(0.001 m)")
+        if 'velocity_scaling' not in skill_params:
+            self.velocity_scaling = 0.01
+            print(f"No initial velocity scaling specified, using: {self.velocity_scaling}")
+        else:
+            self.velocity_scaling = skill_params['velocity_scaling']
 
         current_pose_msg = self.robot_commander.get_current_pose()
         current_pose = RigidTransform.from_pose_msg(current_pose_msg, from_frame='ee')
