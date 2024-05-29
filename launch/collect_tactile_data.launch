@@ -1,7 +1,7 @@
 <launch>
     <arg name="namespace" default="yk_creator"/>
     <arg name="num_trials" default="10"/>
-    <arg name="start_num" default="20"/>
+    <arg name="start_num" default="0"/>
     <arg name="verbose" default="true"/>
     <arg name="config" default="4x1.yaml"/>
     <group ns="$(arg namespace)">

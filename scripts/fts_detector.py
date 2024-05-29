@@ -47,41 +47,41 @@ class FTSDetector:
             result = ''
             if self.wrench_threshold.force.x > 0:
                 if (current_wrench.force.x - self.starting_wrench.force.x) > self.wrench_threshold.force.x:
-                    result += f"Fx diff ({(current_wrench.force.x - self.starting_wrench.force.x):0.2f}) exceeds threshold ({self.wrench_threshold.force.x:0.2f})\n"
+                    result += f"Fx diff ({(current_wrench.force.x - self.starting_wrench.force.x):0.2f}) exceeds threshold ({self.wrench_threshold.force.x:0.2f}) "
             else:
                 if (current_wrench.force.x - self.starting_wrench.force.x) < self.wrench_threshold.force.x:
-                    result += f"Fx diff ({(current_wrench.force.x - self.starting_wrench.force.x):0.2f}) exceeds threshold ({self.wrench_threshold.force.x:0.2f})\n"
+                    result += f"Fx diff ({(current_wrench.force.x - self.starting_wrench.force.x):0.2f}) exceeds threshold ({self.wrench_threshold.force.x:0.2f}) "
             if self.wrench_threshold.force.y > 0:
                 if (current_wrench.force.y - self.starting_wrench.force.y) > self.wrench_threshold.force.y:
-                    result += f"Fy diff ({(current_wrench.force.y - self.starting_wrench.force.y):0.2f}) exceeds threshold ({self.wrench_threshold.force.y:0.2f})\n"
+                    result += f"Fy diff ({(current_wrench.force.y - self.starting_wrench.force.y):0.2f}) exceeds threshold ({self.wrench_threshold.force.y:0.2f}) "
             else:
                 if (current_wrench.force.y - self.starting_wrench.force.y) < self.wrench_threshold.force.y:
-                    result += f"Fy diff ({(current_wrench.force.y - self.starting_wrench.force.y):0.2f}) exceeds threshold ({self.wrench_threshold.force.y:0.2f})\n"
+                    result += f"Fy diff ({(current_wrench.force.y - self.starting_wrench.force.y):0.2f}) exceeds threshold ({self.wrench_threshold.force.y:0.2f}) "
             if self.wrench_threshold.force.z > 0:
                 if (current_wrench.force.z  - self.starting_wrench.force.z) > self.wrench_threshold.force.z:
-                    result += f"Fz diff ({(current_wrench.force.z - self.starting_wrench.force.z):0.2f}) exceeds threshold ({self.wrench_threshold.force.z:0.2f})\n"
+                    result += f"Fz diff ({(current_wrench.force.z - self.starting_wrench.force.z):0.2f}) exceeds threshold ({self.wrench_threshold.force.z:0.2f}) "
             else:
                 if (current_wrench.force.z - self.starting_wrench.force.z) < self.wrench_threshold.force.z:
-                    result += f"Fz diff ({(current_wrench.force.z - self.starting_wrench.force.z):0.2f}) exceeds threshold ({self.wrench_threshold.force.z:0.2f})\n"
+                    result += f"Fz diff ({(current_wrench.force.z - self.starting_wrench.force.z):0.2f}) exceeds threshold ({self.wrench_threshold.force.z:0.2f}) "
 
             if self.wrench_threshold.torque.x > 0:
                 if (current_wrench.torque.x - self.starting_wrench.torque.x) > self.wrench_threshold.torque.x:
-                    result += f"Fx diff ({(current_wrench.torque.x - self.starting_wrench.torque.x):0.2f}) exceeds threshold ({self.wrench_threshold.torque.x:0.2f})\n"
+                    result += f"Fx diff ({(current_wrench.torque.x - self.starting_wrench.torque.x):0.2f}) exceeds threshold ({self.wrench_threshold.torque.x:0.2f}) "
             else:
                 if (current_wrench.torque.x - self.starting_wrench.torque.x) < self.wrench_threshold.torque.x:
-                    result += f"Fx diff ({(current_wrench.torque.x - self.starting_wrench.torque.x):0.2f}) exceeds threshold ({self.wrench_threshold.torque.x:0.2f})\n"
+                    result += f"Fx diff ({(current_wrench.torque.x - self.starting_wrench.torque.x):0.2f}) exceeds threshold ({self.wrench_threshold.torque.x:0.2f}) "
             if self.wrench_threshold.torque.y > 0:
                 if (current_wrench.torque.y - self.starting_wrench.torque.y) > self.wrench_threshold.torque.y:
-                    result += f"Fy diff ({(current_wrench.torque.y - self.starting_wrench.torque.y):0.2f}) exceeds threshold ({self.wrench_threshold.torque.y:0.2f})\n"
+                    result += f"Fy diff ({(current_wrench.torque.y - self.starting_wrench.torque.y):0.2f}) exceeds threshold ({self.wrench_threshold.torque.y:0.2f}) "
             else:
                 if (current_wrench.torque.y - self.starting_wrench.torque.y) < self.wrench_threshold.torque.y:
-                    result += f"Fy diff ({(current_wrench.torque.y - self.starting_wrench.torque.y):0.2f}) exceeds threshold ({self.wrench_threshold.torque.y:0.2f})\n"
+                    result += f"Fy diff ({(current_wrench.torque.y - self.starting_wrench.torque.y):0.2f}) exceeds threshold ({self.wrench_threshold.torque.y:0.2f}) "
             if self.wrench_threshold.torque.z > 0:
                 if (current_wrench.torque.z - self.starting_wrench.torque.z) > self.wrench_threshold.torque.z:
-                    result += f"Fz diff ({(current_wrench.torque.z - self.starting_wrench.torque.z):0.2f}) exceeds threshold ({self.wrench_threshold.torque.z:0.2f})\n"
+                    result += f"Fz diff ({(current_wrench.torque.z - self.starting_wrench.torque.z):0.2f}) exceeds threshold ({self.wrench_threshold.torque.z:0.2f}) "
             else:
                 if (current_wrench.torque.z - self.starting_wrench.torque.z) < self.wrench_threshold.torque.z:
-                    result += f"Fz diff ({(current_wrench.torque.z - self.starting_wrench.torque.z):0.2f}) exceeds threshold ({self.wrench_threshold.torque.z:0.2f})\n"
+                    result += f"Fz diff ({(current_wrench.torque.z - self.starting_wrench.torque.z):0.2f}) exceeds threshold ({self.wrench_threshold.torque.z:0.2f}) "
 
             success = (len(result) > 0)
             resp.result = json.dumps({'starting_forces' : [self.starting_wrench.force.x, self.starting_wrench.force.y, self.starting_wrench.force.z], 

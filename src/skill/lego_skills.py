@@ -310,9 +310,6 @@ class PlaceLego(BaseSkill):
         current_pose_msg = self.robot_commander.get_current_pose()
         current_pose = RigidTransform.from_pose_msg(current_pose_msg, from_frame='ee')
 
-        print(current_pose)
-        print(current_pose * self.T_lego_ee)
-
         self.lift_pose = current_pose * self.T_ee_lift
         self.lift_pose_msg = self.lift_pose.pose_msg
 
@@ -370,9 +367,6 @@ class PickLego(BaseSkill):
 
         current_pose_msg = self.robot_commander.get_current_pose()
         current_pose = RigidTransform.from_pose_msg(current_pose_msg, from_frame='ee')
-
-        print(current_pose)
-        print(current_pose * self.T_lego_ee)
 
         self.lift_pose = current_pose * self.T_ee_lift
         self.lift_pose_msg = self.lift_pose.pose_msg

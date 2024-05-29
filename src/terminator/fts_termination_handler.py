@@ -84,7 +84,7 @@ class FTSTerminationHandler(BaseTerminationHandler):
         Create the termination signal and add causes based on fts_wrench magnitude and the threshold
         """
         terminate = False
-        cause_header = "FTS termination handler caused by:"
+        cause_header = "FTS termination handler caused by: "
         causes = []
 
         # Fx-
@@ -93,7 +93,6 @@ class FTSTerminationHandler(BaseTerminationHandler):
         # Fx+
         if (self.fts_wrench.force.x > self.wrench_thresh_hi.force.x):
             causes.append(f"Fx ({self.fts_wrench.force.x:0.2f}) exceeds threshold ({self.wrench_thresh_hi.force.x:0.2f})")
-            terminate = True
         # Fy-
         if (self.fts_wrench.force.y < self.wrench_thresh_lo.force.y):
             causes.append(f"Fy ({self.fts_wrench.force.y:0.2f}) exceeds threshold ({self.wrench_thresh_lo.force.y:0.2f})")
@@ -126,8 +125,11 @@ class FTSTerminationHandler(BaseTerminationHandler):
         if (self.fts_wrench.torque.z > self.wrench_thresh_hi.torque.z):
             causes.append(f"Tz ({self.fts_wrench.torque.z:0.2f}) exceeds threshold ({self.wrench_thresh_hi.torque.z:0.2f})")
         
-        terminate = len(causes)  > 0
-        cause = "\n".join([cause_header] + causes)
+        terminate = len(causes) > 0
+        if terminate:
+            cause = cause_header + " ".join(causes)
+        else:
+            cause = ''
 
         termination_signal = TerminationSignal()
         termination_signal.id = self.id

@@ -38,9 +38,12 @@ tmux send-keys -t VTT-core:lego_detector 'echo see README for launch instruction
 tmux send-keys -t VTT-core:lego_detector 'roscd vibro_tactile_toolbox' C-m 
 tmux send-keys -t VTT-core:lego_detector 'cd docker' C-m 
 tmux send-keys -t VTT-core:lego_detector './run  -i noetic_vibro_tactile_toolbox -c lego_detector -g' C-m 
-tmux send-keys -t VTT-core:lego_detector 'source /ros1_ws/devel/setup.bash' C-m 
-tmux send-keys -t VTT-core:lego_detector 'cd /home/repos/ros1_ws/src/kevin/vibro_tactile_toolbox/' C-m 
+tmux send-keys -t VTT-core:lego_detector 'cd /ros1_ws/src/vibro_tactile_toolbox/' C-m 
 tmux send-keys -t VTT-core:lego_detector 'git pull' C-m
+tmux send-keys -t VTT-core:lego_detector 'cd /ros1_ws' C-m
+tmux send-keys -t VTT-core:lego_detector 'catkin build' C-m
+tmux send-keys -t VTT-core:lego_detector 'source devel/setup.bash' C-m
+tmux send-keys -t VTT-core:lego_detector 'cd /home/repos/ros1_ws/src/kevin/vibro_tactile_toolbox/' C-m
 tmux send-keys -t VTT-core:lego_detector 'python3 scripts/lego_detector.py'  C-m 
 
 # attach the tmux session to check

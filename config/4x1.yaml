@@ -1,6 +1,6 @@
 lego_ee_tf: "/transforms/lego_ee.tf"
 lego_world_tf: "/transforms/lego_world.tf"
-data_dir: "/data/"
+data_dir: "/mnt/hdd1/vibrotactile_data/lego/"
 block_type: "4x1"
 x_range:
   - -0.005

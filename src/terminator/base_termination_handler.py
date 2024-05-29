@@ -31,5 +31,8 @@ class BaseTerminationHandler(object, metaclass=abc.ABCMeta):
     def get_termination_signal(self) -> TerminationSignal:
         """
         Callback to produce the termination signal
+
+        Note - Do not add newline characters or commas to the TerminationSignal.cause string
+               This will break post processing scripts that rely on csv/text files
         """
         raise NotImplementedError

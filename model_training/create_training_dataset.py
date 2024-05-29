@@ -115,6 +115,7 @@ def segment_trial(dataset_dir, lagging_buffer=0.5, leading_buffer=0.5):
             if line.startswith('#'): continue
             entries = line.split(',')
             entries = [e.strip() for e in entries]
+            # entries = [timestamp, cause]
             timestamp, termination_cause = float(entries[0]), entries[1]
             terminals.append((timestamp, termination_cause))
     terminals.sort(key=lambda x: x[0])
@@ -127,6 +128,7 @@ def segment_trial(dataset_dir, lagging_buffer=0.5, leading_buffer=0.5):
             if line.startswith('#'): continue
             entries = line.split(',')
             entries = [e.strip() for e in entries]
+            # entries = [timestamp, result, success, outcome_ann]
             timestamp, result, success, outcome_ann = float(entries[0]), entries[1], entries[2], entries[3]
             if string_to_bool(success) is not None:
                 outcomes.append((timestamp, success, outcome_ann))
@@ -136,6 +138,7 @@ def segment_trial(dataset_dir, lagging_buffer=0.5, leading_buffer=0.5):
             if line.startswith('#'): continue
             entries = line.split(',')
             entries = [e.strip() for e in entries]
+            # entries = [timestamp, result, success]
             timestamp, result, success = float(entries[0]), entries[1], entries[2]     
             if string_to_bool(success) is not None:
                 outcomes.append((timestamp, success, None))

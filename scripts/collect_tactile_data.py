@@ -41,7 +41,7 @@ def run():
         except yaml.YAMLError as error:
             print(error)
 
-    data_dir = root_pwd+config['data_dir']+config['block_type']+'/'
+    data_dir = config['data_dir']+config['block_type']+'/'
 
     # Instantiate robot controller for Yaskawa API
     robot_commander = YaskawaRobotController(namespace)
