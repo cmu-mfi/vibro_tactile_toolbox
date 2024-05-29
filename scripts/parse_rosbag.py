@@ -16,6 +16,7 @@ CAMERA_1_COLOR_TOPIC = '/camera/color/image_raw'
 CAMERA_2_COLOR_TOPIC = '/side_camera/color/image_cropped'
 FTS_TOPIC = '/fts'
 JOINT_STATE_TOPIC = f'/{namespace}/joint_states'
+SKILL_PARAM_TOPIC = f'/{namespace}/skill/param'
 SKILL_TERMINATION_TOPIC = f'/{namespace}/terminator/skill_termination_signal'
 LEGO_OUTCOME_TOPIC = f'/outcome/lego_detector'
 FTS_OUTCOME_TOPIC = f'/outcome/fts_detector'
@@ -197,19 +198,41 @@ def save_joint_states(bag, save_dir, filename, joint_state_topics=[], use_pkl=Fa
     else:
         np.save(filepath, joint_state_data)
 
+
+def save_skill_params(bag, save_dir, filename, skill_param_topics=[]):
+    '''    
+    Save skill param messsages as a .txt file
+
+    save_dir: Path to dir where data is saved
+    topics: List of topics for which skill param data should be saved. 
+    Return: None
+    '''    
+
+    filepath = os.path.join(save_dir, filename)
+    text_file = os.path.join(save_dir, "skill_params.txt")
+    with open(text_file, 'w') as f:
+        f.write(f"# skill params \n")
+        f.write(f"# file: '{bag.filename}'\n")
+        f.write(f"# timestamp, skill id, skill name, step_name \n")
+        for topic, msg, t in bag.read_messages(topics=skill_param_topics):
+            t_trial = t.to_sec() - bag.get_start_time()
+            print(f"Skill param message at time {t_trial}")
+            f.write(f"{t_trial}, {msg.id}, {msg.skill_name}, {msg.step_name} \n")
+
+
 def save_termination_signals(bag, save_dir, filename, termination_topics=[]):
     '''    
     Save termination messsages as a .txt file
 
     save_dir: Path to dir where data is saved
-    topics: List of topics for which FTS data should be saved. [FTS_TOPIC] is sufficent.
+    topics: List of topics for which termination data should be saved.
     Return: None
     '''    
 
     filepath = os.path.join(save_dir, filename)
     text_file = os.path.join(save_dir, "termination_signals.txt")
     with open(text_file, 'w') as f:
-        f.write(f"# fts_detector.py outcomes\n")
+        f.write(f"# terminator outcomes\n")
         f.write(f"# file: '{bag.filename}'\n")
         f.write(f"# timestamp termination_cause\n")
         for topic, msg, t in bag.read_messages(topics=termination_topics):
@@ -276,16 +299,15 @@ def save_outcomes(bag, save_dir, filenames=[], outcome_topics=[], outcome_latenc
             continue
 
 
+def parse(args, bagfile, save_dir):
+    assert os.path.exists(bagfile), "Rosbag does not exist"
 
-def main(args):
-    assert os.path.exists(args.bagfile), "Rosbag does not exist"
-
-    bag = rosbag.Bag(args.bagfile)
+    bag = rosbag.Bag(bagfile)
     print(f"BAG: t0: {bag.get_start_time()}, tf: {bag.get_end_time()}")
 
-    create_dir_if_not_exists(args.save_dir)
-    short_bag_name = args.bagfile[(args.bagfile.rfind('/')+1):args.bagfile.rfind('.bag')]
-    save_folder = os.path.join(args.save_dir,short_bag_name)
+    create_dir_if_not_exists(save_dir)
+    short_bag_name = bagfile[(bagfile.rfind('/')+1):bagfile.rfind('.bag')]
+    save_folder = os.path.join(save_dir,short_bag_name)
     create_dir_if_not_exists(save_folder)
 
     if args.save_video:
@@ -297,7 +319,7 @@ def main(args):
 
     if args.save_audio:
         audio_info = get_audio_info(bag, AUDIO_TOPIC + '_info')
-        save_audio_dir = os.path.join(args.save_dir, 'audio')
+        save_audio_dir = os.path.join(save_dir, 'audio')
         save_audio(bag, save_folder, 'audio.wav', audio_info, AUDIO_TOPIC)
     
     if args.save_fts:
@@ -308,6 +330,10 @@ def main(args):
         joint_state_topics = [JOINT_STATE_TOPIC]
         save_joint_states(bag, save_folder, 'joint_states', joint_state_topics)
 
+    if args.save_skill_params:
+        skill_param_topics = [SKILL_PARAM_TOPIC]
+        save_skill_params(bag, save_folder, 'skill_params', skill_param_topics)
+
     if args.save_termination:
         termination_topics = [SKILL_TERMINATION_TOPIC]
         save_termination_signals(bag, save_folder, 'termination_signals', termination_topics)
@@ -317,12 +343,25 @@ def main(args):
                           FTS_OUTCOME_TOPIC]
         save_outcomes(bag, save_folder, 'outcomes', outcome_topics, outcome_latency=args.lego_detector_latency)
 
+
+def main(args):
+    if args.walk_dir:
+        for bagfile in os.listdir(args.walk_dir):
+            parse(args, os.path.join(args.walk_dir, bagfile), args.save_dir)
+    elif args.bagfile:
+        parse(args, args.bagfile, args.save_dir)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Creates audio files and videos from bagfile.')
-    parser.add_argument('--bagfile', '-b', type=str, required=True,
-                        help='input bag file')
+
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('--bagfile', '-b', type=str, help='input bag file')
+    group.add_argument('--walk_dir', '-w', type=str, help="Root directory to walk through and parse all folders")
+   
     parser.add_argument('--save_dir', '-d', type=str, required=True,
                         help='Path to save rosbag data such as audio and video')
+
+
     parser.add_argument('--save_audio', '-a', type=bool, default=True,
                         help='True if save audio else False. Default True.')
     parser.add_argument('--save_video', '-v', type=bool, default=True,
@@ -331,6 +370,8 @@ if __name__ == '__main__':
                         help='True if save fts else False. Default True.')
     parser.add_argument('--save_joints', '-j', type=bool, default=True,
                         help='True if save joint states else False. Default True.')
+    parser.add_argument('--save_skill_params', '-p', type=bool, default=True,
+                        help='True if save skill params, else False. Default True.')
     parser.add_argument('--save_termination', '-t', type=bool, default=True,
                         help='True if save termination signals, else False. Default True.')
     parser.add_argument('--save_outcome', '-o', type=bool, default=True,

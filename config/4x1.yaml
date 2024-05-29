@@ -15,8 +15,8 @@ approach_height: 0.03
 move_down_velocity_scaling: 0.01
 lift_height: 0.01
 pull_up_velocity_scaling: 0.001
-place_rotation: 25
-pick_rotation: 25
+place_rotation: 10
+pick_rotation: 15
 fts_detector:
   topic_name: '/fts'
   force_threshold: 0.5
@@ -44,3 +44,5 @@ rosbag_data_recorder:
     - /namespace/terminator/skill_termination_signal
     - /outcome/lego_detector
     - /outcome/fts_detector
+    - /namespace/skill/param
+    - /namespace/terminator/termination_config

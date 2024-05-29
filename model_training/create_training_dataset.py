@@ -20,6 +20,8 @@ WRIST_CAM_NAME = 'wrist_camera.mp4'
 TERMINATIONS_NAME = 'termination_signals.txt'
 VISION_OUTCOMES_NAME = 'lego_outcomes.txt'
 FTS_OUTCOMES_NAME = 'fts_outcomes.txt'
+SKILL_NAME = 'skill_params.txt'
+
 
 def string_to_bool(s: str) -> bool:
     if s.lower() == 'true':
@@ -144,14 +146,28 @@ def segment_trial(dataset_dir, lagging_buffer=0.5, leading_buffer=0.5):
                 outcomes.append((timestamp, success, None))
     outcomes.sort(key=lambda x: x[0])
 
+    # Load skills.txt
+    skill_names = []
+    with open(os.path.join(dataset_dir, SKILL_NAME), 'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            if line.startswith('#'): continue
+            entries = line.split(',')
+            entries = [e.strip() for e in entries]
+            # entries = [timestamp, skill_id, skill_name, step_name]
+            timestamp, skill_id, skill_name, step_name = float(entries[0]), float(entries[1]), entries[2], entries[3]
+            skill_names.append(skill_name)
     # Produce segments
     segments = []
 
     for i, outcome in enumerate(outcomes):
-        OUTCOME_TERMINAL_MAP = {0: 1, 1:4, 2:7}
+        t_outcome = outcome[0]
+        t_terminals = [x[0] for x in terminals]
+        i_detection_skill = np.searchsorted(t_terminals, t_outcome, 'right') - 1 # index of action to drive detection
+        i_detected_skill = i_detection_skill - 1                                 # index of action outcome label corresponds to
+        t_terminal = terminals[i_detected_skill][0]
 
-        # TODO: Make outcome ids to match corresponding terminal/skill step ids
-        t_terminal = float(terminals[OUTCOME_TERMINAL_MAP[i]][0])
+        skill_name = skill_names[i_detected_skill]
 
         # Segment data based on the terminal timestamp and lag/lead buffers
         t_start = t_terminal - lagging_buffer
@@ -178,13 +194,14 @@ def segment_trial(dataset_dir, lagging_buffer=0.5, leading_buffer=0.5):
         # Get the label for the data from the outcome detector
         label = outcome[1]
 
-        segments.append((seg_data, label))
+        segments.append((skill_name, seg_data, label))
 
     return segments
 
 
 
 def main(args):
+    RECORDED_SKILLS = {'MoveDown', 'PickLego', 'PlaceLego'}
     # Create output folder 
     if os.path.exists(args.save_dir):
         if 'y' not in input(f'{args.save_dir} already exists, delete? [y/n] ').lower():
@@ -198,9 +215,16 @@ def main(args):
     fts_dir = 'fts'
     vision_dir = 'vision'
 
-    os.mkdir(os.path.join(args.save_dir, audio_dir))
-    os.mkdir(os.path.join(args.save_dir, fts_dir))
-    os.mkdir(os.path.join(args.save_dir, vision_dir))
+    for skill_name in (RECORDED_SKILLS | {'misc'}):
+        os.mkdir(os.path.join(args.save_dir, skill_name))
+        os.mkdir(os.path.join(args.save_dir, skill_name, 'success'))
+        os.mkdir(os.path.join(args.save_dir, skill_name, 'fail'))
+        os.mkdir(os.path.join(args.save_dir, skill_name, 'success', audio_dir))
+        os.mkdir(os.path.join(args.save_dir, skill_name, 'success', fts_dir))
+        os.mkdir(os.path.join(args.save_dir, skill_name, 'success', vision_dir))
+        os.mkdir(os.path.join(args.save_dir, skill_name, 'fail', audio_dir))
+        os.mkdir(os.path.join(args.save_dir, skill_name, 'fail', fts_dir))
+        os.mkdir(os.path.join(args.save_dir, skill_name, 'fail', vision_dir))
 
     trials_pth = os.path.join(args.save_dir, 'trials.txt')
     labels_pth = os.path.join(args.save_dir, 'labels.txt')
@@ -211,7 +235,7 @@ def main(args):
 
     with open(labels_pth, 'x') as f:
         f.write("# Labels for data segments.\n")
-        f.write("# label, audio_pth, audio_spec_pth, fts_pth, side_cam_pth, wrist_cam_pth, outcome_ann_pth\n")
+        f.write("# label, skill_name, audio_pth, audio_spec_pth, fts_pth, side_cam_pth, wrist_cam_pth, outcome_ann_pth\n")
 
     # Iterate through each trial and extract labelled segments of data
     for dataset_name in os.listdir(args.trial_src):
@@ -236,33 +260,65 @@ def main(args):
             wrist_cam_pth = os.path.join(vision_dir, f'wrist_cam_{segment_num}.png')
             outcome_ann_pth = os.path.join(vision_dir, f'outcome_ann_{segment_num}.png')
 
-            seg_data = segment[0]
-            label = segment[1]
+            skill_name = segment[0]
+            seg_data = segment[1]
+            label = segment[2]
+    
+            '''
+            Produce this file structure:
+            args.save_dir/
+                labels.txt
+                trials.txt
+                engage/
+                    success/
+                        audio/
+                        fts/
+                        vision/
+                    fail/
+                        audio/
+                        fts/
+                        vision/
+                pick/...
+                place/...
+                misc/...
+            '''
+
+
+            if skill_name not in RECORDED_SKILLS:
+                skill_name = 'misc'
+            label_pth = 'success' if label else 'fail'
+            subdir = os.path.join(skill_name, label_pth)
 
             # Write labels.txt with label and corresponding segment files
             with open(labels_pth, 'a') as f:
-                f.write(', '.join([label, audio_pth, audio_spec_pth, fts_pth, side_cam_pth, wrist_cam_pth, outcome_ann_pth]) + '\n')
+                f.write(', '.join([label, skill_name,
+                                   os.path.join(subdir, audio_pth), 
+                                   os.path.join(subdir, audio_spec_pth), 
+                                   os.path.join(subdir, fts_pth), 
+                                   os.path.join(subdir, side_cam_pth), 
+                                   os.path.join(subdir, wrist_cam_pth), 
+                                   os.path.join(subdir, outcome_ann_pth)]) + '\n')
 
             # save audio segment
             if seg_data['audio'] is not None:
-                wavfile.write(os.path.join(args.save_dir, audio_pth), seg_data['audio'][0], seg_data['audio'][1])
+                wavfile.write(os.path.join(args.save_dir, subdir, audio_pth), seg_data['audio'][0], seg_data['audio'][1])
             # save audio segment spectrogram
             if seg_data['audio_spec'] is not None:
-                seg_data['audio_spec'].save(os.path.join(args.save_dir, audio_spec_pth), format='JPEG')
+                seg_data['audio_spec'].save(os.path.join(args.save_dir, subdir, audio_spec_pth), format='JPEG')
             
             # save fts segment
             if seg_data['fts'] is not None:
-                np.save(os.path.join(args.save_dir, fts_pth), seg_data['fts'])
+                np.save(os.path.join(args.save_dir, subdir, fts_pth), seg_data['fts'])
 
             # save side_cam img
             if seg_data['side_cam'] is not None:
-                cv2.imwrite(os.path.join(args.save_dir, side_cam_pth), seg_data['side_cam'])
+                cv2.imwrite(os.path.join(args.save_dir, subdir, side_cam_pth), seg_data['side_cam'])
             # save wrist_cam img
             if seg_data['wrist_cam'] is not None:
-                cv2.imwrite(os.path.join(args.save_dir, wrist_cam_pth), seg_data['wrist_cam'])
+                cv2.imwrite(os.path.join(args.save_dir, subdir, wrist_cam_pth), seg_data['wrist_cam'])
             # save outcome_ann img
             if seg_data['outcome_ann'] is not None:
-                seg_data['outcome_ann'].save(os.path.join(args.save_dir, outcome_ann_pth), format='JPEG')
+                seg_data['outcome_ann'].save(os.path.join(args.save_dir, subdir, outcome_ann_pth), format='JPEG')
 
             segment_num += 1
 
