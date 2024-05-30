@@ -239,7 +239,7 @@ def save_termination_signals(bag, save_dir, filename, termination_topics=[]):
             t_trial = t.to_sec() - bag.get_start_time()
             print(f"Termination message at time {t_trial}")
             termination_cause = msg.cause
-            f.write(f"{t_trial}, {termination_cause}\n")
+            f.write(f"{t_trial}, {msg.id}, {termination_cause}\n")
 
 def save_outcomes(bag, save_dir, filenames=[], outcome_topics=[], outcome_latency=0.0):
     '''    
@@ -346,8 +346,13 @@ def parse(args, bagfile, save_dir):
 
 def main(args):
     if args.walk_dir:
-        for bagfile in os.listdir(args.walk_dir):
-            parse(args, os.path.join(args.walk_dir, bagfile), args.save_dir)
+        list_dir = os.listdir(args.walk_dir)
+        for bagfile in list_dir:
+            if '.bag' in bagfile:
+                if bagfile[:-4] in list_dir and args.skip:
+                    print(f'Bag File: {bagfile} has been already processed. Skipping this bag')
+                else:
+                    parse(args, os.path.join(args.walk_dir, bagfile), args.save_dir)
     elif args.bagfile:
         parse(args, args.bagfile, args.save_dir)
 
@@ -360,8 +365,8 @@ if __name__ == '__main__':
    
     parser.add_argument('--save_dir', '-d', type=str, required=True,
                         help='Path to save rosbag data such as audio and video')
-
-
+    parser.add_argument('--skip', '-s', type=bool, default=True,
+                        help='True if skip rosbags already processed. Default True.')
     parser.add_argument('--save_audio', '-a', type=bool, default=True,
                         help='True if save audio else False. Default True.')
     parser.add_argument('--save_video', '-v', type=bool, default=True,

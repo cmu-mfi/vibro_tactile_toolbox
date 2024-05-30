@@ -14,13 +14,15 @@ import argparse
 def load_audio_files(path: str, label:str):
 
     dataset = []
-    walker = sorted(str(p) for p in Path(path).glob(f'*'+label+'/*.wav'))
+    walker = sorted(str(p) for p in Path(path).glob(f'*/*'+label+'/*.wav'))
 
     for i, file_path in enumerate(walker):
         path, filename = os.path.split(file_path)
 
         # Load audio
         waveform, sample_rate = torchaudio.load(file_path)
+        waveform.resize_(2, sample_rate)
+        print(waveform.size())
         dataset.append([waveform, sample_rate, label])
 
     return dataset
@@ -57,6 +59,26 @@ def show_mfcc(waveform,sample_rate):
     plt.plot(mfcc_spectrogram.log2()[0,:,:].numpy())
     plt.draw()
 
+def plot_specgram(waveform, sample_rate, title="Spectrogram", xlim=None):
+    waveform = waveform.numpy()
+    sample_rate = sample_rate.numpy()[0]
+
+    waveform = waveform.reshape((waveform.shape[1], waveform.shape[2]))
+    num_channels, num_frames = waveform.shape
+    time_axis = torch.arange(0, num_frames) / sample_rate
+
+    figure, axes = plt.subplots(num_channels, 1)
+    if num_channels == 1:
+        axes = [axes]
+    for c in range(num_channels):
+        axes[c].specgram(waveform[c], Fs=sample_rate)
+        if num_channels > 1:
+            axes[c].set_ylabel(f'Channel {c+1}')
+        if xlim:
+            axes[c].set_xlim(xlim)
+    figure.suptitle(title)
+    plt.show()
+
 def create_spectrogram_images(trainloader, label_dir):
     #make directory
     directory = f'data/spectrograms/{label_dir}/'
@@ -72,9 +94,11 @@ def create_spectrogram_images(trainloader, label_dir):
             label = data[2]
 
             # create transformed waveforms
-            spectrogram_tensor = torchaudio.transforms.Spectrogram()(waveform)
+            transform = torchaudio.transforms.Spectrogram()
+            spectrogram_tensor = transform(waveform)
 
             fig = plt.figure()
+
             plt.imsave(f'data/spectrograms/{label_dir}/spec_img{i}.png', spectrogram_tensor[0].log2()[0,:].numpy(), cmap='viridis')
 
 def create_mfcc_images(trainloader, label_dir):

@@ -11,7 +11,10 @@ import cv2
 import soundfile as sf
 
 import matplotlib.pyplot as plt
+from matplotlib import cm
 from PIL import Image
+
+import torchaudio
 
 AUDIO_NAME = 'audio.wav'
 FTS_NAME = 'fts.npy'
@@ -47,29 +50,34 @@ def is_valid_dataset(dataset_dir):
     return True
 
 def segment_audio(audio_data, sample_rate, t_start, t_end):
+    """
+    Segment audio and save spectrogram images
+    
+    audio_data, sample_rate = torchaudio.load(filepath)
+    """
+    import pdb
+
     start_idx = int(t_start * sample_rate)
     end_idx = int(t_end * sample_rate)
 
-    audio_segment = audio_data[start_idx:end_idx, 0]
+    audio_ch0 = audio_data[0, :]
+    audio_ch1 = audio_data[1, :]
 
-    freq, time, audio_spec = signal.spectrogram(audio_segment, sample_rate)
+    audio_segment = audio_ch0[start_idx:end_idx]
+    transform = torchaudio.transforms.Spectrogram()
+    spec_tensor = transform(audio_segment)
+    spec_np = spec_tensor.log2().numpy()
+    spec_np = np.flipud(spec_np)
 
-    # Plot spectrogram
-    fig, ax = plt.subplots()
-    im = ax.pcolormesh(time, freq, 10 * np.log10(audio_spec))  # Convert to dB scale
-    ax.set_ylabel('Frequency [Hz]')
-    ax.set_xlabel('Time [s]')
-    fig.colorbar(im, label='Intensity [dB]', ax=ax)
-    ax.set_title('Spectrogram')
-    fig.tight_layout()
+    # Begin from matplotlib.image.imsave
+    sm = cm.ScalarMappable(cmap='viridis')
+    sm.set_clim(None, None)
+    rgba = sm.to_rgba(spec_np, bytes=True)
+    pil_shape = (rgba.shape[1], rgba.shape[0])
+    image_rgb = Image.frombuffer(
+            "RGBA", pil_shape, rgba, "raw", "RGBA", 0, 1)
+    # End from matplotlib.image.imsave
 
-    fig.canvas.draw()
-    image_arr = np.array(fig.canvas.renderer.buffer_rgba())
-
-    plt.close()
-
-    image_rgb = Image.fromarray(image_arr)
-    image_rgb = image_rgb.convert('RGB')
     return audio_segment, image_rgb
 
 
@@ -100,7 +108,7 @@ def segment_trial(dataset_dir, lagging_buffer=0.5, leading_buffer=0.5):
     """
 
     # Load audio
-    sample_rate, audio_data = wavfile.read(os.path.join(dataset_dir, AUDIO_NAME))
+    audio_data, sample_rate = torchaudio.load(os.path.join(dataset_dir, AUDIO_NAME))
     
     # Load FTS
     fts_data = np.load(os.path.join(dataset_dir, FTS_NAME))
@@ -117,9 +125,9 @@ def segment_trial(dataset_dir, lagging_buffer=0.5, leading_buffer=0.5):
             if line.startswith('#'): continue
             entries = line.split(',')
             entries = [e.strip() for e in entries]
-            # entries = [timestamp, cause]
-            timestamp, termination_cause = float(entries[0]), entries[1]
-            terminals.append((timestamp, termination_cause))
+            # entries = [timestamp, skill_id, cause]
+            timestamp, skill_id, termination_cause = float(entries[0]), int(entries[1]), entries[2]
+            terminals.append((timestamp, skill_id, termination_cause))
     terminals.sort(key=lambda x: x[0])
 
     # Load *_outcomes.txt
@@ -146,8 +154,8 @@ def segment_trial(dataset_dir, lagging_buffer=0.5, leading_buffer=0.5):
                 outcomes.append((timestamp, success, None))
     outcomes.sort(key=lambda x: x[0])
 
-    # Load skills.txt
-    skill_names = []
+    # Load skill_params.txt
+    skill_names = {}
     with open(os.path.join(dataset_dir, SKILL_NAME), 'r') as f:
         lines = f.readlines()
         for line in lines:
@@ -156,7 +164,7 @@ def segment_trial(dataset_dir, lagging_buffer=0.5, leading_buffer=0.5):
             entries = [e.strip() for e in entries]
             # entries = [timestamp, skill_id, skill_name, step_name]
             timestamp, skill_id, skill_name, step_name = float(entries[0]), float(entries[1]), entries[2], entries[3]
-            skill_names.append(skill_name)
+            skill_names[skill_id] = skill_name
     # Produce segments
     segments = []
 
@@ -165,9 +173,10 @@ def segment_trial(dataset_dir, lagging_buffer=0.5, leading_buffer=0.5):
         t_terminals = [x[0] for x in terminals]
         i_detection_skill = np.searchsorted(t_terminals, t_outcome, 'right') - 1 # index of action to drive detection
         i_detected_skill = i_detection_skill - 1                                 # index of action outcome label corresponds to
+
         t_terminal = terminals[i_detected_skill][0]
 
-        skill_name = skill_names[i_detected_skill]
+        skill_name = skill_names[terminals[i_detected_skill][1]] # get skill name from terminal id (matches skill id)
 
         # Segment data based on the terminal timestamp and lag/lead buffers
         t_start = t_terminal - lagging_buffer
@@ -198,7 +207,27 @@ def segment_trial(dataset_dir, lagging_buffer=0.5, leading_buffer=0.5):
 
     return segments
 
+def make_file_names(dataset_name, audio_dir, fts_dir, vision_dir, dataset_segment=None):
+    '''
+    returns: audio_pth, audio_spec_pth, fts_pth, side_cam_pth, wrist_cam_pth, outcome_ann_pth
 
+    For now we assume all trials have 1 failed MoveDown, 1 successful MoveDown, 1 successful (LegoPick | LegoPlace)
+    '''
+    if dataset_segment:
+        # audio_pth = os.path.join(audio_dir, f'seg_{segment_num}.wav')
+        # audio_spec_pth = os.path.join(audio_dir, f'seg_{segment_num}.png')
+        # fts_pth = os.path.join(fts_dir, f'seg_{segment_num}.npy')
+        # side_cam_pth = os.path.join(vision_dir, f'side_cam_{segment_num}.png')
+        # wrist_cam_pth = os.path.join(vision_dir, f'wrist_cam_{segment_num}.png')
+        # outcome_ann_pth = os.path.join(vision_dir, f'outcome_ann_{segment_num}.png')
+        raise NotImplementedError
+    audio_pth = os.path.join(audio_dir, f'{dataset_name}.wav')
+    audio_spec_pth = os.path.join(audio_dir, f'{dataset_name}.png')
+    fts_pth = os.path.join(fts_dir, f'{dataset_name}.npy')
+    side_cam_pth = os.path.join(vision_dir, f'{dataset_name}.png')
+    wrist_cam_pth = os.path.join(vision_dir, f'{dataset_name}.png')
+    outcome_ann_pth = os.path.join(vision_dir, f'{dataset_name}.png')
+    return audio_pth, audio_spec_pth, fts_pth, side_cam_pth, wrist_cam_pth, outcome_ann_pth
 
 def main(args):
     RECORDED_SKILLS = {'MoveDown', 'PickLego', 'PlaceLego'}
@@ -246,19 +275,20 @@ def main(args):
             continue
 
         # Split trial into segments near terminal events
-        segments = segment_trial(dataset_dir)
+        segments = segment_trial(dataset_dir, lagging_buffer=args.lagging_buffer, leading_buffer=args.leading_buffer)
 
         # Save trial segments to dataset
         with open(trials_pth, 'a') as f:
             f.write(dataset_dir + '\n')
 
         for segment in segments:
-            audio_pth = os.path.join(audio_dir, f'seg_{segment_num}.wav')
-            audio_spec_pth = os.path.join(audio_dir, f'seg_{segment_num}.png')
-            fts_pth = os.path.join(fts_dir, f'seg_{segment_num}.npy')
-            side_cam_pth = os.path.join(vision_dir, f'side_cam_{segment_num}.png')
-            wrist_cam_pth = os.path.join(vision_dir, f'wrist_cam_{segment_num}.png')
-            outcome_ann_pth = os.path.join(vision_dir, f'outcome_ann_{segment_num}.png')
+            file_pths = make_file_names(dataset_name, audio_dir, fts_dir, vision_dir)
+            audio_pth = file_pths[0]
+            audio_spec_pth = file_pths[1]
+            fts_pth = file_pths[2]
+            side_cam_pth = file_pths[3]
+            wrist_cam_pth = file_pths[4]
+            outcome_ann_pth = file_pths[5]
 
             skill_name = segment[0]
             seg_data = segment[1]
@@ -286,7 +316,7 @@ def main(args):
 
             if skill_name not in RECORDED_SKILLS:
                 skill_name = 'misc'
-            label_pth = 'success' if label else 'fail'
+            label_pth = 'success' if (label.lower() == 'true') else 'fail'
             subdir = os.path.join(skill_name, label_pth)
 
             # Write labels.txt with label and corresponding segment files
@@ -301,10 +331,15 @@ def main(args):
 
             # save audio segment
             if seg_data['audio'] is not None:
-                wavfile.write(os.path.join(args.save_dir, subdir, audio_pth), seg_data['audio'][0], seg_data['audio'][1])
+                audio_data = seg_data['audio'][1]
+                sample_rate = seg_data['audio'][0]
+                if len(audio_data.shape) < 2:
+                    audio_data = audio_data[None, :]
+                torchaudio.save(os.path.join(args.save_dir, subdir, audio_pth), audio_data, sample_rate)
+                #wavfile.write(os.path.join(args.save_dir, subdir, audio_pth), seg_data['audio'][0], seg_data['audio'][1])
             # save audio segment spectrogram
             if seg_data['audio_spec'] is not None:
-                seg_data['audio_spec'].save(os.path.join(args.save_dir, subdir, audio_spec_pth), format='JPEG')
+                seg_data['audio_spec'].save(os.path.join(args.save_dir, subdir, audio_spec_pth))
             
             # save fts segment
             if seg_data['fts'] is not None:
@@ -318,7 +353,7 @@ def main(args):
                 cv2.imwrite(os.path.join(args.save_dir, subdir, wrist_cam_pth), seg_data['wrist_cam'])
             # save outcome_ann img
             if seg_data['outcome_ann'] is not None:
-                seg_data['outcome_ann'].save(os.path.join(args.save_dir, subdir, outcome_ann_pth), format='JPEG')
+                seg_data['outcome_ann'].save(os.path.join(args.save_dir, subdir, outcome_ann_pth))
 
             segment_num += 1
 
@@ -329,6 +364,10 @@ if __name__ == '__main__':
                         help='Path to folder containing parsed trial datasets')
     parser.add_argument('--save_dir', '-d', type=str, required=True,
                         help='Path to save trial dataset')
+    parser.add_argument('--leading_buffer', type=float, required=False, default=0.5,
+                        help='Specify the seconds ahead of terminals to segment data. Default is 0.5s')
+    parser.add_argument('--lagging_buffer', type=float, required=False, default=0.5,
+                    help='Specify the seconds behind terminals to segment data. Default is 0.5s')
     args = parser.parse_args()
 
     main(args)

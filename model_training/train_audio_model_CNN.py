@@ -20,11 +20,11 @@ import os
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print('Using {} device'.format(device))
 
-data_path = '../data/spectrograms' #looking in subfolder train
+data_path = '/mnt/hdd1/vibrotactile_data/lego/train/' #looking in subfolder train
 
 audio_dataset = datasets.ImageFolder(
     root=data_path,
-    transform=transforms.Compose([transforms.Resize((201,81)),
+    transform=transforms.Compose([transforms.Resize((221,201)),
                                   transforms.ToTensor()
                                   ])
 )
@@ -72,8 +72,9 @@ class CNNet(nn.Module):
         self.conv2 = nn.Conv2d(32, 64, kernel_size=5)
         self.conv2_drop = nn.Dropout2d()
         self.flatten = nn.Flatten()
-        self.fc1 = nn.Linear(51136, 50)
-        self.fc2 = nn.Linear(50, 2)
+        self.fc1 = nn.Linear(156416, 50)
+        self.fc2 = nn.Linear(50, 3)
+        #self.fc3 = nn.Linear(256, 3)
 
 
     def forward(self, x):
@@ -84,6 +85,8 @@ class CNNet(nn.Module):
         x = F.relu(self.fc1(x))
         x = F.dropout(x, training=self.training)
         x = F.relu(self.fc2(x))
+        #x = F.dropout(x, training=self.training)
+        #x = F.relu(self.fc3(x))
         return F.log_softmax(x,dim=1)
 
 model = CNNet().to(device)
@@ -142,7 +145,7 @@ for t in range(epochs):
     test(test_dataloader, model)
 print('Done!')
 
-summary(model, input_size=(15, 3, 201, 81))
+summary(model, input_size=(15, 3, 221, 201))
 
 model.eval()
 test_loss, correct = 0, 0
