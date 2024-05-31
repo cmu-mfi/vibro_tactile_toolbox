@@ -32,7 +32,7 @@ def run():
     namespace = rospy.get_param("go_home_task/namespace")
     root_pwd = rospy.get_param("go_home_task/root_pwd")
     start_trial = rospy.get_param("go_home_task/start_trial")
-
+    verbose = rospy.get_param("go_home_task/verbose")
     # Instantiate robot controller for Yaskawa API
     robot_commander = YaskawaRobotController(namespace)
 
@@ -59,7 +59,8 @@ def run():
     # rosbag_recorder_process = subprocess.Popen(command, stdin=subprocess.PIPE, shell=True)
 
     # 2. Begin Skill
-    home_skill = GoHomeSkill(robot_commander, namespace)
+    params = {'verbose': verbose}
+    home_skill = GoHomeSkill(robot_commander, namespace, params)
     terminals, outcomes = home_skill.execute_skill(None)
     
     for i, terminal in enumerate(terminals):

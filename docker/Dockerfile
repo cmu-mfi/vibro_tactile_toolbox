@@ -33,7 +33,7 @@ RUN cd /Documents \
 RUN cd /Documents \
     && git clone https://github.com/facebookresearch/segment-anything.git \
     && cd segment-anything \
-    && pip install -e .
+    && pip install onnx scikit-image onnxruntime-gpu simplification distinctipy scikit-learn
 
 # Clone Segment Anything Labeling Tool
 RUN cd /Documents \

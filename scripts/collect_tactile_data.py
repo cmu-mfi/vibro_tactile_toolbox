@@ -33,6 +33,9 @@ def run():
     yaml_file = rospy.get_param("collect_tactile_data/config")
     num_trials = rospy.get_param("collect_tactile_data/num_trials")
     start_num = rospy.get_param("collect_tactile_data/start_num")
+    block_type = rospy.get_param("collect_tactile_data/block_type")
+    volume = rospy.get_param("collect_tactile_data/volume")
+    velocity_scale = rospy.get_param("collect_tactile_data/velocity_scale")
     verbose = rospy.get_param("collect_tactile_data/verbose")
 
     with open(root_pwd+'/config/'+yaml_file) as stream:
@@ -41,7 +44,16 @@ def run():
         except yaml.YAMLError as error:
             print(error)
 
-    data_dir = config['data_dir']+config['block_type']+'/'
+    data_dir = config['data_dir']+'volume_'+str(volume)+'/'+block_type+'/vel_'+str(velocity_scale)+'/'
+
+    if str(velocity_scale) == '0.01':
+        move_down_velocity_scaling = 0.01
+    elif str(velocity_scale) == '0.02':
+        move_down_velocity_scaling = 0.02
+    elif str(velocity_scale) == '0.05':
+        move_down_velocity_scaling = 0.05
+    elif str(velocity_scale) == 'random':
+        move_down_velocity_scaling = -1
 
     # Instantiate robot controller for Yaskawa API
     robot_commander = YaskawaRobotController(namespace)
@@ -78,26 +90,31 @@ def run():
 
     # Tasks to do
     for trial_num in range(start_num, start_num+num_trials):
+        # Load temporary lego block registration pose 
+        tmp_T_lego_world = RigidTransform.load(root_pwd+config['tmp_lego_world_tf'])
+
         x_perturb = np.random.uniform(config['x_range'][0], config['x_range'][1])
         y_perturb = np.random.uniform(config['y_range'][0], config['y_range'][1])
         theta_perturb = np.random.uniform(config['theta_range'][0], config['theta_range'][1])
 
+        if move_down_velocity_scaling == -0.1:
+            move_down_velocity_scaling = np.random.uniform(0.01, 0.1)
 
         # 1. Begin rosbag recording
-        rosbag_name = f"trial_{trial_num}-p_{x_perturb:0.4f}_{y_perturb:0.4f}_{theta_perturb:0.4f}.bag"
+        rosbag_name = f"trial_{trial_num}-p_{x_perturb:0.4f}_{y_perturb:0.4f}_{theta_perturb:0.4f}_{move_down_velocity_scaling:0.2f}.bag"
         rosbag_path = os.path.join(data_dir, rosbag_name)
 
         data_recorder.start_recording(rosbag_path, recording_params)
 
         # 2. Determine Skill Parameters
         move_to_above_perturb_lego_params = {
-            'T_lego_world': T_lego_world,
+            'T_lego_world': tmp_T_lego_world,
             'approach_height_offset': config['approach_height'],
             'place_perturbation': [x_perturb, y_perturb, theta_perturb]
         }
 
         move_to_above_lego_params = {
-            'T_lego_world': T_lego_world,
+            'T_lego_world': tmp_T_lego_world,
             'approach_height_offset': config['approach_height'],
         }
 
@@ -108,7 +125,7 @@ def run():
 
         move_down_params = {
             'height_offset': config['approach_height'],
-            'velocity_scaling': config['move_down_velocity_scaling']
+            'velocity_scaling': move_down_velocity_scaling
         }
 
         execution_params = {
@@ -187,6 +204,16 @@ def run():
             labeled_rosbag_path = rosbag_path.split(".bag")[0] + f"_connection_failure.bag"
             os.rename(rosbag_path, labeled_rosbag_path)
 
+            if skill_type == 'place':
+                block_x_perturb = np.random.randint(config['block_x_range'][0], config['block_x_range'][1])
+                block_y_perturb = np.random.randint(config['block_y_range'][0], config['block_y_range'][1])
+
+                place_perturb_pose = RigidTransform(translation=[block_x_perturb*STUD_WIDTH, block_y_perturb*STUD_WIDTH, 0.0],
+                                                     from_frame='lego', to_frame='lego')
+
+                tmp_T_lego_world = T_lego_world * place_perturb_pose
+                tmp_T_lego_world.save(root_pwd+config['tmp_lego_world_tf'])
+
             terminals = home_skill.execute_skill(None)
             continue
         #else:
@@ -222,6 +249,16 @@ def run():
             pass
         
         terminals = home_skill.execute_skill(None)
+
+        if skill_type == "pick" and outcomes['success']:
+            block_x_perturb = np.random.randint(config['block_x_range'][0], config['block_x_range'][1])
+            block_y_perturb = np.random.randint(config['block_y_range'][0], config['block_y_range'][1])
+
+            place_perturb_pose = RigidTransform(translation=[block_x_perturb*STUD_WIDTH, block_y_perturb*STUD_WIDTH, 0.0],
+                                                 from_frame='lego', to_frame='lego')
+
+            tmp_T_lego_world = T_lego_world * place_perturb_pose
+            tmp_T_lego_world.save(root_pwd+config['tmp_lego_world_tf'])
 
 if __name__ == "__main__":
     run()
