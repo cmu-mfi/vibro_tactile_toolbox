@@ -1,5 +1,5 @@
 lego_ee_tf: "/transforms/lego_ee.tf"
-lego_world_tf: "/transforms/lego_world_2.tf"
+lego_world_tf: "/transforms/T_lego_world/"
 tmp_lego_world_tf: "/transforms/tmp_lego_world.tf"
 data_dir: "/mnt/hdd1/vibrotactile_data/lego/"
 x_range:
@@ -12,32 +12,32 @@ theta_range:
   - -10.0
   - 10.0
 block_x_range: 
-  - -15
+  - -12
   - 0
 block_y_range:
   - 0
-  - 10
-approach_height: 0.03
+  - 16
+approach_height: 0.04
 lift_height: 0.01
 pull_up_velocity_scaling: 0.001
 place_rotation: 15
 pick_rotation: 15
 fts_detector:
   topic_name: '/fts'
-  force_threshold: 0.4
+  force_threshold: 0.3
 lego_detector:
   topic_name: '/side_camera/color/image_cropped'
   top_bbox:
-    - 100
-    - 250
+    - 500
+    - 280
     - 1200
-    - 400
+    - 430
   bot_bbox:
-    - 100
-    - 390
+    - 500
+    - 400
     - 1200
-    - 700
-  detection_threshold: 0.9
+    - 600
+  detection_threshold: 0.8
 rosbag_data_recorder:
   topics:
     - /side_camera/color/image_cropped

@@ -60,6 +60,7 @@ class LegoDetector:
 
             for i in bounding_boxes.__iter__():
                 current_score = scores[ind]
+                print(current_score)
                 ind += 1
                 if current_score >= req.score_threshold:
                     bbox = i.numpy()

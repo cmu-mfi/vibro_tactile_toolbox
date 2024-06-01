@@ -23,6 +23,34 @@ LEGO_BLOCK_HEIGHT=0.0096 #z
 LEGO_BLOCK_WIDTH=1*STUD_WIDTH #x    #0.0158 (with clearance)
 LEGO_BLOCK_LENGTH=2*STUD_WIDTH #y   #0.0318 (with clearance)
 
+def determine_next_pose(T_lego_world, block_x_loc, block_y_loc):
+
+    registered_locations = []
+
+    for key in T_lego_world.keys():
+        registered_locations.append([int(k) for k in key.split(',')])
+    registered_locations = np.array(registered_locations)
+    #print(registered_locations)
+    print([block_x_loc, block_y_loc])
+    #print(registered_locations - np.array([block_x_loc, block_y_loc]))
+    dist = np.linalg.norm(registered_locations - np.array([block_x_loc, block_y_loc]), axis=-1)
+    #print(dist)
+    index = np.argmin(dist)
+    #print(index)
+    closest_tf_loc = registered_locations[index]
+    #print(closest_tf_loc)
+    diff = [block_x_loc, block_y_loc] - closest_tf_loc
+    #print(diff)
+    closest_tf = T_lego_world[str(closest_tf_loc[0])+','+str(closest_tf_loc[1])]
+
+    place_perturb_pose = RigidTransform(translation=[diff[0]*STUD_WIDTH, diff[1]*STUD_WIDTH, 0.0],
+                                         from_frame='lego', to_frame='lego')
+
+    tmp_T_lego_world = closest_tf * place_perturb_pose
+    return tmp_T_lego_world
+    
+
+
 def run():
     # Start Node
     rospy.init_node("collect_tactile_data")
@@ -46,6 +74,13 @@ def run():
 
     data_dir = config['data_dir']+'volume_'+str(volume)+'/'+block_type+'/vel_'+str(velocity_scale)+'/'
 
+    if not os.path.exists(config['data_dir']+'volume_'+str(volume)):
+        os.mkdir(config['data_dir']+'volume_'+str(volume))
+    if not os.path.exists(config['data_dir']+'volume_'+str(volume)+'/'+block_type):
+        os.mkdir(config['data_dir']+'volume_'+str(volume)+'/'+block_type)
+    if not os.path.exists(config['data_dir']+'volume_'+str(volume)+'/'+block_type+'/vel_'+str(velocity_scale)):
+        os.mkdir(config['data_dir']+'volume_'+str(volume)+'/'+block_type+'/vel_'+str(velocity_scale))    
+
     if str(velocity_scale) == '0.01':
         move_down_velocity_scaling = 0.01
     elif str(velocity_scale) == '0.02':
@@ -62,7 +97,17 @@ def run():
     T_lego_ee = RigidTransform.load(root_pwd+config['lego_ee_tf'])
 
     # Load Lego block registration pose 
-    T_lego_world = RigidTransform.load(root_pwd+config['lego_world_tf'])
+    T_lego_world = {}
+
+    for tf in os.listdir(root_pwd+config['lego_world_tf']):
+        x_loc = tf.split('_')[2]
+        y_loc = tf.split('_')[3][:-3]
+        T_lego_world[x_loc+','+y_loc] = RigidTransform.load(root_pwd+config['lego_world_tf']+tf)
+
+    block_x_loc = np.random.randint(config['block_x_range'][0], config['block_x_range'][1])
+    block_y_loc = np.random.randint(config['block_y_range'][0], config['block_y_range'][1])
+
+    tmp_T_lego_world = determine_next_pose(T_lego_world, block_x_loc, block_y_loc)
 
     ### Skill Routine ###
     params = {'T_lego_ee': T_lego_ee, 
@@ -105,6 +150,8 @@ def run():
         rosbag_path = os.path.join(data_dir, rosbag_name)
 
         data_recorder.start_recording(rosbag_path, recording_params)
+
+        rospy.sleep(1)
 
         # 2. Determine Skill Parameters
         move_to_above_perturb_lego_params = {
@@ -205,13 +252,11 @@ def run():
             os.rename(rosbag_path, labeled_rosbag_path)
 
             if skill_type == 'place':
-                block_x_perturb = np.random.randint(config['block_x_range'][0], config['block_x_range'][1])
-                block_y_perturb = np.random.randint(config['block_y_range'][0], config['block_y_range'][1])
+                block_x_loc = np.random.randint(config['block_x_range'][0], config['block_x_range'][1])
+                block_y_loc = np.random.randint(config['block_y_range'][0], config['block_y_range'][1])
 
-                place_perturb_pose = RigidTransform(translation=[block_x_perturb*STUD_WIDTH, block_y_perturb*STUD_WIDTH, 0.0],
-                                                     from_frame='lego', to_frame='lego')
+                tmp_T_lego_world = determine_next_pose(T_lego_world, block_x_loc, block_y_loc)
 
-                tmp_T_lego_world = T_lego_world * place_perturb_pose
                 tmp_T_lego_world.save(root_pwd+config['tmp_lego_world_tf'])
 
             terminals = home_skill.execute_skill(None)
@@ -251,13 +296,11 @@ def run():
         terminals = home_skill.execute_skill(None)
 
         if skill_type == "pick" and outcomes['success']:
-            block_x_perturb = np.random.randint(config['block_x_range'][0], config['block_x_range'][1])
-            block_y_perturb = np.random.randint(config['block_y_range'][0], config['block_y_range'][1])
+            block_x_loc = np.random.randint(config['block_x_range'][0], config['block_x_range'][1])
+            block_y_loc = np.random.randint(config['block_y_range'][0], config['block_y_range'][1])
 
-            place_perturb_pose = RigidTransform(translation=[block_x_perturb*STUD_WIDTH, block_y_perturb*STUD_WIDTH, 0.0],
-                                                 from_frame='lego', to_frame='lego')
+            tmp_T_lego_world = determine_next_pose(T_lego_world, block_x_loc, block_y_loc)
 
-            tmp_T_lego_world = T_lego_world * place_perturb_pose
             tmp_T_lego_world.save(root_pwd+config['tmp_lego_world_tf'])
 
 if __name__ == "__main__":

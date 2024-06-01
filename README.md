@@ -52,7 +52,7 @@
    - Run the following command:
      ```sh
      ssh yk-god
-     rosrun sounddevice_ros sounddevice_ros_publisher_node.py -d 2 -c 2
+     rosrun sounddevice_ros sounddevice_ros_publisher_node.py -d 3 -c 3
      ```
 
 8. **Start Terminators**:
