@@ -3,7 +3,7 @@
 '''
 Custom torch class for loading VibroTactile Toolbox datasets from create_training_dataset.py
 '''
-
+import os
 import torch
 from torch.utils.data import Dataset
 
@@ -49,18 +49,21 @@ class VTTDataset(Dataset):
         print(f"velocity: {velocity}")
         print(f"labelling: {labelling}")
 
-        self.data = self.load_data(data_path)
-        self.labels = self.load_labels(data_path)
+        self.data, self.labels = self.make_dataset(data_path)
     
-    def load_data(self, data_path: str):
+    def make_dataset(self, data_path: str):
         """
         Loads data from the data path.
         data_path/
             {volume}/
                 {brick_type}/
                     {velocity}/
-                        trial_{n}_p_{perturbation}_{velocity}_{skill}_{outcome}
-
+                        labels.txt
+                        trials.txt
+                        MoveDown/
+                        PickLego/
+                        PlaceLego/
+                        misc/
         
         Args:
             data_path (string): Path to the data directory.
@@ -68,35 +71,70 @@ class VTTDataset(Dataset):
         Returns:
             list: A list or another data structure containing your data.
         """
-        # Implement your data loading logic here
         data = []
-        # Example:
-        # with open(data_path, 'r') as file:
-        #     data = file.readlines()
-        return data
-    
-    def load_labels(self, data_path):
-        """
-        Loads labels from the data path if you have labels.
-        Implement this method based on your data format.
-        
-        Args:
-            data_path (string): Path to the data file or directory.
-            
-        Returns:
-            list: A list or another data structure containing your labels.
-        """
-        # Implement your label loading logic here
         labels = []
-        # Example:
-        # with open(data_path, 'r') as file:
-        #     labels = file.readlines()
-        return labels
+
+        # Each trial_dir is the output from model_training/create_training_dataset.py
+        trial_dirs = self.collect_trial_dirs(data_path)
+        for trial_dir in trial_dirs:
+            labels = os.path.join(trial_dir, 'labels.txt')
+            wd = os.path.join(trial_dir, self.skill)
+            audio_dir = os.path.join(wd, 'audio')
+
+
+                    
+        return data, labels
+    
+    def collect_trial_dirs(self, data_path):
+        trials_to_load = []
+        wd = data_path
+        # Select by volume
+        for volume in self.volumes:
+            volume_dir = f'volume_{volume}'
+            wd = os.path.join(data_path, volume_dir)
+            if not os.path.isdir(wd):
+                print(f"Warning: {wd} does not exist")
+                continue
+        # Select by brick type
+            for brick_type in self.brick_types:
+                brick_dir = f'{brick_type}'
+                wd = os.path.join(data_path, volume_dir, brick_dir)
+                if not os.path.isdir(wd):
+                    print(f"Warning: {wd} does not exist")
+                    continue
+        # Select by velocity
+                for velocity in self.velocities:
+                    velocity_dir = f'vel_{velocity}'
+                    wd = os.path.join(data_path, volume_dir, brick_dir, velocity_dir)
+                    if not os.path.isdir(wd):
+                        print(f"Warning: {wd} does not exist")
+                        continue
+                    if not self.is_trial_dir(wd):
+                        print(f"{wd} not found in expected format (output from model_training/create_training_dataset.py)")
+                    else:
+                        trials_to_load.append(wd)
+        return trials_to_load
+
+    def is_trial_dir(self, trial_dir: str):
+        '''
+        Minimal folder scan to check if a directory matches the output of create_training_dataset.py
+        '''
+        if not os.path.isdir(trial_dir): return False
+        if not os.path.isdir(os.path.join(trial_dir, 'MoveDown')): return False
+        if not os.path.isfile(os.path.join(trial_dir, 'labels.txt')): return False
+        return True
     
     def __str__(self):
-        dataset_info = super().__str__()
-        dataset_info += '\n'
-        dataset_info += 'Bingus'
+        dataset_info = f"""
+=== Vibrotactile Dataset ===
+{super().__str__()}
+           Skill:   {self.skill}
+Labelling Method:   {self.labelling_method}
+Included Samples:
+   Volume Levels:   {self.volumes}
+     Brick Types:   {self.brick_types}
+      Velocities:   {self.velocities}
+        """
         return dataset_info
 
     def __len__(self):
