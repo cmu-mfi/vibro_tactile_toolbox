@@ -47,4 +47,4 @@ tmux send-keys -t VTT-core:lego_detector 'cd /home/repos/ros1_ws/src/kevin/vibro
 tmux send-keys -t VTT-core:lego_detector 'python3 scripts/lego_detector.py'  C-m 
 
 # attach the tmux session to check
-tmux attach -t VTT-core
+# tmux attach -t VTT-core

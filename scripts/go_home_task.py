@@ -61,7 +61,7 @@ def run():
     # 2. Begin Skill
     params = {'verbose': verbose}
     home_skill = GoHomeSkill(robot_commander, namespace, params)
-    terminals, outcomes = home_skill.execute_skill(None)
+    terminals = home_skill.execute_skill(None)
     
     for i, terminal in enumerate(terminals):
         print(f"step {i} termination cause:\n{terminal.cause}\n")
