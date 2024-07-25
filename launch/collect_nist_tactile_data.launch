@@ -1,19 +1,19 @@
 <launch>
-    <arg name="namespace" default="yk_creator"/>
-    <arg name="num_trials" default="33"/>
+    <arg name="namespace" default="yk_builder"/>
+    <arg name="num_trials" default="10"/>
     <arg name="start_num" default="0"/>
     <arg name="verbose" default="true"/>
-    <arg name="block_type" default="4x1"/>
+    <arg name="connector_type" default="waterproof"/>
     <arg name="velocity_scale" default="0.01"/>
     <arg name="volume" default="75"/>
-    <arg name="config" default="lego.yaml"/>
+    <arg name="config" default="nist.yaml"/>
     <group ns="$(arg namespace)">
-        <node pkg="vibro_tactile_toolbox" name="collect_tactile_data" type="collect_tactile_data.py" output="screen">
+        <node pkg="vibro_tactile_toolbox" name="collect_nist_tactile_data" type="collect_nist_tactile_data.py" output="screen">
             <param name="namespace" value="$(arg namespace)"/>
             <param name="root_pwd" value="$(find vibro_tactile_toolbox)"/>
             <param name="num_trials" value="$(arg num_trials)"/>
             <param name="start_num" value="$(arg start_num)"/>
-            <param name="block_type" value="$(arg block_type)"/>
+            <param name="connector_type" value="$(arg connector_type)"/>
             <param name="velocity_scale" value="$(arg velocity_scale)"/>
             <param name="volume" value="$(arg volume)"/>
             <param name="verbose" value="$(arg verbose)"/>

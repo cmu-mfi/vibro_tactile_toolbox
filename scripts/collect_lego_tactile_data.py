@@ -53,18 +53,18 @@ def determine_next_pose(T_lego_world, block_x_loc, block_y_loc):
 
 def run():
     # Start Node
-    rospy.init_node("collect_tactile_data")
+    rospy.init_node("collect_lego_tactile_data")
 
     # Messaging Namespace
-    namespace = rospy.get_param("collect_tactile_data/namespace")
-    root_pwd = rospy.get_param("collect_tactile_data/root_pwd")
-    yaml_file = rospy.get_param("collect_tactile_data/config")
-    num_trials = rospy.get_param("collect_tactile_data/num_trials")
-    start_num = rospy.get_param("collect_tactile_data/start_num")
-    block_type = rospy.get_param("collect_tactile_data/block_type")
-    volume = rospy.get_param("collect_tactile_data/volume")
-    velocity_scale = rospy.get_param("collect_tactile_data/velocity_scale")
-    verbose = rospy.get_param("collect_tactile_data/verbose")
+    namespace = rospy.get_param("collect_lego_tactile_data/namespace")
+    root_pwd = rospy.get_param("collect_lego_tactile_data/root_pwd")
+    yaml_file = rospy.get_param("collect_lego_tactile_data/config")
+    num_trials = rospy.get_param("collect_lego_tactile_data/num_trials")
+    start_num = rospy.get_param("collect_lego_tactile_data/start_num")
+    block_type = rospy.get_param("collect_lego_tactile_data/block_type")
+    volume = rospy.get_param("collect_lego_tactile_data/volume")
+    velocity_scale = rospy.get_param("collect_lego_tactile_data/velocity_scale")
+    verbose = rospy.get_param("collect_lego_tactile_data/verbose")
 
     with open(root_pwd+'/config/'+yaml_file) as stream:
         try:

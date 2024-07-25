@@ -168,8 +168,10 @@ include_directories(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
-  scripts/collect_tactile_data.py
+  scripts/collect_lego_tactile_data.py
+  scripts/collect_nist_tactile_data.py
   scripts/save_lego_pose.py
+  scripts/save_hande_pose.py
   scripts/image_cropped_republisher.py
   scripts/terminator_node.py
   scripts/termination_handler_node.py
