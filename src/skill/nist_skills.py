@@ -26,7 +26,7 @@ rapid_termination_config = {
                 'orient_tolerance': 0.01,
                 'pose': None},
 }
-# Engaging a brick on the build plate
+# Engaging a connector on the build plate
 # Terminate if Fz exceeds force to join legos with good alignment
 # 10N is an estimate
 engage_termination_config = {
@@ -46,7 +46,7 @@ engage_termination_config = {
                     'z': [-1, 1]}
             }}
 }
-# Releasing a brick through rotation
+# Releasing a connector through rotation
 # Try not to terminate from fts unless the readings may cause an E-stop
 release_termination_config = {
     'time': {'duration': 10.0},
@@ -65,7 +65,7 @@ release_termination_config = {
                     'z': [-2, 2]}
             }}
 }
-# Pulling up on a brick to check if connected
+# Pulling up on a connector to check if connected
 # Terminate if z goes positive
 # Terminate if any substantial reaction otherwise
 servo_termination_config = {
@@ -94,9 +94,9 @@ def add_termination_pose(termination_config, pose : Pose):
 
 class MoveToAbovePerturbConnectorPose(BaseSkill):
 
-    def __init__(self, robot_commander: BaseRobotCommander, namespace: str, params=None):
+    def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
 
-        super().__init__(robot_commander, namespace, params)
+        super().__init__(robot_commander, gripper_controller, namespace, params)
 
         if 'T_hande_ee' not in self.params:
             print(f"MoveToAbovePerturbConnectorPose expects end effector transform: params['T_hande_ee'] = RigidTransform()")
@@ -111,8 +111,8 @@ class MoveToAbovePerturbConnectorPose(BaseSkill):
 
     def execute_skill(self, execution_params, skill_params) -> Tuple[List[TerminationSignal], List[int]]:
         # QOL 
-        if 'T_hande_ee' not in skill_params:
-            print(f"MoveToAbovePerturbConnectorPose expects target brick pose transform: skill_params['T_hande_ee'] = RigidTransform()")
+        if 'T_connector_world' not in skill_params:
+            print(f"MoveToAbovePerturbConnectorPose expects target connector pose transform: skill_params['T_connector_world'] = RigidTransform()")
         if 'approach_height_offset' not in skill_params:
             print(f"MoveToAbovePerturbConnectorPose expects an approach height offset (meters): skill_params['approach_height_offset'] = float(0.010 m)")
         if 'place_perturbation' not in skill_params:
@@ -121,30 +121,30 @@ class MoveToAbovePerturbConnectorPose(BaseSkill):
         else:
             self.place_perturbation = np.array(skill_params['place_perturbation'])
 
-        self.T_hande_ee = skill_params['T_hande_ee']
+        self.T_connector_world = skill_params['T_connector_world']
         self.approach_height_offset = skill_params['approach_height_offset']
 
-        self.T_place_target = self.T_hande_ee.copy()
+        self.T_place_target = self.T_connector_world.copy()
 
-        self.T_lego_approach = RigidTransform(
+        self.T_connector_approach = RigidTransform(
             translation=np.array([0.0, 0.0, -abs(self.approach_height_offset)]),
-            from_frame='lego', to_frame='lego'
+            from_frame='hande', to_frame='hande'
         )
 
         self.place_perturb_pose = RigidTransform(translation=[self.place_perturbation[0], self.place_perturbation[1], 0.0],
                                                  rotation=RigidTransform.z_axis_rotation(np.deg2rad(self.place_perturbation[2])),
-                                                 from_frame='lego', to_frame='lego')
+                                                 from_frame='hande', to_frame='hande')
 
-        self.approach_pose = self.T_place_target * self.place_perturb_pose * self.T_lego_approach * self.T_hande_ee.inverse()
+        self.approach_pose = self.T_place_target * self.place_perturb_pose * self.T_connector_approach * self.T_hande_ee.inverse()
         self.approach_pose_msg = self.approach_pose.pose_msg
 
         return super().execute_skill(execution_params)
 
 class MoveToAboveConnectorPose(BaseSkill):
 
-    def __init__(self, robot_commander: BaseRobotCommander, namespace: str, params=None):
+    def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
 
-        super().__init__(robot_commander, namespace, params)
+        super().__init__(robot_commander, gripper_controller, namespace, params)
 
         if 'T_hande_ee' not in self.params:
             print(f"MoveToAboveConnectorPose expects end effector transform: params['T_hande_ee'] = RigidTransform()")
@@ -159,31 +159,31 @@ class MoveToAboveConnectorPose(BaseSkill):
 
     def execute_skill(self, execution_params, skill_params) -> Tuple[List[TerminationSignal], List[int]]:
         # QOL 
-        if 'T_hande_ee' not in skill_params:
-            print(f"MoveToAboveConnectorPose expects target brick pose transform: skill_params['T_hande_ee'] = RigidTransform()")
+        if 'T_connector_world' not in skill_params:
+            print(f"MoveToAboveConnectorPose expects target connector pose transform: skill_params['T_connector_world'] = RigidTransform()")
         if 'approach_height_offset' not in skill_params:
             print(f"MoveToAboveConnectorPose expects an approach height offset (meters): skill_params['approach_height_offset'] = float(0.010 m)")
 
-        self.T_hande_ee = skill_params['T_hande_ee']
+        self.T_connector_world = skill_params['T_connector_world']
         self.approach_height_offset = skill_params['approach_height_offset']
 
-        self.T_place_target = self.T_hande_ee.copy()
+        self.T_place_target = self.T_connector_world.copy()
 
-        self.T_lego_approach = RigidTransform(
+        self.T_connector_approach = RigidTransform(
             translation=np.array([0.0, 0.0, -abs(self.approach_height_offset)]),
-            from_frame='lego', to_frame='lego'
+            from_frame='hande', to_frame='hande'
         )
 
-        self.approach_pose = self.T_place_target * self.T_lego_approach * self.T_hande_ee.inverse()
+        self.approach_pose = self.T_place_target * self.T_connector_approach * self.T_hande_ee.inverse()
         self.approach_pose_msg = self.approach_pose.pose_msg
 
         return super().execute_skill(execution_params)
 
 class PullUp(BaseSkill):
 
-    def __init__(self, robot_commander: BaseRobotCommander, namespace: str, params=None):
+    def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
 
-        super().__init__(robot_commander, namespace, params)
+        super().__init__(robot_commander, gripper_controller, namespace, params)
 
         self.skill_steps = [
             {'step_name': 'pull_up',
@@ -219,9 +219,9 @@ class PullUp(BaseSkill):
 
 class MoveDown(BaseSkill):
 
-    def __init__(self, robot_commander: BaseRobotCommander, namespace: str, params=None):
+    def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
 
-        super().__init__(robot_commander, namespace, params)
+        super().__init__(robot_commander, gripper_controller, namespace, params)
 
         self.skill_steps = [
             {'step_name': 'move_down',
@@ -256,9 +256,9 @@ class MoveDown(BaseSkill):
 
 class Move2D(BaseSkill):
 
-    def __init__(self, robot_commander: BaseRobotCommander, namespace: str, params=None):
+    def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
 
-        super().__init__(robot_commander, namespace, params)
+        super().__init__(robot_commander, gripper_controller, namespace, params)
 
         self.skill_steps = [
             {'step_name': 'pull_up',
@@ -292,50 +292,51 @@ class Move2D(BaseSkill):
 
         return super().execute_skill(execution_params)
 
-class PickUpConnector(BaseSkill):
+class PickOrPlaceConnector(BaseSkill):
 
     def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
 
-        super().__init__(robot_commander, namespace, params)
+        super().__init__(robot_commander, gripper_controller, namespace, params)
 
         if 'T_hande_ee' not in self.params:
-            print(f"PickUpConnector expects end effector transform: params['T_hande_ee'] = RigidTransform()")
+            print(f"PickOrPlaceConnector expects end effector transform: params['T_hande_ee'] = RigidTransform()")
 
         self.T_hande_ee = self.params['T_hande_ee']
 
+        if 'T_connector_world' not in self.params:
+            print(f"PickOrPlaceConnector expects target connector pose transform: params['T_connector_world'] = RigidTransform()")
+
+        self.T_connector_world = self.params['T_connector_world']
+
+        if 'approach_height_offset' not in self.params:
+            print(f"PickOrPlaceConnector expects an approach height offset (meters): params['approach_height_offset'] = float(0.010 m)")
+
+        self.approach_height_offset = self.params['approach_height_offset']
+
+        self.connector_pose_msg = self.T_connector_world.copy()
+
+        self.T_lego_approach = RigidTransform(
+            translation=np.array([0.0, 0.0, -abs(self.approach_height_offset)]),
+            from_frame='hande', to_frame='hande'
+        )
+
+        self.approach_pose = self.connector_pose_msg * self.T_lego_approach * self.T_hande_ee.inverse()
+        self.approach_pose_msg = self.approach_pose.pose_msg
+
         self.skill_steps = [
+            {'step_name': 'go_to_approach_pose',
+             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.approach_pose_msg, wait=False),
+             'termination_cfg': lambda param: add_termination_pose(rapid_termination_config, self.approach_pose_msg)},
+            {'step_name': 'go_to_connector_pose',
+             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.connector_pose_msg, wait=False),
+             'termination_cfg': lambda param: add_termination_pose(rapid_termination_config, self.connector_pose_msg)},
+            {'step_name': 'grasp_connector',
+             'robot_command': lambda param: self.gripper_controller.close(force=100) if param['pick'] == True else self.gripper_controller.open(),
+             'termination_cfg': None},
             {'step_name': 'go_to_approach_pose',
              'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.approach_pose_msg, wait=False),
              'termination_cfg': lambda param: add_termination_pose(rapid_termination_config, self.approach_pose_msg)},
         ]
 
     def execute_skill(self, execution_params, skill_params) -> Tuple[List[TerminationSignal], List[int]]:
-        # QOL 
-        if 'T_hande_ee' not in skill_params:
-            print(f"PickUpConnector expects target brick pose transform: skill_params['T_hande_ee'] = RigidTransform()")
-        if 'approach_height_offset' not in skill_params:
-            print(f"PickUpConnector expects an approach height offset (meters): skill_params['approach_height_offset'] = float(0.010 m)")
-        if 'place_perturbation' not in skill_params:
-            self.place_perturbation = np.random.uniform(-0.001, 0.001, size=(3,))
-            print(f"No initial place perturbation specified, using random perturbation: {tuple(self.place_perturbation)} [m]")
-        else:
-            self.place_perturbation = np.array(skill_params['place_perturbation'])
-
-        self.T_hande_ee = skill_params['T_hande_ee']
-        self.approach_height_offset = skill_params['approach_height_offset']
-
-        self.T_place_target = self.T_hande_ee.copy()
-
-        self.T_lego_approach = RigidTransform(
-            translation=np.array([0.0, 0.0, -abs(self.approach_height_offset)]),
-            from_frame='lego', to_frame='lego'
-        )
-
-        self.place_perturb_pose = RigidTransform(translation=[self.place_perturbation[0], self.place_perturbation[1], 0.0],
-                                                 rotation=RigidTransform.z_axis_rotation(np.deg2rad(self.place_perturbation[2])),
-                                                 from_frame='lego', to_frame='lego')
-
-        self.approach_pose = self.T_place_target * self.place_perturb_pose * self.T_lego_approach * self.T_hande_ee.inverse()
-        self.approach_pose_msg = self.approach_pose.pose_msg
-
         return super().execute_skill(execution_params)

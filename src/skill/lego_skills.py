@@ -100,9 +100,9 @@ def add_termination_pose(termination_config, pose : Pose):
 
 class MoveToAbovePerturbLegoPose(BaseSkill):
 
-    def __init__(self, robot_commander: BaseRobotCommander, namespace: str, params=None):
+    def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
 
-        super().__init__(robot_commander, namespace, params)
+        super().__init__(robot_commander, gripper_controller, namespace, params)
 
         if 'T_lego_ee' not in self.params:
             print(f"MoveToAbovePerturbLegoPose expects end effector transform: params['T_lego_ee'] = RigidTransform()")
@@ -148,9 +148,9 @@ class MoveToAbovePerturbLegoPose(BaseSkill):
 
 class MoveToAboveLegoPose(BaseSkill):
 
-    def __init__(self, robot_commander: BaseRobotCommander, namespace: str, params=None):
+    def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
 
-        super().__init__(robot_commander, namespace, params)
+        super().__init__(robot_commander, gripper_controller, namespace, params)
 
         if 'T_lego_ee' not in self.params:
             print(f"MoveToAboveLegoPose expects end effector transform: params['T_lego_ee'] = RigidTransform()")
@@ -187,9 +187,9 @@ class MoveToAboveLegoPose(BaseSkill):
 
 class PullUp(BaseSkill):
 
-    def __init__(self, robot_commander: BaseRobotCommander, namespace: str, params=None):
+    def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
 
-        super().__init__(robot_commander, namespace, params)
+        super().__init__(robot_commander, gripper_controller, namespace, params)
 
         self.skill_steps = [
             {'step_name': 'pull_up',
@@ -225,9 +225,9 @@ class PullUp(BaseSkill):
 
 class MoveDown(BaseSkill):
 
-    def __init__(self, robot_commander: BaseRobotCommander, namespace: str, params=None):
+    def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
 
-        super().__init__(robot_commander, namespace, params)
+        super().__init__(robot_commander, gripper_controller, namespace, params)
 
         self.skill_steps = [
             {'step_name': 'move_down',
@@ -262,9 +262,9 @@ class MoveDown(BaseSkill):
 
 class PlaceLego(BaseSkill):
 
-    def __init__(self, robot_commander: BaseRobotCommander, namespace: str, params=None):
+    def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
 
-        super().__init__(robot_commander, namespace, params)
+        super().__init__(robot_commander, gripper_controller, namespace, params)
 
         if 'T_lego_ee' not in self.params:
             print(f"PlaceLego expects end effector transform: params['T_lego_ee'] = RigidTransform()")
@@ -320,9 +320,9 @@ class PlaceLego(BaseSkill):
     
 class PickLego(BaseSkill):
 
-    def __init__(self, robot_commander: BaseRobotCommander, namespace: str, params=None):
+    def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
 
-        super().__init__(robot_commander, namespace, params)
+        super().__init__(robot_commander, gripper_controller, namespace, params)
 
         if 'T_lego_ee' not in self.params:
             print(f"PickLego expects end effector transform: params['T_lego_ee'] = RigidTransform()")
@@ -375,27 +375,3 @@ class PickLego(BaseSkill):
         self.rotate_pose_msg = self.rotate_pose.pose_msg
 
         return super().execute_skill(execution_params)
-
-class ResetLegoPalletSkill(BaseSkill):
-
-    def __init__(self, robot_commander: BaseRobotCommander):
-
-        super().__init__(robot_commander)
-
-        self.skill_steps = [
-             {'step_name': 'go_to_home_joints',
-              'command': lambda: self.robot_commander.go_to_joints([0, 0, 0, 0, -np.pi/2, 0], wait=False),
-              'termination_cfg': {'joint': {'positions': [0, 0, 0, 0, -np.pi/2, 0]}}}
-        ]
-
-class ResetLegoGripperSkill(BaseSkill):
-
-    def __init__(self, robot_commander: BaseRobotCommander):
-
-        super().__init__(robot_commander)
-
-        self.skill_steps = [
-             {'step_name': 'go_to_home_joints',
-              'command': lambda: self.robot_commander.go_to_joints([0, 0, 0, 0, -np.pi/2, 0], wait=False),
-              'termination_cfg': {'joint': {'positions': [0, 0, 0, 0, -np.pi/2, 0]}}}
-        ]

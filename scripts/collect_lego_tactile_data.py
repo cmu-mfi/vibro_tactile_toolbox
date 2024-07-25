@@ -5,6 +5,7 @@ import os
 import numpy as np
 
 from robot_controller.yk_controller import YaskawaRobotController
+from gripper_controller.lego_gripper_controller import LegoGripperController
 
 from autolab_core import RigidTransform
 
@@ -92,6 +93,7 @@ def run():
 
     # Instantiate robot controller for Yaskawa API
     robot_commander = YaskawaRobotController(namespace)
+    gripper_controller = LegoGripperController(namespace)
 
     # Load End-Effector Kinematics
     T_lego_ee = RigidTransform.load(root_pwd+config['lego_ee_tf'])
@@ -113,13 +115,13 @@ def run():
     params = {'T_lego_ee': T_lego_ee, 
               'verbose': verbose}
 
-    move_to_above_lego_pose_skill = MoveToAboveLegoPose(robot_commander, namespace, params)
-    move_to_above_perturb_lego_skill = MoveToAbovePerturbLegoPose(robot_commander, namespace, params)
-    pull_up_skill = PullUp(robot_commander, namespace, params)
-    move_down_skill = MoveDown(robot_commander, namespace, params)
-    place_lego_skill = PlaceLego(robot_commander, namespace, params)
-    pick_lego_skill = PickLego(robot_commander, namespace, params)
-    home_skill = GoHomeSkill(robot_commander, namespace, params)
+    move_to_above_lego_pose_skill = MoveToAboveLegoPose(robot_commander, gripper_controller, namespace, params)
+    move_to_above_perturb_lego_skill = MoveToAbovePerturbLegoPose(robot_commander, gripper_controller, namespace, params)
+    pull_up_skill = PullUp(robot_commander, gripper_controller, namespace, params)
+    move_down_skill = MoveDown(robot_commander, gripper_controller, namespace, params)
+    place_lego_skill = PlaceLego(robot_commander, gripper_controller, namespace, params)
+    pick_lego_skill = PickLego(robot_commander, gripper_controller, namespace, params)
+    home_skill = GoHomeSkill(robot_commander, gripper_controller, namespace, params)
     data_recorder = RosbagDataRecorder()
 
     topics = []

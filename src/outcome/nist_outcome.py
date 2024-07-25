@@ -7,15 +7,6 @@ from vibro_tactile_toolbox.srv import *
 
 from enum import Enum
 
-# class LegoOutcome(Enum):
-#     """
-#     Codes to describe skill outcomes
-#     """
-#     SUCCESS = 0
-#     FAIL = 1
-#     CONNECTED = 2
-#     DISCONNECTED = 3
-
 def send_start_outcome_request(params):
     rospy.wait_for_service('/fts_detector')
 

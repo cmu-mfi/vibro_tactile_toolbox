@@ -5,12 +5,13 @@ import os
 import numpy as np
 
 from robot_controller.yk_controller import YaskawaRobotController
+from gripper_controller.robotiq_hande_controller import RobotiqHandEController
 
 from autolab_core import RigidTransform
 
-from skill.nist_skills import PullUp, MoveToAboveLegoPose, MoveToAbovePerturbLegoPose, PickLego, PlaceLego, MoveDown
+from skill.nist_skills import PullUp, MoveToAboveConnectorPose, MoveToAbovePerturbConnectorPose, PickOrPlaceConnector, MoveDown
 from skill.util_skills import GoHomeSkill
-from outcome.lego_outcome import *
+from outcome.nist_outcome import *
 
 from data_recorder.rosbag_data_recorder import RosbagDataRecorder
 
@@ -58,34 +59,35 @@ def run():
 
     # Instantiate robot controller for Yaskawa API
     robot_commander = YaskawaRobotController(namespace)
+    gripper_controller = RobotiqHandEController(namespace)
 
     # Load End-Effector Kinematics
     T_hande_ee = RigidTransform.load(root_pwd+config['hande_ee_tf'])
 
-    # Load Lego block registration pose 
-    T_lego_world = {}
-
-    for tf in os.listdir(root_pwd+config['lego_world_tf']):
-        x_loc = tf.split('_')[2]
-        y_loc = tf.split('_')[3][:-3]
-        T_lego_world[x_loc+','+y_loc] = RigidTransform.load(root_pwd+config['lego_world_tf']+tf)
-
-    block_x_loc = np.random.randint(config['block_x_range'][0], config['block_x_range'][1])
-    block_y_loc = np.random.randint(config['block_y_range'][0], config['block_y_range'][1])
-
-    tmp_T_lego_world = determine_next_pose(T_lego_world, block_x_loc, block_y_loc)
+    if connector_type == 'waterproof':
+        T_connector_world_pick = RigidTransform.load(root_pwd+config['waterproof_world_pick_tf'])
+        T_connector_world_place = RigidTransform.load(root_pwd+config['waterproof_world_place_tf'])
+    elif connector_type == 'dsub':
+        T_connector_world_pick = RigidTransform.load(root_pwd+config['dsub_world_pick_tf'])
+        T_connector_world_place = RigidTransform.load(root_pwd+config['dsub_world_place_tf'])
 
     ### Skill Routine ###
     params = {'T_hande_ee': T_hande_ee, 
               'verbose': verbose}
 
-    move_to_above_lego_pose_skill = MoveToAboveLegoPose(robot_commander, namespace, params)
-    move_to_above_perturb_lego_skill = MoveToAbovePerturbLegoPose(robot_commander, namespace, params)
-    pull_up_skill = PullUp(robot_commander, namespace, params)
-    move_down_skill = MoveDown(robot_commander, namespace, params)
-    place_lego_skill = PlaceLego(robot_commander, namespace, params)
-    pick_lego_skill = PickLego(robot_commander, namespace, params)
-    home_skill = GoHomeSkill(robot_commander, namespace, params)
+    pick_or_place_connector_params = {
+        'T_hande_ee': T_hande_ee, 
+        'verbose': verbose,
+        'T_connector_world': T_connector_world_pick,
+        'approach_height_offset': config['approach_height'],
+    }
+
+    move_to_above_connector_pose_skill = MoveToAboveConnectorPose(robot_commander, gripper_controller, namespace, params)
+    move_to_above_perturb_connector_skill = MoveToAbovePerturbConnectorPose(robot_commander, gripper_controller, namespace, params)
+    pull_up_skill = PullUp(robot_commander, gripper_controller, namespace, params)
+    move_down_skill = MoveDown(robot_commander, gripper_controller, namespace, params)
+    pick_or_place_connector_skill = PickOrPlaceConnector(robot_commander, gripper_controller, namespace, pick_or_place_connector_params)
+    home_skill = GoHomeSkill(robot_commander, gripper_controller, namespace, params)
     data_recorder = RosbagDataRecorder()
 
     topics = []
@@ -99,10 +101,15 @@ def run():
         'topics': topics
     }
 
+    execution_params = {
+        'skill_step_delay': 2.0
+    }
+
     # Tasks to do
     for trial_num in range(start_num, start_num+num_trials):
-        # Load temporary lego block registration pose 
-        tmp_T_lego_world = RigidTransform.load(root_pwd+config['tmp_lego_world_tf'])
+
+        pick_execution_params = {'skill_step_delay': 2.0, 'skill_step_params': {'open_or_close_gripper': {'pick': True}}}
+        pick_or_place_connector_skill.execute_skill(pick_execution_params, None)
 
         x_perturb = np.random.uniform(config['x_range'][0], config['x_range'][1])
         y_perturb = np.random.uniform(config['y_range'][0], config['y_range'][1])
@@ -120,14 +127,14 @@ def run():
         rospy.sleep(1)
 
         # 2. Determine Skill Parameters
-        move_to_above_perturb_lego_params = {
-            'T_lego_world': tmp_T_lego_world,
+        move_to_above_perturb_connector_params = {
+            'T_connector_world': T_connector_world_place,
             'approach_height_offset': config['approach_height'],
             'place_perturbation': [x_perturb, y_perturb, theta_perturb]
         }
 
-        move_to_above_lego_params = {
-            'T_lego_world': tmp_T_lego_world,
+        move_to_above_connector_params = {
+            'T_connector_world': T_connector_world_place,
             'approach_height_offset': config['approach_height'],
         }
 
@@ -141,23 +148,11 @@ def run():
             'velocity_scaling': move_down_velocity_scaling
         }
 
-        execution_params = {
-            'skill_step_delay': 2.0
-        }
+        
 
-        place_lego_params = {
-            'place_rotation': config['place_rotation'],
-            'lift_height_offset': config['approach_height'],
-        }
+        terminals = move_to_above_perturb_connector_skill.execute_skill(execution_params, move_to_above_perturb_connector_params)
 
-        pick_lego_params = {
-            'pick_rotation': config['pick_rotation'],
-            'lift_height_offset': config['approach_height'],
-        }
-
-        terminals = move_to_above_perturb_lego_skill.execute_skill(execution_params, move_to_above_perturb_lego_params)
-
-        outcomes = send_start_outcome_request({k: config[k] for k in ('fts_detector', 'lego_detector')})
+        outcomes = send_start_outcome_request({'fts_detector': config['fts_detector']})
 
         if outcomes['starting_top'] == 1 and outcomes['starting_bottom'] == 0:
             skill_type = "place"
@@ -182,9 +177,9 @@ def run():
         outcomes = send_end_fts_outcome_request(config['fts_detector'])
 
         if outcomes['success'] == False:
-            terminals = move_to_above_lego_pose_skill.execute_skill(execution_params, move_to_above_lego_params)
+            terminals = move_to_above_connector_pose_skill.execute_skill(execution_params, move_to_above_connector_params)
 
-            outcomes = send_start_outcome_request({k: config[k] for k in ('fts_detector', 'lego_detector')})
+            outcomes = send_start_outcome_request({'fts_detector': config['fts_detector']})
 
             if outcomes['starting_top'] == 1 and outcomes['starting_bottom'] == 0:
                 skill_type = "place"
@@ -209,7 +204,7 @@ def run():
             outcomes = send_end_fts_outcome_request(config['fts_detector'])
 
         if outcomes['success'] == False:
-            print("Failed to pull up lego. Skipping trial")
+            print("Failed to pull up connector. Skipping trial")
             data_recorder.stop_recording()
 
             rospy.sleep(1)
@@ -217,25 +212,15 @@ def run():
             labeled_rosbag_path = rosbag_path.split(".bag")[0] + f"_connection_failure.bag"
             os.rename(rosbag_path, labeled_rosbag_path)
 
-            if skill_type == 'place':
-                block_x_loc = np.random.randint(config['block_x_range'][0], config['block_x_range'][1])
-                block_y_loc = np.random.randint(config['block_y_range'][0], config['block_y_range'][1])
-
-                tmp_T_lego_world = determine_next_pose(T_lego_world, block_x_loc, block_y_loc)
-
-                tmp_T_lego_world.save(root_pwd+config['tmp_lego_world_tf'])
-
             terminals = home_skill.execute_skill(None)
             continue
         #else:
             #terminals = move_down_skill.execute_skill(execution_params, move_down_to_reconnect_params)
 
         if skill_type == "place":
-            terminals = place_lego_skill.execute_skill(execution_params, place_lego_params)
+            terminals = place_connector_skill.execute_skill(execution_params, place_connector_params)
         elif skill_type == "pick":
-            terminals = pick_lego_skill.execute_skill(execution_params, pick_lego_params)
-
-        outcomes = send_end_vision_outcome_request(config['lego_detector'])
+            terminals = pick_connector_skill.execute_skill(execution_params, pick_connector_params)
 
         # 3. End rosbag recording
         data_recorder.stop_recording()
@@ -254,20 +239,10 @@ def run():
             os.rename(rosbag_path, labeled_rosbag_path)
             break
 
-        if outcomes['ending_top'] == 1:
-            pass
-        elif outcomes['ending_bottom'] == 1:
-            pass
+        place_execution_params = {'skill_step_delay': 2.0, 'skill_step_params': {'open_or_close_gripper': {'pick': False}}}
+        pick_or_place_connector_skill.execute_skill(place_execution_params, None)
         
         terminals = home_skill.execute_skill(None)
-
-        if skill_type == "pick" and outcomes['success']:
-            block_x_loc = np.random.randint(config['block_x_range'][0], config['block_x_range'][1])
-            block_y_loc = np.random.randint(config['block_y_range'][0], config['block_y_range'][1])
-
-            tmp_T_lego_world = determine_next_pose(T_lego_world, block_x_loc, block_y_loc)
-
-            tmp_T_lego_world.save(root_pwd+config['tmp_lego_world_tf'])
 
 if __name__ == "__main__":
     run()

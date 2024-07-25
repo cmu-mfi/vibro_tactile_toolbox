@@ -24,11 +24,12 @@ class BaseSkill:
                   'termination': None,
                   'outcome': None}
     
-    def __init__(self, robot_commander: BaseRobotCommander, namespace: str, params=None):
+    def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
 
         self.namespace = namespace
 
         self.robot_commander = robot_commander
+        self.gripper_controller = gripper_controller
         self.skill_termination_topic_name = f'/{namespace}/terminator/skill_termination_signal'
 
         publishers = create_skill_publishers(namespace)
@@ -114,28 +115,34 @@ class BaseSkill:
         skill_param_msg.param = json.dumps(param)
         self.skill_param_pub.publish(skill_param_msg)
 
+        if skill_step['termination_cfg'] is not None: 
 
-        # 1. Set the termination config and reset signal
-        termination_cfg = skill_step['termination_cfg'](param['termination'])
-        termination_cfg['id'] = skill_id
-        termination_cfg_msg = TerminationConfig()
-        termination_cfg_msg.cfg_json = json.dumps(termination_cfg)
-        self.termination_config_pub.publish(termination_cfg_msg)
+            # 1. Set the termination config and reset signal
+            termination_cfg = skill_step['termination_cfg'](param['termination'])
+            termination_cfg['id'] = skill_id
+            termination_cfg_msg = TerminationConfig()
+            termination_cfg_msg.cfg_json = json.dumps(termination_cfg)
+            self.termination_config_pub.publish(termination_cfg_msg)
 
-        # 2. Send the robot command
-        skill_step['robot_command'](param['skill'])
+            # 2. Send the robot command
+            skill_step['robot_command'](param['skill'])
 
-        # 3. Wait for terminationgit
-        termination_signal = rospy.wait_for_message(self.skill_termination_topic_name, TerminationSignal, rospy.Duration(20))
-        self.robot_commander.stop()
+            # 3. Wait for termination
+            termination_signal = rospy.wait_for_message(self.skill_termination_topic_name, TerminationSignal, rospy.Duration(20))
+            self.robot_commander.stop()
 
-        # 3.1 Stop terminators (this prevents the terminator node from filling with wasted messages)
-        termination_cfg = {}
-        termination_cfg['id'] = rospy.Time.now().secs
-        termination_cfg_msg = TerminationConfig()
-        termination_cfg_msg.cfg_json = json.dumps(termination_cfg)
-        self.termination_config_pub.publish(termination_cfg_msg)
-        rospy.sleep(0.5) # sleep 500ms to allow for inertia to stop
+            # 3.1 Stop terminators (this prevents the terminator node from filling with wasted messages)
+            termination_cfg = {}
+            termination_cfg['id'] = rospy.Time.now().secs
+            termination_cfg_msg = TerminationConfig()
+            termination_cfg_msg.cfg_json = json.dumps(termination_cfg)
+            self.termination_config_pub.publish(termination_cfg_msg)
+            rospy.sleep(0.5) # sleep 500ms to allow for inertia to stop
+
+        else:
+            # 2. Send the robot command
+            skill_step['robot_command'](param['skill'])
+            termination_signal = None
 
         # 5. Return terminal
         return termination_signal
