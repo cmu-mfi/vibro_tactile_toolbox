@@ -23,7 +23,7 @@
 		</node>
 
 		<!-- Start image_republisher node -->
-		<node name="image_republisher_node" pkg="vibro_tactile_toolbox" type="image_cropped_republisher.py" output="screen">
+		<node name="image_cropped_republisher_node" pkg="vibro_tactile_toolbox" type="image_cropped_republisher.py" output="screen">
 			<param name="image_sub_topic_name" value="/side_camera/color/image_raw" />
 			<param name="image_pub_topic_name" value="/side_camera/color/image_cropped" />
 			<param name="x_offset" value="200" />
