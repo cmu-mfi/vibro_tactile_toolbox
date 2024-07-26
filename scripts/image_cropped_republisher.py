@@ -12,13 +12,13 @@ class ImageCroppedRepublisher:
   def __init__(self):
 
     ns = rospy.get_namespace()
-    self.image_sub_topic_name = rospy.get_param('image_sub_topic_name')
-    self.image_pub_topic_name = rospy.get_param('image_pub_topic_name')
+    self.image_sub_topic_name = rospy.get_param('image_cropped_republisher/image_sub_topic_name')
+    self.image_pub_topic_name = rospy.get_param('image_cropped_republisher/image_pub_topic_name')
 
-    self.x_offset = rospy.get_param('x_offset')
-    self.y_offset = rospy.get_param('y_offset')
-    self.x_size = rospy.get_param('x_size')
-    self.y_size = rospy.get_param('y_size')
+    self.x_offset = rospy.get_param('image_cropped_republisher/x_offset')
+    self.y_offset = rospy.get_param('image_cropped_republisher/y_offset')
+    self.x_size = rospy.get_param('image_cropped_republisher/x_size')
+    self.y_size = rospy.get_param('image_cropped_republisher/y_size')
 
     self.image_pub = rospy.Publisher("/" + namespace + self.image_pub_topic_name,Image, queue_size=10)
 
@@ -41,7 +41,7 @@ class ImageCroppedRepublisher:
       print(e)
 
 def main(args):
-  rospy.init_node('image_cropped_republisher_node', anonymous=True)
+  rospy.init_node('image_cropped_republisher')
   ic = ImageCroppedRepublisher()
   try:
     rospy.spin()
