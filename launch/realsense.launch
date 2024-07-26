@@ -1,5 +1,6 @@
 <launch>
-  <arg name="serial_no"           default=""/>
+  <arg name="namespace"           default="/"/>
+  <arg name="serial_number"       default=""/>
   <arg name="json_file_path"      default=""/>
   <arg name="camera_name"         default="camera"/>
   <arg name="tf_prefix"           default="$(arg camera_name)"/>
@@ -39,7 +40,7 @@
   <group ns="$(arg namespace)/$(arg camera_name)">
     <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
       <arg name="tf_prefix"                value="$(arg tf_prefix)"/>
-      <arg name="serial_no"                value="$(arg serial_no)"/>
+      <arg name="serial_number"                value="$(arg serial_number)"/>
       <arg name="json_file_path"           value="$(arg json_file_path)"/>
 
       <arg name="enable_pointcloud"        value="$(arg enable_pointcloud)"/>
