@@ -1,7 +1,6 @@
 <launch>
     <!-- unique camera name-->
-    <arg name="namespace" default="/" />
-    <arg name="camera_name" default="side_camera"/>
+    <arg name="camera_name" default="camera"/>
     <arg name="output" default="screen"/>
     <!-- Hardware depth registration -->
     <arg name="depth_registration" default="true"/>
@@ -57,7 +56,7 @@
     <arg name="trigger_out_delay_us" default="0"/>
     <arg name="trigger_out_enabled" default="false"/>
     <arg name="enable_frame_sync" default="false"/>
-    <group ns="$(arg namespace)/$(arg camera_name)">
+    <group ns="$(arg camera_name)">
         <node name="camera" pkg="orbbec_camera" type="orbbec_camera_node" output="$(arg output)">
             <param name="camera_name" value="$(arg camera_name)"/>
             <param name="depth_registration" value="$(arg depth_registration)"/>

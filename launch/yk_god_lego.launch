@@ -4,8 +4,8 @@
 	<!-- Launch femto_bolt.launch from vibro_tactile_toolbox package -->
 	<include
 		file="$(find vibro_tactile_toolbox)/launch/femto_bolt.launch">
-		<arg name="namespace" value="$(arg namespace)"/>
-		<arg name="camera_name" value="side_camera"/>
+		<arg name="namespace" value=""/>
+		<arg name="camera_name" value="/$(arg namespace)/side_camera"/>
 		<arg name="serial_number" value="CL8FC3100XE"/>
 	</include>
 
