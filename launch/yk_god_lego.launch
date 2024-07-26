@@ -6,7 +6,7 @@
 		file="$(find vibro_tactile_toolbox)/launch/femto_bolt.launch">
 		<arg name="namespace" value="$(arg namespace)"/>
 		<arg name="camera_name" value="side_camera"/>
-		<arg name="serial_number" value="CL8FC3100R4"/>
+		<arg name="serial_number" value="CL8FC3100XE"/>
 	</include>
 
 	<!-- Launch rs_aligned_depth.launch from realsense2_camera package -->
