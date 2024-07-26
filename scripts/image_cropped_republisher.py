@@ -11,7 +11,7 @@ class ImageCroppedRepublisher:
 
   def __init__(self):
 
-    ns = rospy.get_namespace()
+    self.namespace = rospy.get_namespace()
     self.image_sub_topic_name = rospy.get_param('image_cropped_republisher/image_sub_topic_name')
     self.image_pub_topic_name = rospy.get_param('image_cropped_republisher/image_pub_topic_name')
 
@@ -20,10 +20,10 @@ class ImageCroppedRepublisher:
     self.x_size = rospy.get_param('image_cropped_republisher/x_size')
     self.y_size = rospy.get_param('image_cropped_republisher/y_size')
 
-    self.image_pub = rospy.Publisher("/" + namespace + self.image_pub_topic_name,Image, queue_size=10)
+    self.image_pub = rospy.Publisher("/" + self.namespace + self.image_pub_topic_name,Image, queue_size=10)
 
     self.bridge = CvBridge()
-    self.image_sub = rospy.Subscriber("/" + namespace + self.image_sub_topic_name,Image,self.callback, queue_size=10)
+    self.image_sub = rospy.Subscriber("/" + self.namespace + self.image_sub_topic_name,Image,self.callback, queue_size=10)
 
   def callback(self,data):
     try:
