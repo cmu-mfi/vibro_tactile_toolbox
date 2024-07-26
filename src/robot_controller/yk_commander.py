@@ -27,7 +27,7 @@ from moveit_msgs.srv import GetMotionPlan
 
 from enum import Enum
 
-from robot_controller.robot_commander import BaseRobotCommander
+from robot_controller.base_robot_commander import BaseRobotCommander
 from std_srvs.srv import Trigger, TriggerRequest
 
 
@@ -117,8 +117,8 @@ class YaskawaRobotCommander(BaseRobotCommander):
         self.srv_client = rospy.ServiceProxy(f'/{namespace}/robot_disable', Trigger)
 
         # setup moveit publishers, services, and actions
-        self.get_plan = rospy.ServiceProxy("/" + namespace+"/plan_kinematic_path", GetMotionPlan)
-        rospy.wait_for_service("/" + namespace+"/plan_kinematic_path", self.timeout)
+        self.get_plan = rospy.ServiceProxy(f'/{namespace}/plan_kinematic_path', GetMotionPlan)
+        rospy.wait_for_service(f'/{namespace}/plan_kinematic_path', self.timeout)
         self.execute_plan = actionlib.SimpleActionClient(
             "/" + namespace+"/execute_trajectory", mi_msg.ExecuteTrajectoryAction
         )

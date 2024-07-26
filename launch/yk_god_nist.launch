@@ -1,0 +1,31 @@
+<launch>
+	<arg name="namespace" default="yk_builder" />
+
+	<!-- Launch femto_bolt.launch from vibro_tactile_toolbox package -->
+	<include
+		file="$(find vibro_tactile_toolbox)/launch/femto_bolt.launch">
+		<arg name="namespace" value="$(arg namespace)"/>
+		<arg name="camera_name" value="side_camera"/>
+		<arg name="serial_number" value="CL8FC3100NM"/>
+	</include>
+
+	<group ns="$(arg namespace)">
+		<!-- Start fts_serial node -->
+		<node name="fts_serial_node" pkg="fts_serial" type="fts_serial_node" output="screen">
+		</node>
+
+		<!-- Start image_republisher node -->
+		<node name="image_republisher_node" pkg="vibro_tactile_toolbox" type="image_cropped_republisher.py" output="screen">
+			<param name="image_sub_topic_name" value="/side_camera/color/image_raw" />
+			<param name="image_pub_topic_name" value="/side_camera/color/image_cropped" />
+			<param name="x_offset" value="200" />
+			<param name="y_offset" value="2000" />
+			<param name="x_size" value="1280" />
+			<param name="y_size" value="720" />
+		</node>
+
+		<!-- Start sounddevice_ros node -->
+		<node name="sounddevice_ros_node" pkg="sounddevice_ros" type="sounddevice_ros_publisher_node.py" output="screen" args="-d 3 -c 3">
+		</node>
+	</group>
+</launch>

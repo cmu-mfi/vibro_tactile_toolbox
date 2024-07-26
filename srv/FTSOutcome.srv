@@ -1,0 +1,8 @@
+int32 id
+string topic_name
+bool start
+geometry_msgs/Wrench threshold
+---
+int32 id
+geometry_msgs/Wrench wrench 
+string result

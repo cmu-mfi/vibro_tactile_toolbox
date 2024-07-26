@@ -1,10 +1,11 @@
 <launch>
     <!-- unique camera name-->
+    <arg name="namespace" default="/" />
     <arg name="camera_name" default="side_camera"/>
     <arg name="output" default="screen"/>
     <!-- Hardware depth registration -->
     <arg name="depth_registration" default="true"/>
-    <arg name="serial_number" default="CL8FC3100R4"/>
+    <arg name="serial_number" default=""/>
     <arg name="usb_port" default=""/>
     <arg name="device_num" default="1"/>
     <arg name="vendor_id" default="0x2bc5"/>
@@ -31,7 +32,7 @@
     <arg name="depth_width" default="640"/>
     <arg name="depth_height" default="576"/>
     <arg name="depth_fps" default="30"/>
-    <arg name="enable_depth" default="true"/>
+    <arg name="enable_depth" default="false"/>
     <arg name="depth_format" default="Y16"/>
     <arg name="flip_depth" default="false"/>
     <arg name="ir_width" default="640"/>
@@ -56,7 +57,7 @@
     <arg name="trigger_out_delay_us" default="0"/>
     <arg name="trigger_out_enabled" default="false"/>
     <arg name="enable_frame_sync" default="false"/>
-    <group ns="$(arg camera_name)">
+    <group ns="$(arg namespace)/$(arg camera_name)">
         <node name="camera" pkg="orbbec_camera" type="orbbec_camera_node" output="$(arg output)">
             <param name="camera_name" value="$(arg camera_name)"/>
             <param name="depth_registration" value="$(arg depth_registration)"/>

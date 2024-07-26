@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import subprocess
+import sys
+
+
+def env_var(name: str, default=None):
+    try:
+        return os.environ[name]
+    except KeyError:
+        pass
+    return default
+
+
+def get_command(args):
+
+    IMAGE_NAME = env_var("IMAGE_NAME", args.image)
+    CONTAINER_NAME = env_var("CONTAINER_NAME", args.container)
+    DISPLAY = env_var("DISPLAY")
+    XAUTH = env_var("XAUTH")
+    ROS_MASTER_URI = env_var("ROS_MASTER_URI")
+    ROS_IP = env_var("ROS_IP")
+    HOME = env_var("HOME")
+
+    cmd = f"""docker run -it --privileged --env=DISPLAY={DISPLAY} --env=XAUTHORITY={XAUTH} --env=QT_X11_NO_MITSHM=1 --env=LIBGL_ALWAYS_INDIRECT= --env=LIBGL_ALWAYS_SOFTWARE=1 --env=ROS_MASTER_URI={ROS_MASTER_URI} --env=ROS_IP={ROS_IP} --name {CONTAINER_NAME} -v /etc/group:/etc/group:ro -v /etc/passwd:/etc/passwd:ro -v {HOME}/:/home -v /dev/shm:/dev/shm --rm --net host --ipc host --pid host """
+
+    if args.gpus:
+        cmd += "--gpus all "
+
+    cmd += IMAGE_NAME
+
+    subprocess.run("xhost +", shell=True)
+    process = subprocess.Popen(
+        cmd.split(" "),
+        stdout=sys.stdout,
+        stderr=subprocess.STDOUT,
+        universal_newlines=True,
+    )
+    process.communicate()
+    subprocess.run("xhost -", shell=True)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--image", '-i', required=True, type=str)
+    parser.add_argument("--container", '-c', required=True, type=str)
+    parser.add_argument("--gpus", '-g', required=False, action="store_true")
+    args = parser.parse_args()
+
+    get_command(args)

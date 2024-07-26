@@ -1,0 +1,53 @@
+lego_ee_tf: "/transforms/lego_ee.tf"
+lego_world_tf: "/transforms/T_lego_world/"
+tmp_lego_world_tf: "/transforms/tmp_lego_world.tf"
+data_dir: "/mnt/hdd1/vibrotactile_data/lego/"
+x_range:
+  - -0.005
+  - 0.005
+y_range: 
+  - -0.005
+  - 0.005
+theta_range: 
+  - -10.0
+  - 10.0
+block_x_range: 
+  - -12
+  - 0
+block_y_range:
+  - 0
+  - 16
+approach_height: 0.04
+lift_height: 0.01
+pull_up_velocity_scaling: 0.001
+place_rotation: 15
+pick_rotation: 15
+fts_detector:
+  topic_name: '/fts'
+  force_threshold: 0.3
+lego_detector:
+  topic_name: '/side_camera/color/image_cropped'
+  top_bbox:
+    - 500
+    - 280
+    - 1200
+    - 430
+  bot_bbox:
+    - 500
+    - 400
+    - 1200
+    - 600
+  detection_threshold: 0.8
+rosbag_data_recorder:
+  topics:
+    - /namespace/side_camera/color/image_cropped
+    - /namespace/wrist_camera/color/image_raw
+    - /namespace/joint_states
+    - /namespace/fts
+    - /namespace/audio
+    - /namespace/audio_info
+    - /namespace/terminator/skill_termination_signal
+    - /outcome/lego_detector
+    - /outcome/fts_detector
+    - /namespace/skill/param
+    - /namespace/terminator/termination_config

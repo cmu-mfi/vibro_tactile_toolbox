@@ -1,0 +1,12 @@
+int32 id
+string topic_name
+bool start
+float64 score_threshold
+BoundingBox top_bbox
+BoundingBox bot_bbox
+---
+int32 id
+sensor_msgs/Image img
+int64[] obj_ids
+BoundingBox[] obj_bboxes
+string result

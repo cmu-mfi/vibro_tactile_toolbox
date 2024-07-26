@@ -1,0 +1,33 @@
+hande_ee_tf: "/transforms/hande_ee.tf"
+waterproof_world_pick_tf: "/transforms/waterproof_world_pick.tf"
+waterproof_world_place_tf: "/transforms/waterproof_world_place.tf"
+dsub_world_pick_tf: "/transforms/dsub_world_pick.tf"
+dsub_world_place_tf: "/transforms/dsub_world_place.tf"
+data_dir: "/mnt/hdd1/vibrotactile_data/nist/"
+x_range:
+  - -0.005
+  - 0.005
+y_range: 
+  - -0.005
+  - 0.005
+theta_range: 
+  - -10.0
+  - 10.0
+approach_height: 0.04
+lift_height: 0.01
+pull_up_velocity_scaling: 0.001
+fts_detector:
+  topic_name: '/fts'
+  force_threshold: 0.3
+rosbag_data_recorder:
+  topics:
+    - /side_camera/color/image_cropped
+    - /camera/color/image_raw
+    - /namespace/joint_states
+    - /namespace/fts
+    - /audio
+    - /audio_info
+    - /namespace/terminator/skill_termination_signal
+    - /outcome/fts_detector
+    - /namespace/skill/param
+    - /namespace/terminator/termination_config

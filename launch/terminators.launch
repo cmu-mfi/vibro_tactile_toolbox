@@ -1,0 +1,32 @@
+<launch>
+    <arg name="namespace" default="yk_creator"/>
+    <group ns="$(arg namespace)">
+        <node pkg="vibro_tactile_toolbox" name="time_termination_handler_node" type="termination_handler_node.py" output="screen">
+            <param name="namespace" value="$(arg namespace)"/>
+            <param name="type" value="time"/>
+            <param name="topic" value=""/>
+        </node>
+
+        <node pkg="vibro_tactile_toolbox" name="fts_termination_handler_node" type="termination_handler_node.py" output="screen">
+            <param name="namespace" value="$(arg namespace)"/>
+            <param name="type" value="fts"/>
+            <param name="topic" value="/fts"/>
+        </node>
+
+        <node pkg="vibro_tactile_toolbox" name="joint_termination_handler_node" type="termination_handler_node.py" output="screen">
+            <param name="namespace" value="$(arg namespace)"/>
+            <param name="type" value="joint"/>
+            <param name="topic" value="/$(arg namespace)/joint_states"/>
+        </node>
+
+        <node pkg="vibro_tactile_toolbox" name="pose_termination_handler_node" type="termination_handler_node.py" output="screen">
+            <param name="namespace" value="$(arg namespace)"/>
+            <param name="type" value="pose"/>
+            <param name="topic" value="/$(arg namespace)/pose"/>
+        </node>
+
+        <node pkg="vibro_tactile_toolbox" name="terminator_node" type="terminator_node.py" output="screen">
+            <param name="namespace" value="$(arg namespace)"/>
+        </node>
+    </group>
+</launch>

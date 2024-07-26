@@ -11,6 +11,8 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  geometry_msgs
+  sensor_msgs
   message_generation
 ) 
 
@@ -48,17 +50,22 @@ catkin_python_setup()
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+  FILES
+  BoundingBox.msg
+  SkillParams.msg
+  TerminationConfig.msg
+  TerminationSignal.msg
+  VisionOutcomeRepub.msg
+  FtsOutcomeRepub.msg
+)
 
 # Generate services in the 'srv' folder
-#add_service_files(
-#  FILES
-#  Service1.srv
-#)
+add_service_files(
+  FILES
+  FTSOutcome.srv
+  LegoOutcome.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -68,10 +75,11 @@ catkin_python_setup()
 # )
 
 ## Generate added messages and services with any dependencies listed here
-#generate_messages(
-#  DEPENDENCIES
-#  std_msgs
-#)
+generate_messages(
+ DEPENDENCIES
+ std_msgs
+ sensor_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -104,8 +112,8 @@ catkin_python_setup()
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES vibro_tactile_toolbox
-#  CATKIN_DEPENDS roscpp rospy std_msgs
+  LIBRARIES vibro_tactile_toolbox
+  CATKIN_DEPENDS roscpp rospy std_msgs message_runtime sensor_msgs
 #  DEPENDS system_lib
 )
 
@@ -160,10 +168,15 @@ include_directories(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
-  scripts/collect_tactile_data.py
+  scripts/collect_lego_tactile_data.py
+  scripts/collect_nist_tactile_data.py
   scripts/save_lego_pose.py
+  scripts/save_hande_pose.py
   scripts/image_cropped_republisher.py
   scripts/terminator_node.py
+  scripts/termination_handler_node.py
+  scripts/pose_stamped_publisher.py
+  scripts/go_home_task.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

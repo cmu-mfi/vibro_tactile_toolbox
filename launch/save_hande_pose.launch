@@ -1,0 +1,9 @@
+<launch>
+    <arg name="namespace" default="yk_builder"/>
+    <group ns="$(arg namespace)">
+        <node pkg="vibro_tactile_toolbox" name="save_hande_pose" type="save_hande_pose.py" output="screen">
+            <param name="namespace" value="$(arg namespace)"/>
+            <param name="root_pwd" value="$(find vibro_tactile_toolbox)"/>
+        </node>
+    </group>
+</launch>
