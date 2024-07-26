@@ -7,9 +7,6 @@ from std_msgs.msg import String
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 
-x_offset = 200
-y_offset = 1950
-
 class ImageCroppedRepublisher:
 
   def __init__(self):
@@ -34,7 +31,7 @@ class ImageCroppedRepublisher:
     except CvBridgeError as e:
       print(e)
 
-    cropped_cv_image = cv2.rotate(cv_image, cv2.ROTATE_90_CLOCKWISE)[y_offset:y_offset+720,x_offset:x_offset+1280]
+    cropped_cv_image = cv2.rotate(cv_image, cv2.ROTATE_90_CLOCKWISE)[self.y_offset:self.y_offset+self.y_size,self.x_offset:self.x_offset+self.x_size]
 
     try:
       image_msg = self.bridge.cv2_to_imgmsg(cropped_cv_image, "bgr8")

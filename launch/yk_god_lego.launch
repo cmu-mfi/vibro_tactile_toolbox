@@ -27,7 +27,7 @@
 			<param name="image_sub_topic_name" value="/side_camera/color/image_raw" />
 			<param name="image_pub_topic_name" value="/side_camera/color/image_cropped" />
 			<param name="x_offset" value="200" />
-			<param name="y_offset" value="2000" />
+			<param name="y_offset" value="1950" />
 			<param name="x_size" value="1280" />
 			<param name="y_size" value="720" />
 		</node>
