@@ -23,8 +23,5 @@
 			<param name="y_size" value="720" />
 		</node>
 
-		<!-- Start sounddevice_ros node -->
-		<node name="sounddevice_ros_node" pkg="sounddevice_ros" type="sounddevice_ros_publisher_node.py" output="screen" args="-d 3 -c 3">
-		</node>
 	</group>
 </launch>
