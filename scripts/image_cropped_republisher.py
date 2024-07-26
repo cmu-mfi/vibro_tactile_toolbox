@@ -14,10 +14,20 @@ y_offset = 2000
 class ImageCroppedRepublisher:
 
   def __init__(self):
-    self.image_pub = rospy.Publisher("/side_camera/color/image_cropped",Image, queue_size=10)
+
+    ns = rospy.get_namespace()
+    image_sub_topic_name = rospy.get_param('image_sub_topic_name')
+    image_pub_topic_name = rospy.get_param('image_pub_topic_name')
+
+    self.x_offset = rospy.get_param('x_offset')
+    self.y_offset = rospy.get_param('y_offset')
+    self.x_size = rospy.get_param('x_size')
+    self.y_size = rospy.get_param('y_size')
+
+    self.image_pub = rospy.Publisher("/" + namespace + "/side_camera/color/image_cropped",Image, queue_size=10)
 
     self.bridge = CvBridge()
-    self.image_sub = rospy.Subscriber("/side_camera/color/image_raw",Image,self.callback, queue_size=10)
+    self.image_sub = rospy.Subscriber("/" + namespace + "/side_camera/color/image_raw",Image,self.callback, queue_size=10)
 
   def callback(self,data):
     try:
@@ -35,8 +45,8 @@ class ImageCroppedRepublisher:
       print(e)
 
 def main(args):
-  ic = ImageCroppedRepublisher()
   rospy.init_node('image_cropped_republisher', anonymous=True)
+  ic = ImageCroppedRepublisher()
   try:
     rospy.spin()
   except KeyboardInterrupt:

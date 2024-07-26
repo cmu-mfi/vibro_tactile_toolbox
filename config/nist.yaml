@@ -24,7 +24,7 @@ rosbag_data_recorder:
     - /side_camera/color/image_cropped
     - /camera/color/image_raw
     - /namespace/joint_states
-    - /fts
+    - /namespace/fts
     - /audio
     - /audio_info
     - /namespace/terminator/skill_termination_signal

@@ -330,7 +330,7 @@ class PickOrPlaceConnector(BaseSkill):
             {'step_name': 'go_to_connector_pose',
              'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.connector_pose_msg, wait=False),
              'termination_cfg': lambda param: add_termination_pose(rapid_termination_config, self.connector_pose_msg)},
-            {'step_name': 'grasp_connector',
+            {'step_name': 'open_or_close_gripper',
              'robot_command': lambda param: self.gripper_controller.close(force=100) if param['pick'] == True else self.gripper_controller.open(),
              'termination_cfg': None},
             {'step_name': 'go_to_approach_pose',

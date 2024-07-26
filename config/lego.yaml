@@ -40,12 +40,12 @@ lego_detector:
   detection_threshold: 0.8
 rosbag_data_recorder:
   topics:
-    - /side_camera/color/image_cropped
-    - /camera/color/image_raw
+    - /namespace/side_camera/color/image_cropped
+    - /namespace/wrist_camera/color/image_raw
     - /namespace/joint_states
-    - /fts
-    - /audio
-    - /audio_info
+    - /namespace/fts
+    - /namespace/audio
+    - /namespace/audio_info
     - /namespace/terminator/skill_termination_signal
     - /outcome/lego_detector
     - /outcome/fts_detector

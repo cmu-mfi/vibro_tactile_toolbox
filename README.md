@@ -15,7 +15,7 @@
    - Open a second tmux window and connect to `yk-god`:
      ```sh
      ssh yk-god
-     rosrun fts_serial fts_serial_node
+     rosrun fts_serial fts_serial_node __ns:="yk_builder"
      ```
 
 3. **Start Dummy Screen** (if screen is not connected):

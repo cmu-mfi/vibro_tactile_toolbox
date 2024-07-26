@@ -118,14 +118,6 @@ def run():
         if move_down_velocity_scaling == -0.1:
             move_down_velocity_scaling = np.random.uniform(0.01, 0.1)
 
-        # 1. Begin rosbag recording
-        rosbag_name = f"trial_{trial_num}-p_{x_perturb:0.4f}_{y_perturb:0.4f}_{theta_perturb:0.4f}_{move_down_velocity_scaling:0.2f}.bag"
-        rosbag_path = os.path.join(data_dir, rosbag_name)
-
-        data_recorder.start_recording(rosbag_path, recording_params)
-
-        rospy.sleep(1)
-
         # 2. Determine Skill Parameters
         move_to_above_perturb_connector_params = {
             'T_connector_world': T_connector_world_place,
@@ -148,27 +140,17 @@ def run():
             'velocity_scaling': move_down_velocity_scaling
         }
 
-        
-
         terminals = move_to_above_perturb_connector_skill.execute_skill(execution_params, move_to_above_perturb_connector_params)
 
+        # # 1. Begin rosbag recording
+        # rosbag_name = f"trial_{trial_num}-p_{x_perturb:0.4f}_{y_perturb:0.4f}_{theta_perturb:0.4f}_{move_down_velocity_scaling:0.2f}.bag"
+        # rosbag_path = os.path.join(data_dir, rosbag_name)
+
+        # data_recorder.start_recording(rosbag_path, recording_params)
+
+        rospy.sleep(1)
+
         outcomes = send_start_outcome_request({'fts_detector': config['fts_detector']})
-
-        if outcomes['starting_top'] == 1 and outcomes['starting_bottom'] == 0:
-            skill_type = "place"
-        elif outcomes['starting_top'] == 0 and outcomes['starting_bottom'] == 1:
-            skill_type = "pick"
-        else:
-            print("Error in skill type. Skipping trial")
-            data_recorder.stop_recording()
-
-            rospy.sleep(1)
-
-            labeled_rosbag_path = rosbag_path.split(".bag")[0] + f"_vision_error.bag"
-            os.rename(rosbag_path, labeled_rosbag_path)
-
-            terminals = home_skill.execute_skill(None)
-            break
 
         terminals = move_down_skill.execute_skill(execution_params, move_down_params)
 
@@ -176,68 +158,22 @@ def run():
 
         outcomes = send_end_fts_outcome_request(config['fts_detector'])
 
-        if outcomes['success'] == False:
-            terminals = move_to_above_connector_pose_skill.execute_skill(execution_params, move_to_above_connector_params)
+        # # 3. End rosbag recording
+        # data_recorder.stop_recording()
 
-            outcomes = send_start_outcome_request({'fts_detector': config['fts_detector']})
+        # rospy.sleep(1)
 
-            if outcomes['starting_top'] == 1 and outcomes['starting_bottom'] == 0:
-                skill_type = "place"
-            elif outcomes['starting_top'] == 0 and outcomes['starting_bottom'] == 1:
-                skill_type = "pick"
-            else:
-                print("Error in skill type. Skipping trial")
-                data_recorder.stop_recording()
-
-                rospy.sleep(1)
-
-                labeled_rosbag_path = rosbag_path.split(".bag")[0] + f"_vision_error.bag"
-                os.rename(rosbag_path, labeled_rosbag_path)
-
-                terminals = home_skill.execute_skill(None)
-                break
-
-            terminals = move_down_skill.execute_skill(execution_params, move_down_params)
-
-            terminals = pull_up_skill.execute_skill(execution_params, pull_up_params)
-
-            outcomes = send_end_fts_outcome_request(config['fts_detector'])
-
-        if outcomes['success'] == False:
-            print("Failed to pull up connector. Skipping trial")
-            data_recorder.stop_recording()
-
-            rospy.sleep(1)
-
-            labeled_rosbag_path = rosbag_path.split(".bag")[0] + f"_connection_failure.bag"
-            os.rename(rosbag_path, labeled_rosbag_path)
-
-            terminals = home_skill.execute_skill(None)
-            continue
-        #else:
-            #terminals = move_down_skill.execute_skill(execution_params, move_down_to_reconnect_params)
-
-        if skill_type == "place":
-            terminals = place_connector_skill.execute_skill(execution_params, place_connector_params)
-        elif skill_type == "pick":
-            terminals = pick_connector_skill.execute_skill(execution_params, pick_connector_params)
-
-        # 3. End rosbag recording
-        data_recorder.stop_recording()
-
-        rospy.sleep(1)
-
-        if outcomes['starting_top'] + outcomes['starting_bottom'] == outcomes['ending_top'] + outcomes['ending_bottom']:
-            if outcomes['success']:
-                labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_" + skill_type + "_success.bag"
-                os.rename(rosbag_path, labeled_rosbag_path)
-            else:
-                labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_" + skill_type + "_failure.bag"
-                os.rename(rosbag_path, labeled_rosbag_path)
-        else:
-            labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_" + skill_type + "_error.bag"
-            os.rename(rosbag_path, labeled_rosbag_path)
-            break
+        # if outcomes['starting_top'] + outcomes['starting_bottom'] == outcomes['ending_top'] + outcomes['ending_bottom']:
+        #     if outcomes['success']:
+        #         labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_" + skill_type + "_success.bag"
+        #         os.rename(rosbag_path, labeled_rosbag_path)
+        #     else:
+        #         labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_" + skill_type + "_failure.bag"
+        #         os.rename(rosbag_path, labeled_rosbag_path)
+        # else:
+        #     labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_" + skill_type + "_error.bag"
+        #     os.rename(rosbag_path, labeled_rosbag_path)
+        #     break
 
         place_execution_params = {'skill_step_delay': 2.0, 'skill_step_params': {'open_or_close_gripper': {'pick': False}}}
         pick_or_place_connector_skill.execute_skill(place_execution_params, None)
