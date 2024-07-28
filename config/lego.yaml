@@ -23,10 +23,10 @@ pull_up_velocity_scaling: 0.001
 place_rotation: 15
 pick_rotation: 15
 fts_detector:
-  topic_name: '/fts'
+  topic_name: '/yk_creator/fts'
   force_threshold: 0.3
 lego_detector:
-  topic_name: '/side_camera/color/image_cropped'
+  topic_name: '/yk_creator/side_camera/color/image_cropped'
   top_bbox:
     - 500
     - 280
