@@ -10,6 +10,7 @@ from geometry_msgs.msg import Pose
 from autolab_core import RigidTransform
 
 from robot_controller.base_robot_commander import BaseRobotCommander
+from gripper_controller.base_gripper_controller import BaseGripperController
 from skill.base_skill import BaseSkill
 import terminator.utils as t_utils
 

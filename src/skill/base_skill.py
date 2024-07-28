@@ -7,6 +7,7 @@ from vibro_tactile_toolbox.msg import SkillParams, TerminationSignal, Terminatio
 from std_msgs.msg import String
 
 from robot_controller.base_robot_commander import BaseRobotCommander
+from gripper_controller.base_gripper_controller import BaseGripperController
 
 from typing import Tuple, List
 

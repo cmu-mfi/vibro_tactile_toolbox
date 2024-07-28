@@ -4,6 +4,7 @@ import numpy as np
 
 from skill.base_skill import BaseSkill
 from robot_controller.base_robot_commander import BaseRobotCommander
+from gripper_controller.base_gripper_controller import BaseGripperController
 import terminator.utils as t_utils
 
 from typing import Tuple, List

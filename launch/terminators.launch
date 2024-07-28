@@ -10,7 +10,7 @@
         <node pkg="vibro_tactile_toolbox" name="fts_termination_handler_node" type="termination_handler_node.py" output="screen">
             <param name="namespace" value="$(arg namespace)"/>
             <param name="type" value="fts"/>
-            <param name="topic" value="/fts"/>
+            <param name="topic" value="/$(arg namespace)/fts"/>
         </node>
 
         <node pkg="vibro_tactile_toolbox" name="joint_termination_handler_node" type="termination_handler_node.py" output="screen">
