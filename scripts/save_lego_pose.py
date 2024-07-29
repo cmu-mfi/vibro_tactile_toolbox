@@ -25,7 +25,7 @@ def run():
 
     T_lego_world = T_ee_world * T_lego_ee
 
-    T_lego_world.save(root_pwd+'/transforms/T_lego_world/lego_world_-9_4.tf')
+    T_lego_world.save(root_pwd+'/transforms/T_lego_world/lego_world_-7_5.tf')
 
 if __name__ == "__main__":
     run()

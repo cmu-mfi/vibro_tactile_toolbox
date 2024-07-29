@@ -11,10 +11,10 @@ import soundfile as sf
 from sounddevice_ros.msg import AudioInfo, AudioData
 
 namespace = "yk_creator"
-AUDIO_TOPIC = '/audio'
-CAMERA_1_COLOR_TOPIC = '/camera/color/image_raw'
-CAMERA_2_COLOR_TOPIC = '/side_camera/color/image_cropped'
-FTS_TOPIC = '/fts'
+AUDIO_TOPIC = f'/{namespace}/audio'
+CAMERA_1_COLOR_TOPIC = f'/{namespace}/wrist_camera/color/image_raw'
+CAMERA_2_COLOR_TOPIC = f'/{namespace}/side_camera/color/image_cropped'
+FTS_TOPIC = f'/{namespace}/fts'
 JOINT_STATE_TOPIC = f'/{namespace}/joint_states'
 SKILL_PARAM_TOPIC = f'/{namespace}/skill/param'
 SKILL_TERMINATION_TOPIC = f'/{namespace}/terminator/skill_termination_signal'
@@ -98,7 +98,7 @@ def save_video(bag, save_dir, filenames=[], image_topics=[], video_latency=0.0):
     skipped_frames = {image_topics[0]: 0, image_topics[1]: 0}
     for topic, msg, t in bag.read_messages(topics=image_topics):
         t = t.to_sec() - bag.get_start_time() - video_latency
-        if t < 0 and topic == '/side_camera/color/image_cropped':
+        if t < 0 and topic == CAMERA_2_COLOR_TOPIC:
             skipped_frames[topic] += 1
             continue
         timestamps[topic].append(t)
@@ -116,7 +116,7 @@ def save_video(bag, save_dir, filenames=[], image_topics=[], video_latency=0.0):
         # cv2.waitKey(1) 
  
     
-    print(f"/SIDE_CAMERA t0: {timestamps['/side_camera/color/image_cropped'][0]}, tf: {timestamps['/side_camera/color/image_cropped'][-1]}")
+    print(f"/SIDE_CAMERA t0: {timestamps[CAMERA_2_COLOR_TOPIC][0]}, tf: {timestamps[CAMERA_2_COLOR_TOPIC][-1]}")
 
     for image_topic in image_topics:
         if image_topic in video_dict.keys():
