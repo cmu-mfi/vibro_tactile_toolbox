@@ -109,6 +109,7 @@ def segment_trial(dataset_dir, lagging_buffer=0.5, leading_buffer=0.5):
 
     # Load audio
     audio_data, sample_rate = torchaudio.load(os.path.join(dataset_dir, AUDIO_NAME))
+    print(sample_rate)
     
     # Load FTS
     fts_data = np.load(os.path.join(dataset_dir, FTS_NAME))
