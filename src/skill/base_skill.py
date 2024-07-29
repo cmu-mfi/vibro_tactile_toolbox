@@ -81,7 +81,7 @@ class BaseSkill:
             terminal = self.execute_skill_step(skill_step, step_param)
             terminals.append(terminal)
 
-            if self.params['verbose']:
+            if self.params['verbose'] and terminal is not None:
                 print(f"\nTerminated with status:\n'{terminal.cause}'")
 
             # TODO: If outcome is unsuccessful:

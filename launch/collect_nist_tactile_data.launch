@@ -1,6 +1,6 @@
 <launch>
     <arg name="namespace" default="yk_builder"/>
-    <arg name="num_trials" default="10"/>
+    <arg name="num_trials" default="1"/>
     <arg name="start_num" default="0"/>
     <arg name="verbose" default="true"/>
     <arg name="connector_type" default="waterproof"/>

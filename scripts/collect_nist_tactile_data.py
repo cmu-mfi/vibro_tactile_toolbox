@@ -108,7 +108,7 @@ def run():
     # Tasks to do
     for trial_num in range(start_num, start_num+num_trials):
 
-        pick_execution_params = {'skill_step_delay': 2.0, 'skill_step_params': {'open_or_close_gripper': {'pick': True}}}
+        pick_execution_params = {'skill_step_delay': 2.0, 'skill_step_params': {'open_or_close_gripper': {'skill':{'pick': True}}}}
         pick_or_place_connector_skill.execute_skill(pick_execution_params, None)
 
         x_perturb = np.random.uniform(config['x_range'][0], config['x_range'][1])
@@ -148,7 +148,7 @@ def run():
 
         # data_recorder.start_recording(rosbag_path, recording_params)
 
-        rospy.sleep(1)
+        # rospy.sleep(1)
 
         outcomes = send_start_outcome_request({'fts_detector': config['fts_detector']})
 
@@ -158,10 +158,23 @@ def run():
 
         outcomes = send_end_fts_outcome_request(config['fts_detector'])
 
-        # # 3. End rosbag recording
-        # data_recorder.stop_recording()
+        if outcomes['success'] == False:
+            terminals = move_to_above_perturb_connector_skill.execute_skill(execution_params, move_to_above_perturb_connector_params)
 
-        # rospy.sleep(1)
+            outcomes = send_start_outcome_request({'fts_detector': config['fts_detector']})
+
+            terminals = move_down_skill.execute_skill(execution_params, move_down_params)
+
+            terminals = pull_up_skill.execute_skill(execution_params, pull_up_params)
+
+            outcomes = send_end_fts_outcome_request(config['fts_detector'])
+
+        terminals = move_to_above_perturb_connector_skill.execute_skill(execution_params, move_to_above_perturb_connector_params)
+
+        # 3. End rosbag recording
+        #data_recorder.stop_recording()
+
+        rospy.sleep(1)
 
         # if outcomes['starting_top'] + outcomes['starting_bottom'] == outcomes['ending_top'] + outcomes['ending_bottom']:
         #     if outcomes['success']:
@@ -175,7 +188,7 @@ def run():
         #     os.rename(rosbag_path, labeled_rosbag_path)
         #     break
 
-        place_execution_params = {'skill_step_delay': 2.0, 'skill_step_params': {'open_or_close_gripper': {'pick': False}}}
+        place_execution_params = {'skill_step_delay': 2.0, 'skill_step_params': {'open_or_close_gripper': {'skill':{'pick': False}}}}
         pick_or_place_connector_skill.execute_skill(place_execution_params, None)
         
         terminals = home_skill.execute_skill(None)

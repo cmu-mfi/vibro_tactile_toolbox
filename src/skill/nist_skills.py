@@ -21,7 +21,7 @@ from typing import Tuple, List
 ### Termination Configs for Lego Skills ###
 # Rapid motion
 rapid_termination_config = {
-    'time': {'duration': 10.0},
+    'time': {'duration': 20.0},
     'pose': {'pos_tolerance': 0.001,
                 'orient_tolerance': 0.01,
                 'pose': None},
@@ -78,7 +78,7 @@ servo_termination_config = {
                 'force': {
                     'x': [-50, 50],               # any substantial reaction force in x-y
                     'y': [-50, 50],
-                    'z': [-float('inf'), 2]},   # reaction force pulling away in z
+                    'z': [-float('inf'), 6]},   # reaction force pulling away in z
                 'torque': {
                     'x': [-2, 2],               # any substantial reaction torque
                     'y': [-2, 2],
@@ -313,14 +313,16 @@ class PickOrPlaceConnector(BaseSkill):
 
         self.approach_height_offset = self.params['approach_height_offset']
 
-        self.connector_pose_msg = self.T_connector_world.copy()
+        self.connector_pose = self.T_connector_world.copy()
+        self.robot_connector_pose = self.connector_pose * self.T_hande_ee.inverse()
+        self.connector_pose_msg = self.robot_connector_pose.pose_msg
 
         self.T_lego_approach = RigidTransform(
             translation=np.array([0.0, 0.0, -abs(self.approach_height_offset)]),
             from_frame='hande', to_frame='hande'
         )
 
-        self.approach_pose = self.connector_pose_msg * self.T_lego_approach * self.T_hande_ee.inverse()
+        self.approach_pose = self.connector_pose * self.T_lego_approach * self.T_hande_ee.inverse()
         self.approach_pose_msg = self.approach_pose.pose_msg
 
         self.skill_steps = [
@@ -331,7 +333,7 @@ class PickOrPlaceConnector(BaseSkill):
              'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.connector_pose_msg, wait=False),
              'termination_cfg': lambda param: add_termination_pose(rapid_termination_config, self.connector_pose_msg)},
             {'step_name': 'open_or_close_gripper',
-             'robot_command': lambda param: self.gripper_controller.close(force=100) if param['pick'] == True else self.gripper_controller.open(),
+             'robot_command': lambda param: self.gripper_controller.close(force=160) if param['pick'] == True else self.gripper_controller.open(),
              'termination_cfg': None},
             {'step_name': 'go_to_approach_pose',
              'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.approach_pose_msg, wait=False),

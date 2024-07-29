@@ -13,7 +13,7 @@ y_range:
 theta_range: 
   - -10.0
   - 10.0
-approach_height: 0.04
+approach_height: 0.05
 lift_height: 0.01
 pull_up_velocity_scaling: 0.001
 fts_detector:
