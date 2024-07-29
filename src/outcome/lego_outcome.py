@@ -64,7 +64,6 @@ def send_start_outcome_request(params):
         print("Service call failed:", e)
         return None
 
-
 def send_end_fts_outcome_request(params):
     rospy.wait_for_service('/fts_detector')
     try:
@@ -89,6 +88,35 @@ def send_end_fts_outcome_request(params):
         result = json.loads(resp.result)
         return result
     
+    except rospy.ServiceException as e:
+        print("Service call failed:", e)
+        return None
+
+
+def send_start_vision_outcome_request(params):
+    rospy.wait_for_service('/lego_detector')
+
+    try:
+        detect_lego = rospy.ServiceProxy('/lego_detector', LegoOutcome)
+        lego_req = LegoOutcomeRequest()
+        lego_req.id = 0
+        lego_req.topic_name = params['topic_name']
+        lego_req.start = True
+        lego_req.score_threshold = params['detection_threshold']
+        
+        top_bbox = BoundingBox()
+        top_bbox.coords = params['top_bbox']
+        bot_bbox = BoundingBox()
+        bot_bbox.coords = params['bot_bbox']
+        lego_req.top_bbox = top_bbox
+        lego_req.bot_bbox = bot_bbox
+
+        lego_resp = detect_lego(lego_req)
+        lego_result = json.loads(lego_resp.result)
+        print("Vision Detection Response:", lego_resp.result)
+        return lego_result
+
+
     except rospy.ServiceException as e:
         print("Service call failed:", e)
         return None
@@ -120,4 +148,28 @@ def send_end_vision_outcome_request(params):
         return result
     except rospy.ServiceException as e:
         print("Vision service call failed:", e)
+        return None
+
+
+def send_audio_outcome_request(params, timestamp):
+    rospy.wait_for_service('/audio_detector')
+
+    try:
+        detect_audio = rospy.ServiceProxy('/audio_detector', AudioOutcome)
+        audio_req = AudioOutcomeRequest()
+        audio_req.id = 0
+        audio_req.topic_name = params['topic_name']  
+        audio_req.stamp = timestamp
+        audio_req.model_path = params['model_path'] 
+        
+
+        audio_resp = detect_audio(audio_req)
+        audio_result = json.loads(audio_resp.result)
+        print("Audio Detector Response:", audio_resp.result)
+        
+        return audio_result
+
+
+    except rospy.ServiceException as e:
+        print("Service call failed:", e)
         return None

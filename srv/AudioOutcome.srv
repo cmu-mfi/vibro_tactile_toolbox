@@ -4,5 +4,5 @@ time stamp
 string model_path
 ---
 int32 id
-sensor_msgs/Image img
+sensor_msgs/Image spec
 string result

@@ -76,6 +76,7 @@ class TerminationHandlerNode:
       return
     termination_signal = self.termination_handler.get_termination_signal()
     if termination_signal.terminate and termination_signal.id > 0:
+      termination_signal.stamp = rospy.Time.now()
       # print(f"\nTermination Handler {self.termination_handler.__class__.__name__} publishing termination signal\n")
       self.termination_signal_pub.publish(termination_signal)
 

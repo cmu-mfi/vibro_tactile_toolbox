@@ -64,6 +64,7 @@ def segment_audio(audio_data, sample_rate, t_start, t_end):
     audio_ch1 = audio_data[1, :]
 
     audio_segment = audio_ch0[start_idx:end_idx]
+    print(audio_segment.shape)
     transform = torchaudio.transforms.Spectrogram()
     spec_tensor = transform(audio_segment)
     spec_np = spec_tensor.log2().numpy()

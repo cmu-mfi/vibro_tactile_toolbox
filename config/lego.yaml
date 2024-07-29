@@ -22,6 +22,9 @@ lift_height: 0.01
 pull_up_velocity_scaling: 0.001
 place_rotation: 15
 pick_rotation: 15
+audio_detector:
+  topic_name: '/yk_creator/audio'
+  model_path: '/home/mfi/repos/ros1_ws/src/kevin/vibro_tactile_toolbox/models/audio_outcome_lego.pt'
 fts_detector:
   topic_name: '/yk_creator/fts'
   force_threshold: 0.3

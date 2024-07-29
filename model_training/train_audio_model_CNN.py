@@ -24,7 +24,7 @@ data_path = '/mnt/hdd1/vibrotactile_data/lego_dataset/train/' #looking in subfol
 
 audio_dataset = datasets.ImageFolder(
     root=data_path,
-    transform=transforms.Compose([transforms.Resize((221,201)),
+    transform=transforms.Compose([
                                   transforms.ToTensor()
                                   ])
 )
@@ -130,6 +130,7 @@ def test(dataloader, model):
 
     with torch.no_grad():
         for batch, (X, Y) in enumerate(dataloader):
+            print(X.size())
             X, Y = X.to(device), Y.to(device)
             pred = model(X)
 
@@ -142,6 +143,7 @@ def test(dataloader, model):
     if correct > max_test_correct:
         max_test_correct = correct
         torch.save(model, 'models/audio_outcome_lego.pt')
+        print("====================== SAVED MODEL ==========================")
 
     print(f'\nTest Error:\nacc: {(100*correct):>0.1f}%, avg loss: {test_loss:>8f}\n')
 
@@ -158,6 +160,7 @@ summary(model, input_size=(15, 3, 221, 201))
 model.eval()
 test_loss, correct = 0, 0
 class_map = ['nominal', 'error']
+print("MAX TEST CORRECT: " + str(max_test_correct))
 
 with torch.no_grad():
     for batch, (X, Y) in enumerate(test_dataloader):
