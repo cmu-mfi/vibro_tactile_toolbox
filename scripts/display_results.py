@@ -159,11 +159,11 @@ class MainWindow(QMainWindow):
                 if line.startswith("#"):
                     continue
                 entries = line.split(",")
-                if len(entries) != 2:
+                if len(entries) != 3:
                     continue
 
                 t_trial = float(entries[0].strip())
-                termination_cause = entries[1].strip()
+                termination_cause = entries[2].strip()
                 self.termination_data.append((t_trial, termination_cause))
         self.termination_data.sort(key=lambda x: x[0])
 
@@ -179,12 +179,13 @@ class MainWindow(QMainWindow):
                 if line.startswith("#"):
                     continue
                 entries = line.split(",")
-                if len(entries) != 3:
+                if len(entries) != 4:
                     continue
 
                 t_trial = float(entries[0].strip())
-                lego_outcome = entries[1].strip()
-                img_ann_file = entries[2].strip()
+                result = entries[1].strip()
+                lego_outcome = entries[2].strip()
+                img_ann_file = entries[3].strip()
 
                 img_ann = cv2.imread(os.path.join(self.data_path, img_ann_file))
                 img_ann = cv2.cvtColor(img_ann, cv2.COLOR_BGR2RGB)
@@ -204,11 +205,12 @@ class MainWindow(QMainWindow):
                 if line.startswith("#"):
                     continue
                 entries = line.split(",")
-                if len(entries) != 2:
+                if len(entries) != 3:
                     continue
 
                 t_trial = float(entries[0].strip())
-                fts_outcome = entries[1].strip()
+                result = entries[1].strip()
+                fts_outcome = entries[2].strip()
 
                 self.outcome_data.append((t_trial, 'fts_detector', fts_outcome))
         
@@ -283,6 +285,7 @@ class MainWindow(QMainWindow):
         self.force_canvas.addLegend(offset=(0.5, 1.18))
         self.force_canvas.setRange(xRange=[0, self.t_fts[-1]])
         self.force_canvas.setLabel('left', 'N')
+        self.force_canvas.getPlotItem().getAxis('left').setWidth(50)
         self.force_time = pg.InfiniteLine(pos=0, angle=90, pen=pg.mkPen('k'))
         self.force_canvas.addItem(self.force_time)
 
@@ -297,6 +300,7 @@ class MainWindow(QMainWindow):
         self.torque_canvas.addLegend(offset=(0.5, 1.18))
         self.torque_canvas.setRange(xRange=[0, self.t_fts[-1]])
         self.torque_canvas.setLabel('left', 'N-m')
+        self.torque_canvas.getPlotItem().getAxis('left').setWidth(50)
         self.torque_time = pg.InfiniteLine(pos=0, angle=90, pen=pg.mkPen('k'))
         self.torque_canvas.addItem(self.torque_time)
 
@@ -306,8 +310,9 @@ class MainWindow(QMainWindow):
         ]
         self.audio_canvas.setBackground('w')
         self.audio_canvas.addLegend(offset=(0.5, 1.18))
-        self.audio_canvas.setRange(xRange=[0, self.t_audio[-1]])
-        self.audio_canvas.setLabel('left', 'A')
+        self.audio_canvas.setRange(xRange=[0, self.t_fts[-1]])
+        self.audio_canvas.setLabel('left', 'Amplitude')
+        self.audio_canvas.getPlotItem().getAxis('left').setWidth(50)
         self.audio_time = pg.InfiniteLine(pos=0, angle=90, pen=pg.mkPen('k'))
         self.audio_canvas.addItem(self.audio_time)
 
@@ -421,6 +426,14 @@ class MainWindow(QMainWindow):
         new_val_pre_mod = np.floor(new_val)
         new_val = int(new_val) % self.time_slider_max 
         if new_val < new_val_pre_mod:
+            # if we've reached the end of the trial
+            if (self.playing): # if playing, stop
+                self.playing = False
+                self.playButton.click()
+                new_val = self.time_slider_max
+                self.time_slider.setValue(new_val)
+                return
+            # else, wrap around
             self.last_paused_for_outcome = 0.0
         self.time_slider.setValue(new_val)
 
