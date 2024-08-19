@@ -1,1 +1,1 @@
-docker build -t noetic_sounddevice_ros -f Dockerfile.yk-god .
+docker build -t noetic_realsense_and_sounddevice_ros -f Dockerfile.realsense_and_sounddevice_ros .

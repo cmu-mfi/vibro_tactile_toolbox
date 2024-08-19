@@ -1,0 +1,56 @@
+FROM ros:noetic
+ENV TZ=ET
+SHELL ["/bin/bash", "-c"]
+
+# Basic apt-get
+RUN apt-get update
+RUN apt-get install -y git vim tmux curl \
+    && apt-get install -y python3 \
+    && apt-get install -y python3-pip
+
+# Install ROS Noetic Desktop Full
+ENV DEBIAN_FRONTEND noninteractive
+RUN apt-get install -y ros-noetic-desktop-full \
+    && apt-get install -y python3-rosdep python3-rosinstall python3-rosinstall-generator python3-wstool build-essential
+
+# Create a Ros1 ws
+RUN cd / && mkdir -p ros1_ws/src
+
+# Install catkin tools
+RUN apt-get -y install python3-catkin-tools
+
+# Realsense ROS
+RUN mkdir -p /etc/apt/keyrings
+RUN curl -sSf https://librealsense.intel.com/Debian/librealsense.pgp | tee /etc/apt/keyrings/librealsense.pgp
+RUN apt-get install apt-transport-https
+RUN echo "deb [signed-by=/etc/apt/keyrings/librealsense.pgp] https://librealsense.intel.com/Debian/apt-repo `lsb_release -cs` main" | tee /etc/apt/sources.list.d/librealsense.list
+RUN apt-get update
+RUN apt-get install librealsense2-dkms -y
+RUN apt-get install librealsense2-utils -y
+RUN apt-get install librealsense2-dev -y
+RUN apt-get install librealsense2-dbg -y
+
+RUN cd /ros1_ws/src \ 
+    && git clone https://github.com/rjwb1/realsense-ros.git
+
+# Audio (https://github.com/firephinx/sounddevice_ros)
+RUN cd /ros1_ws/src \ 
+    && git clone https://github.com/firephinx/sounddevice_ros.git
+RUN pip install sounddevice pysoundfile
+RUN sudo apt-get install libportaudio2 libasound-dev
+
+RUN source /opt/ros/noetic/setup.bash \
+ && cd /ros1_ws \
+ && rosdep update \
+ && rosdep install \
+    --from-paths src \
+    --ignore-src \
+    --rosdistro $ROS_DISTRO \
+    -y \
+ && catkin build
+
+# Add sourcing to bashrc
+RUN echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
+RUN echo "source /ros1_ws/devel/setup.bash" >> ~/.bashrc
+
+RUN echo "All Done "

@@ -1,7 +1,3 @@
-# Copyright 2024 RobotAlert, Inc., All Rights Reserved
-# Proprietary and confidential. Unauthorized copying of this file via any medium is strictly prohibited.
-# RobotAlert, Inc. is Kevin Zhang (klz1@andew.cmu.edu), Rohit Sonker (rsonker@andrew.cmu.edu)], and Tianqin Li (tianqinl@andrew.cmu.edu)
-
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 import torch
