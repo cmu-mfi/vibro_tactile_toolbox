@@ -1,0 +1,36 @@
+FROM ros:noetic
+ENV TZ=ET
+SHELL ["/bin/bash", "-c"]
+
+# Basic apt-get
+RUN apt-get update
+RUN apt-get install -y git vim curl \
+    && apt-get install -y python3 \
+    && apt-get install -y python3-pip
+
+# Install ROS Noetic Desktop Full
+ENV DEBIAN_FRONTEND noninteractive
+RUN apt-get install -y ros-noetic-desktop-full \
+    && apt-get install -y python3-rosdep python3-rosinstall python3-rosinstall-generator python3-wstool build-essential
+
+# Create a Ros1 ws
+RUN cd / && mkdir -p ros1_ws/src
+
+# Install catkin tools
+RUN apt-get -y install python3-catkin-tools
+
+# Audio (https://github.com/firephinx/sounddevice_ros)
+RUN cd /ros1_ws/src \ 
+    && git clone https://github.com/firephinx/sounddevice_ros.git
+RUN pip install sounddevice pysoundfile
+RUN sudo apt-get install libportaudio2 libasound-dev
+
+RUN source /opt/ros/noetic/setup.bash \
+ && cd /ros1_ws \
+ && catkin build
+
+# Add sourcing to bashrc
+RUN echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
+RUN echo "source /ros1_ws/devel/setup.bash" >> ~/.bashrc
+
+RUN echo "All Done "
