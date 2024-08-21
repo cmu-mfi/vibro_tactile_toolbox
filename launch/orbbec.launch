@@ -1,0 +1,23 @@
+<launch>
+	<arg name="namespace" default="yk_builder" />
+
+	<!-- Launch femto_bolt.launch from vibro_tactile_toolbox package -->
+	<include
+		file="$(find vibro_tactile_toolbox)/launch/femto_bolt.launch">
+		<arg name="camera_name" value="$(arg namespace)/side_camera"/>
+		<arg name="serial_number" value="CL8FC3100NM"/>
+	</include>
+
+	<group ns="$(arg namespace)">
+		<!-- Start image_republisher node -->
+		<node name="image_cropped_republisher" pkg="vibro_tactile_toolbox" type="image_cropped_republisher.py" output="screen">
+			<param name="image_sub_topic_name" value="/side_camera/color/image_raw" />
+			<param name="image_pub_topic_name" value="/side_camera/color/image_cropped" />
+			<param name="x_offset" value="200" />
+			<param name="y_offset" value="1950" />
+			<param name="x_size" value="1280" />
+			<param name="y_size" value="720" />
+		</node>
+
+	</group>
+</launch>
