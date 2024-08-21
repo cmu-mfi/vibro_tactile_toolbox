@@ -11,7 +11,7 @@
 
 	<group ns="$(arg namespace)">
 
-		<node name="sounddevice_ros_node" pkg="sounddevice_ros" type="sounddevice_ros_publisher_node.py" output="screen" args="-d 2 -c 3">
+		<node name="sounddevice_ros_node" pkg="sounddevice_ros" type="sounddevice_ros_publisher_node.py" output="screen" args="-d UMC404HD 192k: USB Audio -c 3">
 		</node>
 
 	</group>

@@ -21,7 +21,7 @@
 		<node name="fts_serial_node" pkg="fts_serial" type="fts_serial_node" output="screen">
 		</node>
 
-		<node name="sounddevice_ros_node" pkg="sounddevice_ros" type="sounddevice_ros_publisher_node.py" output="screen" args="-d 2 -c 3">
+		<node name="sounddevice_ros_node" pkg="sounddevice_ros" type="sounddevice_ros_publisher_node.py" output="screen" args="-d UMC404HD 192k: USB Audio -c 3">
 		</node>
 
 		<!-- Start image_republisher node -->
