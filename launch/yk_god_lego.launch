@@ -32,6 +32,7 @@
 			<param name="y_offset" value="1950" />
 			<param name="x_size" value="1280" />
 			<param name="y_size" value="720" />
+			<param name="rotation_direction" value="clockwise" />
 		</node>
 
 	</group>

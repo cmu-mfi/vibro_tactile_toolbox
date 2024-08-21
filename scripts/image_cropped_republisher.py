@@ -19,6 +19,7 @@ class ImageCroppedRepublisher:
     self.y_offset = rospy.get_param('image_cropped_republisher/y_offset')
     self.x_size = rospy.get_param('image_cropped_republisher/x_size')
     self.y_size = rospy.get_param('image_cropped_republisher/y_size')
+    self.rotation_direction = rospy.get_param('image_cropped_republisher/rotation_direction')
 
     self.image_pub = rospy.Publisher(self.namespace + self.image_pub_topic_name,Image, queue_size=10)
 
@@ -31,7 +32,14 @@ class ImageCroppedRepublisher:
     except CvBridgeError as e:
       print(e)
 
-    cropped_cv_image = cv2.rotate(cv_image, cv2.ROTATE_90_CLOCKWISE)[self.y_offset:self.y_offset+self.y_size,self.x_offset:self.x_offset+self.x_size]
+    if self.rotation_direction == 'clockwise':
+      cropped_cv_image = cv2.rotate(cv_image, cv2.ROTATE_90_CLOCKWISE)[self.y_offset:self.y_offset+self.y_size,self.x_offset:self.x_offset+self.x_size]
+    elif self.rotation_direction == 'counter_clockwise':
+      cropped_cv_image = cv2.rotate(cv_image, cv2.ROTATE_90_COUNTERCLOCKWISE)[self.y_offset:self.y_offset+self.y_size,self.x_offset:self.x_offset+self.x_size]
+    elif self.rotation_direction == '180':
+      cropped_cv_image = cv2.rotate(cv_image, cv2.ROTATE_180)[self.y_offset:self.y_offset+self.y_size,self.x_offset:self.x_offset+self.x_size]
+    else:
+      cropped_cv_image = cv_image[self.y_offset:self.y_offset+self.y_size,self.x_offset:self.x_offset+self.x_size]
 
     try:
       image_msg = self.bridge.cv2_to_imgmsg(cropped_cv_image, "bgr8")
