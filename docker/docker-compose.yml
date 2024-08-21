@@ -14,11 +14,12 @@ services:
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - /etc/group:/etc/group:ro
+      - /dev:/dev
     privileged: true
     network_mode: "host"
     ipc: "host"
     restart: "unless-stopped"
-    command: roslaunch vibro_tactile_toolbox realsense_and_sounddevice.launch 
+    command: bash -c "source /ros1_ws/devel/setup.bash && roslaunch vibro_tactile_toolbox realsense_and_sounddevice.launch"
 
   orbbec-ros:
     image: "noetic_orbbec_ros:latest"
@@ -30,14 +31,13 @@ services:
       - "LIBGL_ALWAYS_INDIRECT="
       - "ROS_IP=${ROS_IP}"
       - "ROS_MASTER_URI=${ROS_MASTER_URI}"
-    devices:
-      - /dev/dri:/dev/dri
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
       - /etc/group:/etc/group:ro
+      - /dev:/dev
     privileged: true
     network_mode: host
     ipc: host
     pid: host
     restart: "unless-stopped"
-    command: roslaunch vibro_tactile_toolbox orbbec.launch 
+    command: bash -c "source /opt/ros/noetic/setup.bash && source /ros1_ws/devel/setup.bash && roslaunch vibro_tactile_toolbox orbbec.launch"
