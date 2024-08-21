@@ -1,5 +1,5 @@
 <launch>
-	<arg name="namespace" default="yk_creator" />
+	<arg name="namespace" default="yk_builder" />
 
 	<!-- Launch rs_aligned_depth.launch from realsense2_camera package -->
 	<include

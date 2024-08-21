@@ -35,7 +35,8 @@ RUN cd /ros1_ws/src \
 
 # Audio (https://github.com/firephinx/sounddevice_ros)
 RUN cd /ros1_ws/src \ 
-    && git clone https://github.com/firephinx/sounddevice_ros.git
+    && git clone https://github.com/firephinx/sounddevice_ros.git \ 
+    && git clone https://github.com/cmu-mfi/vibro_tactile_toolbox.git
 RUN pip install sounddevice pysoundfile
 RUN sudo apt-get install libportaudio2 libasound-dev
 
