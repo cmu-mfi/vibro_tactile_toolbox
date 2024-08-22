@@ -77,9 +77,8 @@ class TerminatorNode:
 
 
 def main(args):
-  node_name = args[1].split(':=')[1]
-  rospy.init_node(node_name, anonymous=True)
-  namespace = rospy.get_param(f'{node_name}/namespace')
+  namespace = rospy.get_namespace()
+  rospy.init_node(f"{namespace}_terminator_node", anonymous=True)
   node = TerminatorNode(namespace)
   try:
     rospy.spin()

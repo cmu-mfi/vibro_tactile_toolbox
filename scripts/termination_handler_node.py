@@ -81,9 +81,9 @@ class TerminationHandlerNode:
       self.termination_signal_pub.publish(termination_signal)
 
 def main(args):
+  namespace = rospy.get_namespace()
   node_name = args[1].split(':=')[1]
-  rospy.init_node(node_name, anonymous=True)
-  namespace = rospy.get_param(f'{node_name}/namespace')
+  rospy.init_node(namespace + node_name, anonymous=True)
   termination_handler = rospy.get_param(f'{node_name}/type')
   topic = rospy.get_param(f'{node_name}/topic')
   node = TerminationHandlerNode(namespace, termination_handler, topic)

@@ -23,7 +23,7 @@ from vibro_tactile_toolbox.msg import BoundingBox, VisionOutcomeRepub
 
 class LegoDetector:
 
-    def __init__(self):
+    def __init__(self, namespace):
 
         self.cfg = get_cfg()
         self.cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
@@ -33,9 +33,9 @@ class LegoDetector:
         self.bridge = CvBridge()
         self.starting_top = 0
         self.starting_bottom = 0
-        self.service = rospy.Service('lego_detector', LegoOutcome, self.detect_lego)
+        self.service = rospy.Service(f"/{namespace}/lego_detector", LegoOutcome, self.detect_lego)
 
-        self.outcome_repub = rospy.Publisher('/outcome/lego_detector', VisionOutcomeRepub, queue_size=1)
+        self.outcome_repub = rospy.Publisher(f"/{namespace}/outcome/lego_detector", VisionOutcomeRepub, queue_size=1)
 
     def detect_lego(self, req):
 
@@ -143,11 +143,15 @@ class LegoDetector:
 
         return resp
                                                         
-def main():
-    rospy.init_node('lego_detector_server')
-    lego_detector = LegoDetector()
+def main(args):
+  namespace = rospy.get_namespace()
+  rospy.init_node(f"{namespace}_lego_detector", anonymous=True)
+  node = LegoDetector(namespace)
+  try:
     rospy.spin()
-
+  except KeyboardInterrupt:
+    print("Shutting down")
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv)
+

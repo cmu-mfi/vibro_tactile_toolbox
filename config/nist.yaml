@@ -17,17 +17,18 @@ approach_height: 0.05
 lift_height: 0.01
 pull_up_velocity_scaling: 0.001
 fts_detector:
-  topic_name: '/yk_builder/fts'
+  namespace: namespace
+  topic_name: '/namespace/fts'
   force_threshold: 0.3
 rosbag_data_recorder:
   topics:
-    - /side_camera/color/image_cropped
-    - /camera/color/image_raw
+    - /namespace/side_camera/color/image_cropped
+    - /namespace/wrist_camera/color/image_raw
     - /namespace/joint_states
     - /namespace/fts
-    - /audio
-    - /audio_info
+    - /namespace/audio
+    - /namespace/audio_info
     - /namespace/terminator/skill_termination_signal
-    - /outcome/fts_detector
+    - /namespace/outcome/fts_detector
     - /namespace/skill/param
     - /namespace/terminator/termination_config

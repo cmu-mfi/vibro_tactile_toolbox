@@ -73,6 +73,12 @@ def run():
         except yaml.YAMLError as error:
             print(error)
 
+    for key in config.keys():
+        if 'namespace' in config[key]:
+            config[key]['namespace'] = namespace
+        if 'topic_name' in config[key]:
+            config[key]['topic_name'] = config[key]['topic_name'].replace("namespace", namespace)
+
     data_dir = config['data_dir']+'volume_'+str(volume)+'/'+block_type+'/vel_'+str(velocity_scale)+'/'
 
     if not os.path.exists(config['data_dir']+'volume_'+str(volume)):

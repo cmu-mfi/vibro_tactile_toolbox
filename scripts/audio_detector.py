@@ -133,23 +133,23 @@ class AudioBuffer:
 
 class AudioDetector:
 
-    def __init__(self):
+    def __init__(self, namespace):
         # Input data buffer
         sample_rate = 44100
         buffer_duration_s = 10.0
 
         self.audio_buffer = AudioBuffer(sample_rate, buffer_duration_s)
-        self.audio_subscriber = rospy.Subscriber('/yk_creator/audio', AudioData, self.audio_buffer.callback)
+        self.audio_subscriber = rospy.Subscriber(f"/{namespace}/audio", AudioData, self.audio_buffer.callback)
 
         # Model config - torchaudio stuff
 
         self.bridge = CvBridge()
         self.model = CNNet()
 
-        self.service = rospy.Service('audio_detector', AudioOutcome, self.detect_audio)
+        self.service = rospy.Service(f"/{namespace}/audio_detector", AudioOutcome, self.detect_audio)
 
-        self.outcome_repub = rospy.Publisher('/outcome/audio_detector', AudioOutcomeRepub, queue_size=1)
-        self.image_pub = rospy.Publisher('/outcome/audio_detector/spectrogram', sensor_msgs.msg.Image, queue_size=1)
+        self.outcome_repub = rospy.Publisher(f"/{namespace}/outcome/audio_detector", AudioOutcomeRepub, queue_size=1)
+        self.image_pub = rospy.Publisher(f"/{namespace}/outcome/audio_detector/spectrogram", sensor_msgs.msg.Image, queue_size=1)
 
 
     def detect_audio(self, req):
@@ -189,11 +189,15 @@ class AudioDetector:
 
         return resp
                                                         
-def main():
-    rospy.init_node('audio_detector_server')
-    fts_detector = AudioDetector()
+def main(args):
+  namespace = rospy.get_namespace()
+  rospy.init_node(f"{namespace}_audio_detector", anonymous=True)
+  node = AudioDetector(namespace)
+  try:
     rospy.spin()
-
+  except KeyboardInterrupt:
+    print("Shutting down")
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv)
+

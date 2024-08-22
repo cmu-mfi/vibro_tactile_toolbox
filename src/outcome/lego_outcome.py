@@ -17,11 +17,13 @@ from enum import Enum
 #     DISCONNECTED = 3
 
 def send_start_outcome_request(params):
-    rospy.wait_for_service('/fts_detector')
-    rospy.wait_for_service('/lego_detector')
+    fts_namespace = params['fts_detector']['namespace']
+    lego_namespace = params['lego_detector']['namespace']
+    rospy.wait_for_service(f"/{namespace}/fts_detector")
+    rospy.wait_for_service(f"/{namespace}/lego_detector")
 
     try:
-        detect_fts = rospy.ServiceProxy('/fts_detector', FTSOutcome)
+        detect_fts = rospy.ServiceProxy(f"/{namespace}/fts_detector", FTSOutcome)
         fts_req = FTSOutcomeRequest()
         fts_req.id = 0
         fts_req.topic_name = params['fts_detector']['topic_name']  
@@ -40,7 +42,7 @@ def send_start_outcome_request(params):
         print("FTS Detector Response:", fts_resp.result)
         
 
-        detect_lego = rospy.ServiceProxy('/lego_detector', LegoOutcome)
+        detect_lego = rospy.ServiceProxy(f"/{namespace}/lego_detector", LegoOutcome)
         lego_req = LegoOutcomeRequest()
         lego_req.id = 0
         lego_req.topic_name = params['lego_detector']['topic_name']
@@ -65,10 +67,10 @@ def send_start_outcome_request(params):
         return None
 
 def send_end_fts_outcome_request(params):
-    rospy.wait_for_service('/fts_detector')
+    fts_namespace = params['namespace']
+    rospy.wait_for_service(f"/{namespace}/fts_detector")
     try:
-      
-        detect_fts = rospy.ServiceProxy('/fts_detector', FTSOutcome)
+        detect_fts = rospy.ServiceProxy(f"/{namespace}/fts_detector", FTSOutcome)
         
         req = FTSOutcomeRequest()
         req.id = 0  
@@ -94,10 +96,11 @@ def send_end_fts_outcome_request(params):
 
 
 def send_start_vision_outcome_request(params):
-    rospy.wait_for_service('/lego_detector')
+    lego_namespace = params['namespace']
+    rospy.wait_for_service(f"/{namespace}/lego_detector")
 
     try:
-        detect_lego = rospy.ServiceProxy('/lego_detector', LegoOutcome)
+        detect_lego = rospy.ServiceProxy(f"/{namespace}/lego_detector", LegoOutcome)
         lego_req = LegoOutcomeRequest()
         lego_req.id = 0
         lego_req.topic_name = params['topic_name']
@@ -123,11 +126,11 @@ def send_start_vision_outcome_request(params):
 
 
 def send_end_vision_outcome_request(params):
-    rospy.wait_for_service('/lego_detector')
+    lego_namespace = params['namespace']
+    rospy.wait_for_service(f"/{namespace}/lego_detector")
+
     try:
-       
-        detect_lego = rospy.ServiceProxy('/lego_detector', LegoOutcome)
-        
+        detect_lego = rospy.ServiceProxy(f"/{namespace}/lego_detector", LegoOutcome)
     
         req = LegoOutcomeRequest()
         req.id = 0  
@@ -152,10 +155,11 @@ def send_end_vision_outcome_request(params):
 
 
 def send_audio_outcome_request(params, timestamp):
-    rospy.wait_for_service('/audio_detector')
+    audio_namespace = params['namespace']
+    rospy.wait_for_service(f"/{namespace}/audio_detector")
 
     try:
-        detect_audio = rospy.ServiceProxy('/audio_detector', AudioOutcome)
+        detect_audio = rospy.ServiceProxy(f"/{namespace}/audio_detector", AudioOutcome)
         audio_req = AudioOutcomeRequest()
         audio_req.id = 0
         audio_req.topic_name = params['topic_name']  

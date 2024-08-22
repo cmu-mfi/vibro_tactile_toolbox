@@ -17,13 +17,13 @@ from vibro_tactile_toolbox.msg import FtsOutcomeRepub
 
 class FTSDetector:
 
-    def __init__(self):
+    def __init__(self, namespace):
 
         self.starting_wrench = Wrench()
         self.wrench_threshold = Wrench()
-        self.service = rospy.Service('fts_detector', FTSOutcome, self.detect_fts)
+        self.service = rospy.Service( f"/{namespace}/fts_detector", FTSOutcome, self.detect_fts)
 
-        self.outcome_repub = rospy.Publisher('/outcome/fts_detector', FtsOutcomeRepub, queue_size=1)
+        self.outcome_repub = rospy.Publisher( f"/{namespace}/outcome/fts_detector", FtsOutcomeRepub, queue_size=1)
 
     def detect_fts(self, req):
         print("Received Request")
@@ -101,11 +101,14 @@ class FTSDetector:
 
         return resp
                                                         
-def main():
-    rospy.init_node('fts_detector_server')
-    fts_detector = FTSDetector()
+def main(args):
+  namespace = rospy.get_namespace()
+  rospy.init_node(f"{namespace}_fts_detector", anonymous=True)
+  node = FTSDetector(namespace)
+  try:
     rospy.spin()
-
+  except KeyboardInterrupt:
+    print("Shutting down")
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv)
