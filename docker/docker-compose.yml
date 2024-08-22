@@ -1,6 +1,26 @@
 version: "3"
 
 services:
+  robotiq-mm-ros:
+    image: "robotiq_mm_ros:noetic"
+    container_name: "robotiq_mm_ros_noetic"
+    environment:
+      - "DISPLAY=${DISPLAY}"
+      - "QT_X11_NO_MITSHM=1"
+      - "LIBGL_ALWAYS_SOFTWARE=1"
+      - "LIBGL_ALWAYS_INDIRECT="
+      - "ROS_IP=${ROS_IP}"
+      - "ROS_MASTER_URI=${ROS_MASTER_URI}"
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - /etc/group:/etc/group:ro
+      - /dev:/dev
+    privileged: true
+    network_mode: "host"
+    ipc: "host"
+    restart: "unless-stopped"
+    command: bash -c "source /ros1_ws/devel/setup.bash && roslaunch robotiq_mm_ros robotiq_server.launch"
+  
   realsense-and-sounddevice-ros:
     image: "noetic_realsense_and_sounddevice_ros:latest"
     container_name: "noetic_realsense_and_sounddevice_ros_container"

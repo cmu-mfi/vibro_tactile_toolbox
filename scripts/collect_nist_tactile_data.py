@@ -9,7 +9,7 @@ from gripper_controller.robotiq_hande_controller import RobotiqHandEController
 
 from autolab_core import RigidTransform
 
-from skill.nist_skills import PullUp, MoveToAboveConnectorPose, MoveToAbovePerturbConnectorPose, PickOrPlaceConnector, MoveDown
+from skill.nist_skills import PullUp, MoveToAboveConnectorPose, MoveToAbovePerturbConnectorPose, PickOrPlaceConnector, MoveDown, OpenGripper
 from skill.util_skills import GoHomeSkill
 from outcome.nist_outcome import *
 
@@ -94,6 +94,7 @@ def run():
     move_down_skill = MoveDown(robot_commander, gripper_controller, namespace, params)
     pick_or_place_connector_skill = PickOrPlaceConnector(robot_commander, gripper_controller, namespace, pick_or_place_connector_params)
     home_skill = GoHomeSkill(robot_commander, gripper_controller, namespace, params)
+    open_gripper_skill = OpenGripper(robot_commander, gripper_controller, namespace, params)
     data_recorder = RosbagDataRecorder()
 
     topics = []
@@ -110,6 +111,9 @@ def run():
     execution_params = {
         'skill_step_delay': 2.0
     }
+
+    terminals = open_gripper_skill.execute_skill(None)
+    terminals = home_skill.execute_skill(None)
 
     # Tasks to do
     for trial_num in range(start_num, start_num+num_trials):

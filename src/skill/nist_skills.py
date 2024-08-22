@@ -342,3 +342,33 @@ class PickOrPlaceConnector(BaseSkill):
 
     def execute_skill(self, execution_params, skill_params) -> Tuple[List[TerminationSignal], List[int]]:
         return super().execute_skill(execution_params)
+
+class OpenGripper(BaseSkill):
+
+    def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
+
+        super().__init__(robot_commander, gripper_controller, namespace, params)
+
+        self.skill_steps = [
+            {'step_name': 'open_gripper',
+             'robot_command': lambda param: self.gripper_controller.open(),
+             'termination_cfg': None},
+        ]
+
+    def execute_skill(self, execution_params, skill_params) -> Tuple[List[TerminationSignal], List[int]]:
+        return super().execute_skill(execution_params)
+
+class CloseGripper(BaseSkill):
+
+    def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
+
+        super().__init__(robot_commander, gripper_controller, namespace, params)
+
+        self.skill_steps = [
+            {'step_name': 'close_gripper',
+             'robot_command': lambda param: self.gripper_controller.close(force=160),
+             'termination_cfg': None},
+        ]
+
+    def execute_skill(self, execution_params, skill_params) -> Tuple[List[TerminationSignal], List[int]]:
+        return super().execute_skill(execution_params)

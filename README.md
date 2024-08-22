@@ -152,3 +152,38 @@
      ```sh
      roslaunch vibro_tactile_toolbox go_home_skill.launch
      ```
+
+
+### NIST Data Collection Instructions
+1. **Start rosmaster**:
+   - Open a new tmux session named `roscore` on `mfi-twin`:
+     ```sh
+     tmux new -t roscore
+     roscore
+     ```
+
+2. **Start Yaskawa Drivers**:
+   - Open a new tmux session named `yk-builder` on `mfi-twin`:
+     ```sh
+     tmux new -t yk-builder
+     ```
+   - Start MoveIt in a new tmux window (don't use tmux if you want to use RViz):
+     ```sh
+     tmux new-window -n moveit
+     roslaunch testbed_utils lego_moveit_yk.launch namespace:=yk_builder
+     ```
+   - Start Pose Stamped Publisher in another new tmux window:
+     ```sh
+     tmux new-window -n pose_stamped_publisher
+     rosrun vibro_tactile_toolbox pose_stamped_publisher.py -n yk_builder -f 100
+     ```
+
+3. **Start FTS Sensor on Yk-god**:
+    - Open a terminal window and connect to `yk-god`:
+     ```sh
+     ssh yk-god
+     tmux a
+     rosrun fts_serial multi_fts_serial_node
+     ```
+    
+4. **Start Camera and Audio Drivers**:
