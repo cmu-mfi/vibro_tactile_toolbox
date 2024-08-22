@@ -172,11 +172,6 @@
      tmux new-window -n moveit
      roslaunch testbed_utils lego_moveit_yk.launch namespace:=yk_builder
      ```
-   - Start Pose Stamped Publisher in another new tmux window:
-     ```sh
-     tmux new-window -n pose_stamped_publisher
-     rosrun vibro_tactile_toolbox pose_stamped_publisher.py -n yk_builder -f 100
-     ```
 
 3. **Start FTS Sensor on Yk-god**:
     - Open a terminal window and connect to `yk-god`:
@@ -186,4 +181,21 @@
      rosrun fts_serial multi_fts_serial_node
      ```
     
-4. **Start Camera and Audio Drivers**:
+4. **Start Gripper, Camera, and Audio Drivers on r221-lambda**:
+    - Open a terminal window and connect to `r221-lambda`:
+     ```sh
+     ssh r221-lambda
+     cd repos/kevin/vibro_tactile_toolbox/docker
+     docker compose up
+     ```
+
+5. **Start Outcome Detection, Terminators, and Pose Stamped Publisher on MFI Twin**:
+    - Open a new tmux session named `nist-drivers` on `mfi-twin`:
+     ```sh
+     tmux new -t nist-drivers
+     ```
+    - Start mfi_twin_nist in a new tmux window:
+     ```sh
+     tmux new-window -n nist-launch
+     roslaunch vibro_tactile_toolbox mfi_twin_nist.launch
+     ```

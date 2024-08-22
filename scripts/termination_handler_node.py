@@ -82,6 +82,7 @@ class TerminationHandlerNode:
 
 def main(args):
   namespace = rospy.get_namespace()
+  namespace = namespace[1:-1]
   node_name = args[1].split(':=')[1]
   rospy.init_node(namespace + node_name, anonymous=True)
   termination_handler = rospy.get_param(f'{node_name}/type')

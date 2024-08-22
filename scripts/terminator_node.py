@@ -78,6 +78,7 @@ class TerminatorNode:
 
 def main(args):
   namespace = rospy.get_namespace()
+  namespace = namespace[1:-1]
   rospy.init_node(f"{namespace}_terminator_node", anonymous=True)
   node = TerminatorNode(namespace)
   try:

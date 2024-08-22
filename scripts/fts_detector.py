@@ -103,6 +103,7 @@ class FTSDetector:
                                                         
 def main(args):
   namespace = rospy.get_namespace()
+  namespace = namespace[1:-1]
   rospy.init_node(f"{namespace}_fts_detector", anonymous=True)
   node = FTSDetector(namespace)
   try:

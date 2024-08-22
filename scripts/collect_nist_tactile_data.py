@@ -40,10 +40,13 @@ def run():
             print(error)
 
     for key in config.keys():
-        if 'namespace' in config[key]:
-            config[key]['namespace'] = namespace
-        if 'topic_name' in config[key]:
-            config[key]['topic_name'] = config[key]['topic_name'].replace("namespace", namespace)
+        if isinstance(config[key], dict):
+            if 'namespace' in config[key]:
+                config[key]['namespace'] = namespace
+            if 'topic_name' in config[key]:
+                config[key]['topic_name'] = config[key]['topic_name'].replace("namespace", namespace)
+
+    print(config['fts_detector'])
 
     data_dir = config['data_dir']+'volume_'+str(volume)+'/'+connector_type+'/vel_'+str(velocity_scale)+'/'
 
@@ -160,7 +163,7 @@ def run():
 
         # rospy.sleep(1)
 
-        outcomes = send_start_outcome_request({'fts_detector': config['fts_detector']})
+        outcomes = send_start_outcome_request(config['fts_detector'])
 
         terminals = move_down_skill.execute_skill(execution_params, move_down_params)
 
@@ -171,7 +174,7 @@ def run():
         if outcomes['success'] == False:
             terminals = move_to_above_perturb_connector_skill.execute_skill(execution_params, move_to_above_perturb_connector_params)
 
-            outcomes = send_start_outcome_request({'fts_detector': config['fts_detector']})
+            outcomes = send_start_outcome_request(config['fts_detector'])
 
             terminals = move_down_skill.execute_skill(execution_params, move_down_params)
 

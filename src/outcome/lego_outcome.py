@@ -67,7 +67,7 @@ def send_start_outcome_request(params):
         return None
 
 def send_end_fts_outcome_request(params):
-    fts_namespace = params['namespace']
+    namespace = params['namespace']
     rospy.wait_for_service(f"/{namespace}/fts_detector")
     try:
         detect_fts = rospy.ServiceProxy(f"/{namespace}/fts_detector", FTSOutcome)
@@ -96,7 +96,7 @@ def send_end_fts_outcome_request(params):
 
 
 def send_start_vision_outcome_request(params):
-    lego_namespace = params['namespace']
+    namespace = params['namespace']
     rospy.wait_for_service(f"/{namespace}/lego_detector")
 
     try:
@@ -126,7 +126,7 @@ def send_start_vision_outcome_request(params):
 
 
 def send_end_vision_outcome_request(params):
-    lego_namespace = params['namespace']
+    namespace = params['namespace']
     rospy.wait_for_service(f"/{namespace}/lego_detector")
 
     try:
@@ -155,7 +155,7 @@ def send_end_vision_outcome_request(params):
 
 
 def send_audio_outcome_request(params, timestamp):
-    audio_namespace = params['namespace']
+    namespace = params['namespace']
     rospy.wait_for_service(f"/{namespace}/audio_detector")
 
     try:

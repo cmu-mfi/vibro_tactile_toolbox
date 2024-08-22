@@ -191,6 +191,7 @@ class AudioDetector:
                                                         
 def main(args):
   namespace = rospy.get_namespace()
+  namespace = namespace[1:-1]
   rospy.init_node(f"{namespace}_audio_detector", anonymous=True)
   node = AudioDetector(namespace)
   try:

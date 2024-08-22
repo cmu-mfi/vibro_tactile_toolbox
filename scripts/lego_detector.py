@@ -145,6 +145,7 @@ class LegoDetector:
                                                         
 def main(args):
   namespace = rospy.get_namespace()
+  namespace = namespace[1:-1]
   rospy.init_node(f"{namespace}_lego_detector", anonymous=True)
   node = LegoDetector(namespace)
   try:

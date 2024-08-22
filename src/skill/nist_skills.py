@@ -355,20 +355,20 @@ class OpenGripper(BaseSkill):
              'termination_cfg': None},
         ]
 
-    def execute_skill(self, execution_params, skill_params) -> Tuple[List[TerminationSignal], List[int]]:
-        return super().execute_skill(execution_params)
-
 class CloseGripper(BaseSkill):
 
     def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
 
         super().__init__(robot_commander, gripper_controller, namespace, params)
+        self.force = 160
 
         self.skill_steps = [
             {'step_name': 'close_gripper',
-             'robot_command': lambda param: self.gripper_controller.close(force=160),
+             'robot_command': lambda param: self.gripper_controller.close(force=self.force),
              'termination_cfg': None},
         ]
 
-    def execute_skill(self, execution_params, skill_params) -> Tuple[List[TerminationSignal], List[int]]:
+    def execute_skill(self, execution_params, skill_params = None) -> Tuple[List[TerminationSignal], List[int]]:
+        if skill_params is not None:
+            self.force = skill_params['force']
         return super().execute_skill(execution_params)

@@ -8,13 +8,14 @@ from vibro_tactile_toolbox.srv import *
 from enum import Enum
 
 def send_start_outcome_request(params):
-    rospy.wait_for_service('/fts_detector')
+    namespace = params['namespace']
+    rospy.wait_for_service(f"/{namespace}/fts_detector")
 
     try:
-        detect_fts = rospy.ServiceProxy('/fts_detector', FTSOutcome)
+        detect_fts = rospy.ServiceProxy(f"/{namespace}/fts_detector", FTSOutcome)
         fts_req = FTSOutcomeRequest()
         fts_req.id = 0
-        fts_req.topic_name = params['fts_detector']['topic_name']  
+        fts_req.topic_name = params['topic_name']  
         fts_req.start = True
         fts_req.threshold = Wrench()
         fts_req.threshold.force.x = 10
@@ -38,10 +39,12 @@ def send_start_outcome_request(params):
 
 
 def send_end_fts_outcome_request(params):
-    rospy.wait_for_service('/fts_detector')
+    namespace = params['namespace']
+    rospy.wait_for_service(f"/{namespace}/fts_detector")
+
     try:
       
-        detect_fts = rospy.ServiceProxy('/fts_detector', FTSOutcome)
+        detect_fts = rospy.ServiceProxy(f"/{namespace}/fts_detector", FTSOutcome)
         
         req = FTSOutcomeRequest()
         req.id = 0  
