@@ -97,7 +97,7 @@ class CNNet(nn.Module):
 class AudioBuffer:
     def __init__(self, sample_rate, buffer_duration):
         self.sample_rate = sample_rate
-        self.num_channels = 3
+        self.num_channels = 4
         self.buffer_duration = buffer_duration
         self.max_samples = int(200 * buffer_duration)
         self.buffer = deque(maxlen=self.max_samples)
