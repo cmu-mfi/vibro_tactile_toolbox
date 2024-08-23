@@ -9,7 +9,7 @@ from gripper_controller.robotiq_hande_controller import RobotiqHandEController
 
 from autolab_core import RigidTransform
 
-from skill.nist_skills import PullUp, MoveToAboveConnectorPose, MoveToAbovePerturbConnectorPose, PickOrPlaceConnector, MoveDown, OpenGripper
+from skill.nist_skills import PullUp, MoveToAboveConnectorPose, MoveToAbovePerturbConnectorPose, PickOrPlaceConnector, MoveDown, OpenGripper, ResetConnector
 from skill.util_skills import GoHomeSkill
 from outcome.nist_outcome import *
 
@@ -76,9 +76,13 @@ def run():
     if connector_type == 'waterproof':
         T_connector_world_pick = RigidTransform.load(root_pwd+config['waterproof_world_pick_tf'])
         T_connector_world_place = RigidTransform.load(root_pwd+config['waterproof_world_place_tf'])
+        T_connector_world_reset_x = RigidTransform.load(root_pwd+config['waterproof_world_reset_x_tf'])
+        T_connector_world_reset_y = RigidTransform.load(root_pwd+config['waterproof_world_reset_y_tf'])
     elif connector_type == 'dsub':
         T_connector_world_pick = RigidTransform.load(root_pwd+config['dsub_world_pick_tf'])
         T_connector_world_place = RigidTransform.load(root_pwd+config['dsub_world_place_tf'])
+        T_connector_world_reset_x = RigidTransform.load(root_pwd+config['dsub_world_reset_x_tf'])
+        T_connector_world_reset_y = RigidTransform.load(root_pwd+config['dsub_world_reset_y_tf'])
 
     ### Skill Routine ###
     params = {'T_hande_ee': T_hande_ee, 
@@ -90,12 +94,22 @@ def run():
         'T_connector_world': T_connector_world_pick,
         'approach_height_offset': config['approach_height'],
     }
+    reset_connector_params = {
+        'T_hande_ee': T_hande_ee, 
+        'verbose': verbose,
+        'T_connector_world_reset_x': T_connector_world_reset_x,
+        'T_connector_world_reset_y': T_connector_world_reset_y,
+        'reset_x_offset': config['reset_x_offset'],
+        'reset_y_offset': config['reset_y_offset'],
+        'height_offset': config['approach_height'],
+    }
 
     move_to_above_connector_pose_skill = MoveToAboveConnectorPose(robot_commander, gripper_controller, namespace, params)
     move_to_above_perturb_connector_skill = MoveToAbovePerturbConnectorPose(robot_commander, gripper_controller, namespace, params)
     pull_up_skill = PullUp(robot_commander, gripper_controller, namespace, params)
     move_down_skill = MoveDown(robot_commander, gripper_controller, namespace, params)
     pick_or_place_connector_skill = PickOrPlaceConnector(robot_commander, gripper_controller, namespace, pick_or_place_connector_params)
+    reset_connector_skill = ResetConnector(robot_commander, gripper_controller, namespace, reset_connector_params)
     home_skill = GoHomeSkill(robot_commander, gripper_controller, namespace, params)
     open_gripper_skill = OpenGripper(robot_commander, gripper_controller, namespace, params)
     data_recorder = RosbagDataRecorder()
@@ -155,28 +169,28 @@ def run():
 
         terminals = move_to_above_perturb_connector_skill.execute_skill(execution_params, move_to_above_perturb_connector_params)
 
-        # # 1. Begin rosbag recording
-        # rosbag_name = f"trial_{trial_num}-p_{x_perturb:0.4f}_{y_perturb:0.4f}_{theta_perturb:0.4f}_{move_down_velocity_scaling:0.2f}.bag"
-        # rosbag_path = os.path.join(data_dir, rosbag_name)
+        # 1. Begin rosbag recording
+        rosbag_name = f"trial_{trial_num}-p_{x_perturb:0.4f}_{y_perturb:0.4f}_{theta_perturb:0.4f}_{move_down_velocity_scaling:0.2f}.bag"
+        rosbag_path = os.path.join(data_dir, rosbag_name)
 
-        # data_recorder.start_recording(rosbag_path, recording_params)
+        data_recorder.start_recording(rosbag_path, recording_params)
 
-        # rospy.sleep(1)
-
-        outcomes = send_start_outcome_request(config['fts_detector'])
+        rospy.sleep(1)
 
         terminals = move_down_skill.execute_skill(execution_params, move_down_params)
+
+        outcomes = send_start_outcome_request(config['fts_detector'])
 
         terminals = pull_up_skill.execute_skill(execution_params, pull_up_params)
 
         outcomes = send_end_fts_outcome_request(config['fts_detector'])
 
-        if outcomes['success'] == False:
+        if outcomes['success'] == True:
             terminals = move_to_above_connector_pose_skill.execute_skill(execution_params, move_to_above_perturb_connector_params)
 
-            outcomes = send_start_outcome_request(config['fts_detector'])
-
             terminals = move_down_skill.execute_skill(execution_params, move_down_params)
+
+            outcomes = send_start_outcome_request(config['fts_detector'])
 
             terminals = pull_up_skill.execute_skill(execution_params, pull_up_params)
 
@@ -185,26 +199,22 @@ def run():
         terminals = move_to_above_connector_pose_skill.execute_skill(execution_params, move_to_above_perturb_connector_params)
 
         # 3. End rosbag recording
-        #data_recorder.stop_recording()
+        data_recorder.stop_recording()
 
         rospy.sleep(1)
 
-        # if outcomes['starting_top'] + outcomes['starting_bottom'] == outcomes['ending_top'] + outcomes['ending_bottom']:
-        #     if outcomes['success']:
-        #         labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_" + skill_type + "_success.bag"
-        #         os.rename(rosbag_path, labeled_rosbag_path)
-        #     else:
-        #         labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_" + skill_type + "_failure.bag"
-        #         os.rename(rosbag_path, labeled_rosbag_path)
-        # else:
-        #     labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_" + skill_type + "_error.bag"
-        #     os.rename(rosbag_path, labeled_rosbag_path)
-        #     break
+        if outcomes['success'] == False:
+            labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_success.bag"
+            os.rename(rosbag_path, labeled_rosbag_path)
+        else:
+            labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_failure.bag"
+            os.rename(rosbag_path, labeled_rosbag_path)
 
         place_execution_params = {'skill_step_delay': 2.0, 'skill_step_params': {'open_or_close_gripper': {'skill':{'pick': False}}}}
         pick_or_place_connector_skill.execute_skill(place_execution_params, None)
         
-        terminals = home_skill.execute_skill(None)
+        reset_connector_skill.execute_skill(execution_params)
+    terminals = home_skill.execute_skill(None)
 
 if __name__ == "__main__":
     run()

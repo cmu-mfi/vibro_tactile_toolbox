@@ -18,7 +18,7 @@ from vibro_tactile_toolbox.msg import TerminationSignal
 
 from typing import Tuple, List
 
-### Termination Configs for Lego Skills ###
+### Termination Configs for Connector Skills ###
 # Rapid motion
 rapid_termination_config = {
     'time': {'duration': 20.0},
@@ -27,9 +27,9 @@ rapid_termination_config = {
                 'pose': None},
 }
 # Engaging a connector on the build plate
-# Terminate if Fz exceeds force to join legos with good alignment
+# Terminate if Fz exceeds force to join connectors with good alignment
 # 10N is an estimate
-engage_termination_config = {
+z_engage_termination_config = {
     'time': {'duration': 10.0},
     'pose': {'pos_tolerance': 0.0001,
                 'orient_tolerance': 0.01,
@@ -46,6 +46,61 @@ engage_termination_config = {
                     'z': [-1, 1]}
             }}
 }
+
+x_engage_termination_config = {
+    'time': {'duration': 10.0},
+    'pose': {'pos_tolerance': 0.0001,
+                'orient_tolerance': 0.01,
+                'pose': None},
+    'fts': {'check_rate_ns': 1E6,
+            'threshold': {
+                'force': {
+                    'x': [0, 10],
+                    'y': [-10, 10],
+                    'z': [-10, 10]},
+                'torque': {
+                    'x': [-1, 1],
+                    'y': [-1, 1],
+                    'z': [-1, 1]}
+            }}
+}
+
+y_engage_termination_config = {
+    'time': {'duration': 10.0},
+    'pose': {'pos_tolerance': 0.0001,
+                'orient_tolerance': 0.01,
+                'pose': None},
+    'fts': {'check_rate_ns': 1E6,
+            'threshold': {
+                'force': {
+                    'x': [-10, 10],
+                    'y': [0, 10],
+                    'z': [-10, 10]},
+                'torque': {
+                    'x': [-1, 1],
+                    'y': [-1, 1],
+                    'z': [-1, 1]}
+            }}
+}
+
+xy_engage_termination_config = {
+    'time': {'duration': 10.0},
+    'pose': {'pos_tolerance': 0.0001,
+                'orient_tolerance': 0.01,
+                'pose': None},
+    'fts': {'check_rate_ns': 1E6,
+            'threshold': {
+                'force': {
+                    'x': [0, 10],
+                    'y': [0, 10],
+                    'z': [-10, 10]},
+                'torque': {
+                    'x': [-1, 1],
+                    'y': [-1, 1],
+                    'z': [-1, 1]}
+            }}
+}
+
 # Releasing a connector through rotation
 # Try not to terminate from fts unless the readings may cause an E-stop
 release_termination_config = {
@@ -226,7 +281,7 @@ class MoveDown(BaseSkill):
         self.skill_steps = [
             {'step_name': 'move_down',
              'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.move_down_pose_msg, wait=False, velocity_scaling=self.velocity_scaling),
-             'termination_cfg': lambda param: add_termination_pose(engage_termination_config, self.move_down_pose_msg)},
+             'termination_cfg': lambda param: add_termination_pose(z_engage_termination_config, self.move_down_pose_msg)},
         ]
 
     def execute_skill(self, execution_params, skill_params) -> Tuple[List[TerminationSignal], List[int]]:
@@ -317,12 +372,12 @@ class PickOrPlaceConnector(BaseSkill):
         self.robot_connector_pose = self.connector_pose * self.T_hande_ee.inverse()
         self.connector_pose_msg = self.robot_connector_pose.pose_msg
 
-        self.T_lego_approach = RigidTransform(
+        self.T_connector_approach = RigidTransform(
             translation=np.array([0.0, 0.0, -abs(self.approach_height_offset)]),
             from_frame='hande', to_frame='hande'
         )
 
-        self.approach_pose = self.connector_pose * self.T_lego_approach * self.T_hande_ee.inverse()
+        self.approach_pose = self.connector_pose * self.T_connector_approach * self.T_hande_ee.inverse()
         self.approach_pose_msg = self.approach_pose.pose_msg
 
         self.skill_steps = [
@@ -342,6 +397,115 @@ class PickOrPlaceConnector(BaseSkill):
 
     def execute_skill(self, execution_params, skill_params) -> Tuple[List[TerminationSignal], List[int]]:
         return super().execute_skill(execution_params)
+
+class ResetConnector(BaseSkill):
+
+    def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
+
+        super().__init__(robot_commander, gripper_controller, namespace, params)
+
+        if 'T_hande_ee' not in self.params:
+            print(f"ResetConnector expects end effector transform: params['T_hande_ee'] = RigidTransform()")
+
+        self.T_hande_ee = self.params['T_hande_ee']
+
+        if 'T_connector_world_reset_x' not in self.params:
+            print(f"ResetConnector expects target connector pose transform: params['T_connector_world_reset_x'] = RigidTransform()")
+
+        self.T_connector_world_reset_x = self.params['T_connector_world_reset_x']
+
+        if 'T_connector_world_reset_y' not in self.params:
+            print(f"ResetConnector expects target connector pose transform: params['T_connector_world_reset_y'] = RigidTransform()")
+
+        self.T_connector_world_reset_y = self.params['T_connector_world_reset_y']
+
+        if 'reset_x_offset' not in self.params:
+            print(f"ResetConnector expects target connector pose transform: params['reset_x_offset'] = RigidTransform()")
+
+        self.reset_x_offset = self.params['reset_x_offset']
+
+        if 'reset_y_offset' not in self.params:
+            print(f"ResetConnector expects target connector pose transform: params['reset_y_offset'] = RigidTransform()")
+
+        self.reset_y_offset = self.params['reset_y_offset']
+
+        if 'height_offset' not in self.params:
+            print(f"ResetConnector expects target connector pose transform: params['height_offset'] = RigidTransform()")
+
+        self.height_offset = self.params['height_offset']
+
+        self.T_connector_approach_yz = RigidTransform(
+            translation=np.array([-abs(self.reset_y_offset), 0.0, -abs(self.height_offset)]),
+            from_frame='hande', to_frame='hande'
+        )
+
+        self.T_connector_approach_y = RigidTransform(
+            translation=np.array([-abs(self.reset_y_offset), 0.0, 0.0]),
+            from_frame='hande', to_frame='hande'
+        )
+
+        self.T_connector_approach_xz = RigidTransform(
+            translation=np.array([0.0, abs(self.reset_x_offset), -abs(self.height_offset)]),
+            from_frame='hande', to_frame='hande'
+        )
+
+        self.T_connector_approach_x = RigidTransform(
+            translation=np.array([0.0, abs(self.reset_x_offset), 0.0]),
+            from_frame='hande', to_frame='hande'
+        )
+
+        
+
+        self.reset_yz_approach_pose = self.T_connector_world_reset_y * self.T_connector_approach_yz * self.T_hande_ee.inverse()
+        self.reset_yz_approach_pose_msg = self.reset_yz_approach_pose.pose_msg
+
+        self.reset_y_approach_pose = self.T_connector_world_reset_y * self.T_connector_approach_y * self.T_hande_ee.inverse()
+        self.reset_y_approach_pose_msg = self.reset_y_approach_pose.pose_msg
+
+        self.reset_y_pose = self.T_connector_world_reset_y * self.T_hande_ee.inverse()
+        self.reset_y_pose_msg = self.reset_y_pose.pose_msg
+
+        self.reset_xz_approach_pose = self.T_connector_world_reset_x * self.T_connector_approach_xz * self.T_hande_ee.inverse()
+        self.reset_xz_approach_pose_msg = self.reset_xz_approach_pose.pose_msg
+
+        self.reset_x_approach_pose = self.T_connector_world_reset_x * self.T_connector_approach_x * self.T_hande_ee.inverse()
+        self.reset_x_approach_pose_msg = self.reset_x_approach_pose.pose_msg
+
+        self.reset_x_pose = self.T_connector_world_reset_x * self.T_hande_ee.inverse()
+        self.reset_x_pose_msg = self.reset_x_pose.pose_msg
+
+        self.skill_steps = [
+            {'step_name': 'go_to_reset_yz_approach_pose',
+             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.reset_yz_approach_pose_msg, wait=False),
+             'termination_cfg': lambda param: add_termination_pose(z_engage_termination_config, self.reset_yz_approach_pose_msg)},
+            {'step_name': 'go_to_reset_y_approach_pose',
+             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.reset_y_approach_pose_msg, wait=False),
+             'termination_cfg': lambda param: add_termination_pose(x_engage_termination_config, self.reset_y_approach_pose_msg)},
+            {'step_name': 'go_to_reset_y_pose',
+             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.reset_y_pose_msg, wait=False),
+             'termination_cfg': lambda param: add_termination_pose(x_engage_termination_config, self.reset_y_pose_msg)},
+            {'step_name': 'go_to_reset_y_approach_pose',
+             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.reset_y_approach_pose_msg, wait=False),
+             'termination_cfg': lambda param: add_termination_pose(x_engage_termination_config, self.reset_y_approach_pose_msg)},
+            {'step_name': 'go_to_reset_yz_approach_pose',
+             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.reset_yz_approach_pose_msg, wait=False),
+             'termination_cfg': lambda param: add_termination_pose(z_engage_termination_config, self.reset_yz_approach_pose_msg)},
+            {'step_name': 'go_to_reset_xz_approach_pose',
+             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.reset_xz_approach_pose_msg, wait=False),
+             'termination_cfg': lambda param: add_termination_pose(z_engage_termination_config, self.reset_xz_approach_pose_msg)},
+            {'step_name': 'go_to_reset_x_approach_pose',
+             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.reset_x_approach_pose_msg, wait=False),
+             'termination_cfg': lambda param: add_termination_pose(y_engage_termination_config, self.reset_x_approach_pose_msg)},
+            {'step_name': 'go_to_reset_x_pose',
+             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.reset_x_pose_msg, wait=False),
+             'termination_cfg': lambda param: add_termination_pose(y_engage_termination_config, self.reset_x_pose_msg)},
+            {'step_name': 'go_to_reset_x_approach_pose',
+             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.reset_x_approach_pose_msg, wait=False),
+             'termination_cfg': lambda param: add_termination_pose(y_engage_termination_config, self.reset_x_approach_pose_msg)},
+            {'step_name': 'go_to_reset_xz_approach_pose',
+             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.reset_xz_approach_pose_msg, wait=False),
+             'termination_cfg': lambda param: add_termination_pose(z_engage_termination_config, self.reset_xz_approach_pose_msg)},
+        ]
 
 class OpenGripper(BaseSkill):
 

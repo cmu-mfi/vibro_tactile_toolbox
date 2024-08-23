@@ -1,6 +1,8 @@
 hande_ee_tf: "/transforms/hande_ee.tf"
 waterproof_world_pick_tf: "/transforms/waterproof_world_pick.tf"
 waterproof_world_place_tf: "/transforms/waterproof_world_place.tf"
+waterproof_world_reset_x_tf: "/transforms/waterproof_world_reset_x.tf"
+waterproof_world_reset_y_tf: "/transforms/waterproof_world_reset_y.tf"
 dsub_world_pick_tf: "/transforms/dsub_world_pick.tf"
 dsub_world_place_tf: "/transforms/dsub_world_place.tf"
 data_dir: "/mnt/hdd1/vibrotactile_data/nist/"
@@ -14,12 +16,14 @@ theta_range:
   - -10.0
   - 10.0
 approach_height: 0.05
+reset_x_offset: 0.01
+reset_y_offset: 0.01
 lift_height: 0.01
-pull_up_velocity_scaling: 0.001
+pull_up_velocity_scaling: 0.01
 fts_detector:
   namespace: namespace
   topic_name: '/namespace/fts'
-  force_threshold: 0.3
+  force_threshold: 5.0
 rosbag_data_recorder:
   topics:
     - /namespace/side_camera/color/image_cropped
