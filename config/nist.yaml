@@ -5,6 +5,8 @@ waterproof_world_reset_x_tf: "/transforms/waterproof_world_reset_x.tf"
 waterproof_world_reset_y_tf: "/transforms/waterproof_world_reset_y.tf"
 dsub_world_pick_tf: "/transforms/dsub_world_pick.tf"
 dsub_world_place_tf: "/transforms/dsub_world_place.tf"
+dsub_world_reset_x_tf: "/transforms/dsub_world_reset_x.tf"
+dsub_world_reset_y_tf: "/transforms/dsub_world_reset_y.tf"
 data_dir: "/mnt/hdd1/vibrotactile_data/nist/"
 x_range:
   - -0.005
@@ -15,7 +17,7 @@ y_range:
 theta_range: 
   - -10.0
   - 10.0
-approach_height: 0.05
+approach_height: 0.08
 reset_x_offset: 0.01
 reset_y_offset: 0.01
 lift_height: 0.01

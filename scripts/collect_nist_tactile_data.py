@@ -126,11 +126,13 @@ def run():
     }
 
     execution_params = {
-        'skill_step_delay': 2.0
+        'skill_step_delay': 1.0
     }
 
     terminals = open_gripper_skill.execute_skill(None)
     terminals = home_skill.execute_skill(None)
+
+    reset_connector_skill.execute_skill(execution_params)
 
     # Tasks to do
     for trial_num in range(start_num, start_num+num_trials):
