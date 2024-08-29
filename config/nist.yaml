@@ -25,7 +25,7 @@ pull_up_velocity_scaling: 0.01
 fts_detector:
   namespace: namespace
   topic_name: '/namespace/fts'
-  force_threshold: 5.0
+  force_threshold: 10.0
 rosbag_data_recorder:
   topics:
     - /namespace/side_camera/color/image_cropped

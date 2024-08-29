@@ -47,25 +47,7 @@ z_engage_termination_config = {
             }}
 }
 
-x_engage_termination_config = {
-    'time': {'duration': 10.0},
-    'pose': {'pos_tolerance': 0.0001,
-                'orient_tolerance': 0.01,
-                'pose': None},
-    'fts': {'check_rate_ns': 1E6,
-            'threshold': {
-                'force': {
-                    'x': [0, 10],
-                    'y': [-10, 10],
-                    'z': [-10, 10]},
-                'torque': {
-                    'x': [-1, 1],
-                    'y': [-1, 1],
-                    'z': [-1, 1]}
-            }}
-}
-
-y_engage_termination_config = {
+engage_termination_config = {
     'time': {'duration': 10.0},
     'pose': {'pos_tolerance': 0.0001,
                 'orient_tolerance': 0.01,
@@ -74,25 +56,7 @@ y_engage_termination_config = {
             'threshold': {
                 'force': {
                     'x': [-10, 10],
-                    'y': [0, 10],
-                    'z': [-10, 10]},
-                'torque': {
-                    'x': [-1, 1],
-                    'y': [-1, 1],
-                    'z': [-1, 1]}
-            }}
-}
-
-xy_engage_termination_config = {
-    'time': {'duration': 10.0},
-    'pose': {'pos_tolerance': 0.0001,
-                'orient_tolerance': 0.01,
-                'pose': None},
-    'fts': {'check_rate_ns': 1E6,
-            'threshold': {
-                'force': {
-                    'x': [0, 10],
-                    'y': [0, 10],
+                    'y': [-10, 10],
                     'z': [-10, 10]},
                 'torque': {
                     'x': [-1, 1],
@@ -480,13 +444,13 @@ class ResetConnector(BaseSkill):
              'termination_cfg': lambda param: add_termination_pose(z_engage_termination_config, self.reset_yz_approach_pose_msg)},
             {'step_name': 'go_to_reset_y_approach_pose',
              'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.reset_y_approach_pose_msg, wait=False),
-             'termination_cfg': lambda param: add_termination_pose(x_engage_termination_config, self.reset_y_approach_pose_msg)},
+             'termination_cfg': lambda param: add_termination_pose(engage_termination_config, self.reset_y_approach_pose_msg)},
             {'step_name': 'go_to_reset_y_pose',
              'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.reset_y_pose_msg, wait=False),
-             'termination_cfg': lambda param: add_termination_pose(x_engage_termination_config, self.reset_y_pose_msg)},
+             'termination_cfg': lambda param: add_termination_pose(engage_termination_config, self.reset_y_pose_msg)},
             {'step_name': 'go_to_reset_y_approach_pose',
              'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.reset_y_approach_pose_msg, wait=False),
-             'termination_cfg': lambda param: add_termination_pose(x_engage_termination_config, self.reset_y_approach_pose_msg)},
+             'termination_cfg': lambda param: add_termination_pose(engage_termination_config, self.reset_y_approach_pose_msg)},
             {'step_name': 'go_to_reset_yz_approach_pose',
              'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.reset_yz_approach_pose_msg, wait=False),
              'termination_cfg': lambda param: add_termination_pose(z_engage_termination_config, self.reset_yz_approach_pose_msg)},
@@ -495,13 +459,13 @@ class ResetConnector(BaseSkill):
              'termination_cfg': lambda param: add_termination_pose(z_engage_termination_config, self.reset_xz_approach_pose_msg)},
             {'step_name': 'go_to_reset_x_approach_pose',
              'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.reset_x_approach_pose_msg, wait=False),
-             'termination_cfg': lambda param: add_termination_pose(y_engage_termination_config, self.reset_x_approach_pose_msg)},
+             'termination_cfg': lambda param: add_termination_pose(engage_termination_config, self.reset_x_approach_pose_msg)},
             {'step_name': 'go_to_reset_x_pose',
              'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.reset_x_pose_msg, wait=False),
-             'termination_cfg': lambda param: add_termination_pose(y_engage_termination_config, self.reset_x_pose_msg)},
+             'termination_cfg': lambda param: add_termination_pose(engage_termination_config, self.reset_x_pose_msg)},
             {'step_name': 'go_to_reset_x_approach_pose',
              'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.reset_x_approach_pose_msg, wait=False),
-             'termination_cfg': lambda param: add_termination_pose(y_engage_termination_config, self.reset_x_approach_pose_msg)},
+             'termination_cfg': lambda param: add_termination_pose(engage_termination_config, self.reset_x_approach_pose_msg)},
             {'step_name': 'go_to_reset_xz_approach_pose',
              'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.reset_xz_approach_pose_msg, wait=False),
              'termination_cfg': lambda param: add_termination_pose(z_engage_termination_config, self.reset_xz_approach_pose_msg)},
