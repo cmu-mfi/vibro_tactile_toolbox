@@ -47,7 +47,7 @@ lego_detector:
 rosbag_data_recorder:
   topics:
     - /namespace/side_camera/color/image_cropped
-    - /namespace/wrist_camera/color/image_raw
+    - /namespace/wrist_camera/color/image_raw/compressed
     - /namespace/joint_states
     - /namespace/fts
     - /namespace/audio

@@ -1,6 +1,7 @@
 hande_ee_tf: "/transforms/hande_ee.tf"
 waterproof_world_pick_tf: "/transforms/waterproof_world_pick.tf"
 waterproof_world_place_tf: "/transforms/waterproof_world_place.tf"
+waterproof_world_place_reset_tf: "/transforms/waterproof_world_place_reset.tf"
 waterproof_world_reset_x_tf: "/transforms/waterproof_world_reset_x.tf"
 waterproof_world_reset_y_tf: "/transforms/waterproof_world_reset_y.tf"
 dsub_world_pick_tf: "/transforms/dsub_world_pick.tf"
@@ -18,7 +19,7 @@ theta_range:
   - -10.0
   - 10.0
 approach_height: 0.08
-reset_x_offset: 0.01
+reset_x_offset: 0.008
 reset_y_offset: 0.01
 lift_height: 0.01
 pull_up_velocity_scaling: 0.01

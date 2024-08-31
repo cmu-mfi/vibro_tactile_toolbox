@@ -9,7 +9,7 @@ from gripper_controller.robotiq_hande_controller import RobotiqHandEController
 
 from autolab_core import RigidTransform
 
-from skill.nist_skills import PullUp, MoveToAboveConnectorPose, MoveToAbovePerturbConnectorPose, PickOrPlaceConnector, MoveDown, OpenGripper, ResetConnector
+from skill.nist_skills import PullUp, MoveToAboveConnectorPose, MoveToAbovePerturbConnectorPose, PickConnector, PlaceConnector, MoveDown, OpenGripper, ResetConnector
 from skill.util_skills import GoHomeSkill
 from outcome.nist_outcome import *
 
@@ -76,6 +76,7 @@ def run():
     if connector_type == 'waterproof':
         T_connector_world_pick = RigidTransform.load(root_pwd+config['waterproof_world_pick_tf'])
         T_connector_world_place = RigidTransform.load(root_pwd+config['waterproof_world_place_tf'])
+        T_connector_world_place_reset = RigidTransform.load(root_pwd+config['waterproof_world_place_reset_tf'])
         T_connector_world_reset_x = RigidTransform.load(root_pwd+config['waterproof_world_reset_x_tf'])
         T_connector_world_reset_y = RigidTransform.load(root_pwd+config['waterproof_world_reset_y_tf'])
     elif connector_type == 'dsub':
@@ -88,11 +89,18 @@ def run():
     params = {'T_hande_ee': T_hande_ee, 
               'verbose': verbose}
 
-    pick_or_place_connector_params = {
+    pick_connector_params = {
         'T_hande_ee': T_hande_ee, 
         'verbose': verbose,
         'T_connector_world': T_connector_world_pick,
         'approach_height_offset': config['approach_height'],
+    }
+    place_connector_params = {
+        'T_hande_ee': T_hande_ee, 
+        'verbose': verbose,
+        'T_connector_world': T_connector_world_place_reset,
+        'approach_height_offset': config['approach_height'],
+        'reset_x_offset': config['reset_x_offset'],
     }
     reset_connector_params = {
         'T_hande_ee': T_hande_ee, 
@@ -108,7 +116,9 @@ def run():
     move_to_above_perturb_connector_skill = MoveToAbovePerturbConnectorPose(robot_commander, gripper_controller, namespace, params)
     pull_up_skill = PullUp(robot_commander, gripper_controller, namespace, params)
     move_down_skill = MoveDown(robot_commander, gripper_controller, namespace, params)
-    pick_or_place_connector_skill = PickOrPlaceConnector(robot_commander, gripper_controller, namespace, pick_or_place_connector_params)
+    pick_connector_skill = PickConnector(robot_commander, gripper_controller, namespace, pick_connector_params)
+    place_connector_skill = PlaceConnector(robot_commander, gripper_controller, namespace, place_connector_params)
+
     reset_connector_skill = ResetConnector(robot_commander, gripper_controller, namespace, reset_connector_params)
     home_skill = GoHomeSkill(robot_commander, gripper_controller, namespace, params)
     open_gripper_skill = OpenGripper(robot_commander, gripper_controller, namespace, params)
@@ -137,8 +147,7 @@ def run():
     # Tasks to do
     for trial_num in range(start_num, start_num+num_trials):
 
-        pick_execution_params = {'skill_step_delay': 2.0, 'skill_step_params': {'open_or_close_gripper': {'skill':{'pick': True}}}}
-        pick_or_place_connector_skill.execute_skill(pick_execution_params, None)
+        pick_connector_skill.execute_skill(execution_params)
 
         x_perturb = np.random.uniform(config['x_range'][0], config['x_range'][1])
         y_perturb = np.random.uniform(config['y_range'][0], config['y_range'][1])
@@ -212,8 +221,7 @@ def run():
             labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_failure.bag"
             os.rename(rosbag_path, labeled_rosbag_path)
 
-        place_execution_params = {'skill_step_delay': 2.0, 'skill_step_params': {'open_or_close_gripper': {'skill':{'pick': False}}}}
-        pick_or_place_connector_skill.execute_skill(place_execution_params, None)
+        place_connector_skill.execute_skill(execution_params)
         
         reset_connector_skill.execute_skill(execution_params)
     terminals = home_skill.execute_skill(None)

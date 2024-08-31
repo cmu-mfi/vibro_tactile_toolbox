@@ -1,13 +1,6 @@
 <launch>
 	<arg name="namespace" default="yk_builder" />
 
-	<!-- Launch femto_bolt.launch from vibro_tactile_toolbox package -->
-	<include
-		file="$(find vibro_tactile_toolbox)/launch/femto_bolt.launch">
-		<arg name="camera_name" value="$(arg namespace)/side_camera"/>
-		<arg name="serial_number" value="CL8FC3100NM"/>
-	</include>
-
 	<group ns="$(arg namespace)">
 		<!-- Start compressed_image_republisher node -->
 		<node name="compressed_image_cropped_republisher" pkg="vibro_tactile_toolbox" type="compressed_image_cropped_republisher.py" output="screen">
