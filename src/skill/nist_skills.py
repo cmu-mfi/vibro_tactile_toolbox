@@ -97,7 +97,7 @@ servo_termination_config = {
                 'force': {
                     'x': [-30, 30],               # any substantial reaction force in x-y
                     'y': [-30, 30],
-                    'z': [-30, 30]},   # reaction force pulling away in z
+                    'z': [-float('inf'), 8]},   # reaction force pulling away in z
                 'torque': {
                     'x': [-3, 3],               # any substantial reaction torque
                     'y': [-3, 3],

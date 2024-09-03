@@ -17,8 +17,7 @@ from enum import Enum
 #     DISCONNECTED = 3
 
 def send_start_outcome_request(params):
-    fts_namespace = params['fts_detector']['namespace']
-    lego_namespace = params['lego_detector']['namespace']
+    namespace = params['fts_detector']['namespace']
     rospy.wait_for_service(f"/{namespace}/fts_detector")
     rospy.wait_for_service(f"/{namespace}/lego_detector")
 

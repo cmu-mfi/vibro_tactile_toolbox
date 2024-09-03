@@ -175,6 +175,7 @@ catkin_install_python(PROGRAMS
   scripts/save_lego_pose.py
   scripts/save_hande_pose.py
   scripts/compressed_image_cropped_republisher.py
+  scripts/compressed_lego_detector.py
   scripts/image_cropped_republisher.py
   scripts/terminator_node.py
   scripts/termination_handler_node.py

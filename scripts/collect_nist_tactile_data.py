@@ -82,6 +82,7 @@ def run():
     elif connector_type == 'dsub':
         T_connector_world_pick = RigidTransform.load(root_pwd+config['dsub_world_pick_tf'])
         T_connector_world_place = RigidTransform.load(root_pwd+config['dsub_world_place_tf'])
+        T_connector_world_place_reset = RigidTransform.load(root_pwd+config['dsub_world_place_reset_tf'])
         T_connector_world_reset_x = RigidTransform.load(root_pwd+config['dsub_world_reset_x_tf'])
         T_connector_world_reset_y = RigidTransform.load(root_pwd+config['dsub_world_reset_y_tf'])
 

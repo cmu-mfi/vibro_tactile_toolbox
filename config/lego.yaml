@@ -32,7 +32,7 @@ fts_detector:
   force_threshold: 0.3
 lego_detector:
   namespace: namespace
-  topic_name: '/namespace/side_camera/color/image_cropped'
+  topic_name: '/namespace/side_camera/color/image_cropped/compressed'
   top_bbox:
     - 500
     - 280

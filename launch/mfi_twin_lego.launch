@@ -1,0 +1,27 @@
+<launch>
+	<arg name="namespace" default="yk_creator" />
+
+	<!-- Launch outcomes.launch from vibro_tactile_toolbox package -->
+	<include
+		file="$(find vibro_tactile_toolbox)/launch/outcomes.launch">
+		<arg name="namespace" value="$(arg namespace)"/>
+	</include>
+
+	<!-- Launch terminators.launch from vibro_tactile_toolbox package -->
+	<include
+		file="$(find vibro_tactile_toolbox)/launch/terminators.launch">
+		<arg name="namespace" value="$(arg namespace)"/>
+	</include>
+
+	<group ns="$(arg namespace)">
+		<!-- Start pose_stamped_publisher node -->
+		<node name="pose_stamped_publisher_node" pkg="vibro_tactile_toolbox" type="pose_stamped_publisher.py" output="screen">
+			<param name="frequency" value="100" />
+		</node>
+
+		<node pkg="vibro_tactile_toolbox" name="lego_detector_node" type="compressed_lego_detector.py" output="screen">
+			<param name="model_path" value="/home/mfi/repos/ros1_ws/src/kevin/vibro_tactile_toolbox/models/lego_model.pth" />
+        </node>
+
+	</group>
+</launch>
