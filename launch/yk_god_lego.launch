@@ -17,10 +17,6 @@
 	</include>
 
 	<group ns="$(arg namespace)">
-		<!-- Start fts_serial node -->
-		<node name="multi_fts_serial_node" pkg="fts_serial" type="multi_fts_serial_node" output="screen">
-		</node>
-
 		<node name="sounddevice_ros_node" pkg="sounddevice_ros" type="sounddevice_ros_publisher_node.py" output="screen" args="-d UMC404HD 192k: USB Audio -c 4">
 		</node>
 
@@ -28,11 +24,11 @@
 		<node name="compressed_image_cropped_republisher" pkg="vibro_tactile_toolbox" type="compressed_image_cropped_republisher.py" output="screen">
 			<param name="compressed_image_sub_topic_name" value="side_camera/color/image_raw/compressed" />
 			<param name="compressed_image_pub_topic_name" value="side_camera/color/image_cropped/compressed" />
-			<param name="x_offset" value="600" />
-			<param name="y_offset" value="2150" />
+			<param name="x_offset" value="200" />
+			<param name="y_offset" value="1950" />
 			<param name="x_size" value="1280" />
 			<param name="y_size" value="720" />
-			<param name="rotation_direction" value="counter_clockwise" />
+			<param name="rotation_direction" value="clockwise" />
 		</node>
 
 	</group>
