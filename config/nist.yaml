@@ -29,8 +29,8 @@ fts_detector:
   force_threshold: 10.0
 rosbag_data_recorder:
   topics:
-    - /namespace/side_camera/color/image_cropped
-    - /namespace/wrist_camera/color/image_raw
+    - /namespace/side_camera/color/image_cropped/compressed
+    - /namespace/wrist_camera/color/image_raw/compressed
     - /namespace/joint_states
     - /namespace/fts
     - /namespace/audio

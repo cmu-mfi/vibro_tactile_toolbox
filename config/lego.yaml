@@ -46,7 +46,7 @@ lego_detector:
   detection_threshold: 0.8
 rosbag_data_recorder:
   topics:
-    - /namespace/side_camera/color/image_cropped
+    - /namespace/side_camera/color/image_cropped/compressed
     - /namespace/wrist_camera/color/image_raw/compressed
     - /namespace/joint_states
     - /namespace/fts
