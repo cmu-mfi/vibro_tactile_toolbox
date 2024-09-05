@@ -236,6 +236,44 @@ class PullUp(BaseSkill):
 
         return super().execute_skill(execution_params)
 
+class MoveUp(BaseSkill):
+
+    def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
+
+        super().__init__(robot_commander, gripper_controller, namespace, params)
+
+        self.skill_steps = [
+            {'step_name': 'move_up',
+             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.move_up_pose_msg, wait=False, velocity_scaling=self.velocity_scaling),
+             'termination_cfg': lambda param: add_termination_pose(servo_termination_config, self.move_up_pose_msg)},
+        ]
+
+    def execute_skill(self, execution_params, skill_params) -> Tuple[List[TerminationSignal], List[int]]:
+        # QOL 
+        if 'lift_height_offset' not in skill_params:
+            print(f"moveUp expects an lift height offset (meters): skill_params['lift_height_offset'] = float(0.001 m)")
+        if 'velocity_scaling' not in skill_params:
+            self.velocity_scaling = 0.01
+            print(f"No initial velocity scaling specified, using: {self.velocity_scaling}")
+        else:
+            self.velocity_scaling = skill_params['velocity_scaling']
+
+        current_pose_msg = self.robot_commander.get_current_pose()
+        current_pose = RigidTransform.from_pose_msg(current_pose_msg, from_frame='ee')
+
+
+        self.lift_height_offset = skill_params['lift_height_offset']
+
+        self.T_move_up = RigidTransform(
+            translation=np.array([0.0, 0.0, -abs(self.lift_height_offset)]),
+            from_frame='ee', to_frame='ee'
+        )
+
+        self.move_up_pose = current_pose * self.T_move_up
+        self.move_up_pose_msg = self.move_up_pose.pose_msg
+
+        return super().execute_skill(execution_params)
+
 class MoveDown(BaseSkill):
 
     def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):

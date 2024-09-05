@@ -199,3 +199,61 @@
      tmux new-window -n nist-launch
      roslaunch vibro_tactile_toolbox mfi_twin_nist.launch
      ```
+6. **Start Data Collection Script on MFI Twin**:
+    - Open a new tmux session named `nist_data_collection` on `mfi-twin`:
+     ```sh
+     tmux new -t nist_data_collection
+     ```
+    - Start mfi_twin_nist in a new tmux window:
+     ```sh
+     tmux new-window -n nist_data_collection
+     roslaunch vibro_tactile_toolbox collect_nist_tactile_data.launch
+     ```
+
+
+### Lego Data Collection Instructions
+1. **Start rosmaster**:
+   - Open a new tmux session named `roscore` on `mfi-twin`:
+     ```sh
+     tmux new -t roscore
+     roscore
+     ```
+
+2. **Start Yaskawa Drivers**:
+   - Open a new tmux session named `yk-creator` on `mfi-twin`:
+     ```sh
+     tmux new -t yk-creator
+     ```
+   - Start MoveIt in a new tmux window (don't use tmux if you want to use RViz):
+     ```sh
+     tmux new-window -n moveit
+     roslaunch testbed_utils lego_moveit_yk.launch namespace:=yk_creator
+     ```
+
+3. **Start Wrist, Side Cameras, and Audio on Yk-god**:
+    - Open a terminal window and connect to `yk-god`:
+     ```sh
+     ssh yk-god
+     roslaunch vibro_tactile_toolbox yk_god_lego.launch
+     ```
+
+4. **Start Outcome Detection, Terminators, and Pose Stamped Publisher on MFI Twin**:
+    - Open a new tmux session named `lego-drivers` on `mfi-twin`:
+     ```sh
+     tmux new -t lego-drivers
+     ```
+    - Start mfi_twin_lego in a new tmux window:
+     ```sh
+     tmux new-window -n lego-launch
+     roslaunch vibro_tactile_toolbox mfi_twin_lego.launch
+     ```
+5. **Start Data Collection Script on MFI Twin**:
+    - Open a new tmux session named `lego_data_collection` on `mfi-twin`:
+     ```sh
+     tmux new -t lego_data_collection
+     ```
+    - Start mfi_twin_lego in a new tmux window:
+     ```sh
+     tmux new-window -n lego_data_collection
+     roslaunch vibro_tactile_toolbox collect_lego_tactile_data.launch
+     ```

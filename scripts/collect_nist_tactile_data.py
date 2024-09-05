@@ -9,7 +9,7 @@ from gripper_controller.robotiq_hande_controller import RobotiqHandEController
 
 from autolab_core import RigidTransform
 
-from skill.nist_skills import PullUp, MoveToAboveConnectorPose, MoveToAbovePerturbConnectorPose, PickConnector, PlaceConnector, MoveDown, OpenGripper, ResetConnector
+from skill.nist_skills import PullUp, MoveToAboveConnectorPose, MoveToAbovePerturbConnectorPose, PickConnector, PlaceConnector, MoveDown, MoveUp, OpenGripper, ResetConnector
 from skill.util_skills import GoHomeSkill
 from outcome.nist_outcome import *
 
@@ -116,6 +116,7 @@ def run():
     move_to_above_connector_pose_skill = MoveToAboveConnectorPose(robot_commander, gripper_controller, namespace, params)
     move_to_above_perturb_connector_skill = MoveToAbovePerturbConnectorPose(robot_commander, gripper_controller, namespace, params)
     pull_up_skill = PullUp(robot_commander, gripper_controller, namespace, params)
+    move_up_skill = MoveUp(robot_commander, gripper_controller, namespace, params)
     move_down_skill = MoveDown(robot_commander, gripper_controller, namespace, params)
     pick_connector_skill = PickConnector(robot_commander, gripper_controller, namespace, pick_connector_params)
     place_connector_skill = PlaceConnector(robot_commander, gripper_controller, namespace, place_connector_params)
@@ -140,7 +141,12 @@ def run():
         'skill_step_delay': 1.0
     }
 
+    move_up_params = {
+        'lift_height_offset': config['approach_height'],
+    }
+
     terminals = open_gripper_skill.execute_skill(None)
+    terminals = move_up_skill.execute_skill(execution_params, move_up_params)
     terminals = home_skill.execute_skill(None)
 
     reset_connector_skill.execute_skill(execution_params)
