@@ -3,7 +3,6 @@ import argparse
 import rosbag
 import cv2
 import numpy as np
-from cv_bridge import CvBridge
 import pickle
 import json
 
@@ -12,14 +11,14 @@ from sounddevice_ros.msg import AudioInfo, AudioData
 
 namespace = "yk_creator"
 AUDIO_TOPIC = f'/{namespace}/audio'
-CAMERA_1_COLOR_TOPIC = f'/{namespace}/wrist_camera/color/image_raw'
-CAMERA_2_COLOR_TOPIC = f'/{namespace}/side_camera/color/image_cropped'
+CAMERA_1_COLOR_TOPIC = f'/{namespace}/wrist_camera/color/image_raw/compressed'
+CAMERA_2_COLOR_TOPIC = f'/{namespace}/side_camera/color/image_cropped/compressed'
 FTS_TOPIC = f'/{namespace}/fts'
 JOINT_STATE_TOPIC = f'/{namespace}/joint_states'
 SKILL_PARAM_TOPIC = f'/{namespace}/skill/param'
 SKILL_TERMINATION_TOPIC = f'/{namespace}/terminator/skill_termination_signal'
-LEGO_OUTCOME_TOPIC = f'/outcome/lego_detector'
-FTS_OUTCOME_TOPIC = f'/outcome/fts_detector'
+LEGO_OUTCOME_TOPIC = f'/{namespace}/outcome/lego_detector'
+FTS_OUTCOME_TOPIC = f'/{namespace}/outcome/fts_detector'
 
 def create_dir_if_not_exists(dir_path):
     if not os.path.exists(dir_path):
@@ -71,9 +70,6 @@ def save_video(bag, save_dir, filenames=[], image_topics=[], video_latency=0.0):
     Return: None
     '''
 
-
-    bridge = CvBridge()
-
     video_dict = {}
 
     bag_duration = bag.get_end_time() - bag.get_start_time()
@@ -85,8 +81,10 @@ def save_video(bag, save_dir, filenames=[], image_topics=[], video_latency=0.0):
         video_freq = bag.get_message_count([image_topic]) / bag_duration
         if video_freq > 0.0:
             for topic, msg, t in bag.read_messages(topics=[image_topic]):
-                video_width = msg.width
-                video_height = msg.height
+                np_arr = np.frombuffer(msg.data, np.uint8)
+                frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+                video_width = frame.shape[1]
+                video_height = frame.shape[0]
                 print(video_width, video_height)
                 video_dict[image_topic] = cv2.VideoWriter(os.path.join(save_dir,filenames[i]+'.mp4'),  
                                           cv2.VideoWriter_fourcc(*'mp4v'), 
@@ -102,7 +100,8 @@ def save_video(bag, save_dir, filenames=[], image_topics=[], video_latency=0.0):
             skipped_frames[topic] += 1
             continue
         timestamps[topic].append(t)
-        frame = bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+        np_arr = np.frombuffer(msg.data, np.uint8)
+        frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
         video_dict[topic].write(frame)
 
         last_frame[topic] = frame
@@ -250,7 +249,6 @@ def save_outcomes(bag, save_dir, filenames=[], outcome_topics=[], outcome_latenc
     topics: List of topics for which FTS data should be saved. [FTS_TOPIC] is sufficent.
     Return: None
     '''   
-    bridge = CvBridge()
 
     outcome_data = []
 
@@ -286,7 +284,8 @@ def save_outcomes(bag, save_dir, filenames=[], outcome_topics=[], outcome_latenc
                     outcome = json.loads(msg.result)
                     result = outcome['result'].strip()
                     success = outcome['success']
-                    img_ann = bridge.imgmsg_to_cv2(msg.img)
+                    img_np_arr = np.frombuffer(msg.img.data, np.uint8)
+                    img_ann = cv2.imdecode(img_np_arr, cv2.IMREAD_COLOR)
                     img_name = f"{t_trial}.png" 
                     img_path = os.path.join(lego_detections_dir, img_name)
                     print(f"Saving annotated image to {img_path}")

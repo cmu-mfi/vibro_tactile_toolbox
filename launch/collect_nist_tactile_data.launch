@@ -1,10 +1,10 @@
 <launch>
     <arg name="namespace" default="yk_builder"/>
-    <arg name="num_trials" default="33"/>
-    <arg name="start_num" default="1"/>
+    <arg name="num_trials" default="30"/>
+    <arg name="start_num" default="50"/>
     <arg name="verbose" default="true"/>
-    <arg name="connector_type" default="dsub"/>
-    <arg name="velocity_scale" default="0.02"/>
+    <arg name="connector_type" default="waterproof"/>
+    <arg name="velocity_scale" default="0.01"/>
     <arg name="volume" default="75"/>
     <arg name="config" default="nist.yaml"/>
     <group ns="$(arg namespace)">

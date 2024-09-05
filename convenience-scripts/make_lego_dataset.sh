@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Define the arrays for volumes, bricks, and velocities
-VOLS=(25 50 75 100)
-BRICKS=("2x1" "2x2" "2x4" "4x2")
-VELS=(0.01 0.02 0.05)
+VOLS=(75)
+BRICKS=("2x1" "2x2" "2x4" "4x1" "4x2")
+VELS=(0.01 0.02)
 
 # Define the base paths
 BASE_TARGET_DIR="/mnt/hdd1/vibrotactile_data/lego/volume_"

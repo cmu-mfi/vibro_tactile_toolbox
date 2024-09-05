@@ -55,31 +55,33 @@ def segment_audio(audio_data, sample_rate, t_start, t_end):
     
     audio_data, sample_rate = torchaudio.load(filepath)
     """
-    import pdb
-
     start_idx = int(t_start * sample_rate)
     end_idx = int(t_end * sample_rate)
 
-    audio_ch0 = audio_data[0, :]
-    audio_ch1 = audio_data[1, :]
+    num_channels = audio_data.shape[0]
+    
+    combined_image_rgb = None
+    audio_segment = audio_data[:,start_idx:end_idx]
+    rgb_images = []
+    for ch_num in range(num_channels):
+        channel_audio_segment = audio_segment[ch_num,:]
+        transform = torchaudio.transforms.Spectrogram()
+        spec_tensor = transform(channel_audio_segment)
+        spec_np = spec_tensor.log2().numpy()
+        spec_np = np.flipud(spec_np)
 
-    audio_segment = audio_ch0[start_idx:end_idx]
-    print(audio_segment.shape)
-    transform = torchaudio.transforms.Spectrogram()
-    spec_tensor = transform(audio_segment)
-    spec_np = spec_tensor.log2().numpy()
-    spec_np = np.flipud(spec_np)
+        # Begin from matplotlib.image.imsave
+        sm = cm.ScalarMappable(cmap='viridis')
+        sm.set_clim(None, None)
+        rgba = sm.to_rgba(spec_np, bytes=True)
+        pil_shape = (rgba.shape[1], rgba.shape[0])
+        image_rgb = Image.frombuffer(
+                "RGBA", pil_shape, rgba, "raw", "RGBA", 0, 1)
+        rgb_images.append(image_rgb)
 
-    # Begin from matplotlib.image.imsave
-    sm = cm.ScalarMappable(cmap='viridis')
-    sm.set_clim(None, None)
-    rgba = sm.to_rgba(spec_np, bytes=True)
-    pil_shape = (rgba.shape[1], rgba.shape[0])
-    image_rgb = Image.frombuffer(
-            "RGBA", pil_shape, rgba, "raw", "RGBA", 0, 1)
-    # End from matplotlib.image.imsave
+        # End from matplotlib.image.imsave
 
-    return audio_segment, image_rgb
+    return audio_segment, rgb_images
 
 
 def segment_video(video_data: cv2.VideoCapture, t_terminal):
@@ -110,7 +112,6 @@ def segment_trial(dataset_dir, lagging_buffer=0.5, leading_buffer=0.5):
 
     # Load audio
     audio_data, sample_rate = torchaudio.load(os.path.join(dataset_dir, AUDIO_NAME))
-    print(sample_rate)
     
     # Load FTS
     fts_data = np.load(os.path.join(dataset_dir, FTS_NAME))
