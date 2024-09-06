@@ -178,8 +178,8 @@ def segment_trial(dataset_dir, lagging_buffer=0.5, leading_buffer=0.5):
         i_detected_skill = i_detection_skill - 1                                 # index of action outcome label corresponds to
 
         t_terminal = terminals[i_detected_skill][0]
-
-        skill_name = skill_names[terminals[i_detected_skill][1]] # get skill name from terminal id (matches skill id)
+        skill_id = terminals[i_detected_skill][1]
+        skill_name = skill_names[skill_id] # get skill name from terminal id (matches skill id)
 
         # Segment data based on the terminal timestamp and lag/lead buffers
         t_start = t_terminal - lagging_buffer
@@ -206,11 +206,11 @@ def segment_trial(dataset_dir, lagging_buffer=0.5, leading_buffer=0.5):
         # Get the label for the data from the outcome detector
         label = outcome[1]
 
-        segments.append((skill_name, seg_data, label))
+        segments.append((skill_name, skill_id, seg_data, label))
 
     return segments
 
-def make_file_names(dataset_name, audio_dir, fts_dir, vision_dir, dataset_segment=None):
+def make_file_names(dataset_name, skill_id, audio_dir, fts_dir, vision_dir, dataset_segment=None):
     '''
     returns: audio_pth, audio_spec_pth, fts_pth, side_cam_pth, wrist_cam_pth, outcome_ann_pth
 
@@ -224,16 +224,16 @@ def make_file_names(dataset_name, audio_dir, fts_dir, vision_dir, dataset_segmen
         # wrist_cam_pth = os.path.join(vision_dir, f'wrist_cam_{segment_num}.png')
         # outcome_ann_pth = os.path.join(vision_dir, f'outcome_ann_{segment_num}.png')
         raise NotImplementedError
-    audio_pth = os.path.join(audio_dir, f'{dataset_name}.wav')
-    audio_spec_pth = os.path.join(audio_dir, f'{dataset_name}.png')
-    fts_pth = os.path.join(fts_dir, f'{dataset_name}.npy')
-    side_cam_pth = os.path.join(vision_dir, f'{dataset_name}.png')
-    wrist_cam_pth = os.path.join(vision_dir, f'{dataset_name}.png')
-    outcome_ann_pth = os.path.join(vision_dir, f'{dataset_name}.png')
+    audio_pth = os.path.join(audio_dir, f'{dataset_name}_{skill_id}.wav')
+    audio_spec_pth = os.path.join(audio_dir, f'{dataset_name}_{skill_id}')
+    fts_pth = os.path.join(fts_dir, f'{dataset_name}_{skill_id}.npy')
+    side_cam_pth = os.path.join(vision_dir, f'{dataset_name}_{skill_id}.png')
+    wrist_cam_pth = os.path.join(vision_dir, f'{dataset_name}_{skill_id}.png')
+    outcome_ann_pth = os.path.join(vision_dir, f'{dataset_name}_{skill_id}.png')
     return audio_pth, audio_spec_pth, fts_pth, side_cam_pth, wrist_cam_pth, outcome_ann_pth
 
 def main(args):
-    RECORDED_SKILLS = {'MoveDown', 'PickLego', 'PlaceLego'}
+    RECORDED_SKILLS = {'MoveDown'} #, 'PickLego', 'PlaceLego'}
     # Create output folder 
     if os.path.exists(args.save_dir):
         if 'y' not in input(f'{args.save_dir} already exists, delete? [y/n] ').lower():
@@ -284,18 +284,14 @@ def main(args):
         with open(trials_pth, 'a') as f:
             f.write(dataset_dir + '\n')
 
-        for segment in segments:
-            file_pths = make_file_names(dataset_name, audio_dir, fts_dir, vision_dir)
+        for (skill_name, skill_id, seg_data, label) in segments:
+            file_pths = make_file_names(dataset_name, skill_id, audio_dir, fts_dir, vision_dir)
             audio_pth = file_pths[0]
             audio_spec_pth = file_pths[1]
             fts_pth = file_pths[2]
             side_cam_pth = file_pths[3]
             wrist_cam_pth = file_pths[4]
             outcome_ann_pth = file_pths[5]
-
-            skill_name = segment[0]
-            seg_data = segment[1]
-            label = segment[2]
     
             '''
             Produce this file structure:
@@ -342,7 +338,8 @@ def main(args):
                 #wavfile.write(os.path.join(args.save_dir, subdir, audio_pth), seg_data['audio'][0], seg_data['audio'][1])
             # save audio segment spectrogram
             if seg_data['audio_spec'] is not None:
-                seg_data['audio_spec'].save(os.path.join(args.save_dir, subdir, audio_spec_pth))
+                for (i,audio_spec) in enumerate(seg_data['audio_spec']):
+                    audio_spec.save(os.path.join(args.save_dir, subdir, audio_spec_pth + '_' + str(i) + '.png'))
             
             # save fts segment
             if seg_data['fts'] is not None:

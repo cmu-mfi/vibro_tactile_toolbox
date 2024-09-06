@@ -9,11 +9,13 @@ import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
 import matplotlib.pyplot as plt
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, Dataset
+import torchvision
 from torchvision import datasets, models, transforms
 from torchinfo import summary
 import pandas as pd
 import os
+import glob
 
 import matplotlib.pyplot as plt
 
@@ -21,25 +23,57 @@ import matplotlib.pyplot as plt
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print('Using {} device'.format(device))
 
-data_path = '/mnt/hdd1/vibrotactile_data/lego_dataset/train/' #looking in subfolder train
+class VibrotactileDataset(Dataset):
+  '''
+  Prepare the Vibrotactile dataset for Prediction
+  '''
 
-audio_dataset = datasets.ImageFolder(
-    root=data_path,
-    transform=transforms.Compose([
-                                  transforms.ToTensor()
-                                  ])
-)
-print(audio_dataset)
+  def __init__(self, dataset_type, channels):
 
-class_map=audio_dataset.class_to_idx
+    self.total_length = 0
+    num_channels = len(channels)
 
-print("\nClass category and index of the images: {}\n".format(class_map))
+    if dataset_type == 'lego':
+        paths = glob.glob('/mnt/hdd1/vibrotactile_data/lego_dataset/*/*/*/MoveDown/*/audio/*_0.png')
+    elif dataset_type == 'dsub':
+        paths = glob.glob('/mnt/hdd1/vibrotactile_data/nist_dataset/*/dsub/*/MoveDown/*/audio/*_0.png')
+    elif dataset_type == 'waterproof':
+        paths = glob.glob('/mnt/hdd1/vibrotactile_data/nist_dataset/*/waterproof/*/MoveDown/*/audio/*_0.png')
 
-from collections import Counter
+    self.total_length = len(paths)
 
-# labels in training set
-test_classes = [label for _, label in audio_dataset]
-Counter(test_classes)
+    self.X = torch.zeros([self.total_length,4*num_channels,201,221])
+    self.y = torch.zeros([self.total_length,1])
+
+    current_trial = 0
+    for path in paths:
+      print(current_trial)
+      channel_num = 0
+      label = path[path.find('MoveDown')+len('MoveDown')+1:path.find('audio')-1]
+      if label == 'fail':
+        self.y[current_trial] = 0
+      elif label == 'success':
+        self.y[current_trial] = 1
+
+      for channel in channels:
+        torch_image = torchvision.io.read_image(path[:-5]+str(channel)+'.png')
+        self.X[current_trial,channel_num*4:(channel_num+1)*4] = torch_image #transforms.ToTensor()(pil_image).unsqueeze_(0)
+        
+      current_trial += 1
+
+      self.X.to(device)
+      self.y.to(device)
+
+  def __len__(self):
+    return self.total_length
+
+  def __getitem__(self, i):
+    return self.X[i], self.y[i]
+
+channels = [0,1,2,3]
+num_channels = len(channels)
+audio_dataset = VibrotactileDataset('lego',channels)
+print(len(audio_dataset))
 
 test_dataloader = torch.utils.data.DataLoader(
     audio_dataset,
@@ -51,14 +85,14 @@ test_dataloader = torch.utils.data.DataLoader(
 class CNNet(nn.Module):
     def __init__(self):
         super().__init__()
-        self.conv1 = nn.Conv2d(3, 16, kernel_size=5)
+        self.conv1 = nn.Conv2d(num_channels*4, 16, kernel_size=5)
         self.conv2 = nn.Conv2d(16, 32, kernel_size=5)
         self.conv2_drop = nn.Dropout2d()
         self.conv3 = nn.Conv2d(32, 16, kernel_size=5)
         self.flatten = nn.Flatten()
         self.fc1 = nn.Linear(8064, 512)
         self.fc2 = nn.Linear(512, 256)
-        self.fc3 = nn.Linear(256, 3)
+        self.fc3 = nn.Linear(256, 1)
 
 
     def forward(self, x):
@@ -71,15 +105,15 @@ class CNNet(nn.Module):
         x = F.dropout(x, training=self.training)
         x = F.relu(self.fc2(x))
         x = F.dropout(x, training=self.training)
-        x = F.relu(self.fc3(x))
-        return F.log_softmax(x,dim=1)
+        x = F.sigmoid(self.fc3(x))
+        return x
 
 model = CNNet()
 model = torch.load('./models/audio_outcome_lego.pt')
 model.eval()
 model.to(device)
 
-class_map = ['nominal', 'error']
+class_map = ['fail', 'success']
 
 y_true = []
 y_pred = []
@@ -90,12 +124,11 @@ with torch.no_grad():
         X = X.to(device)
         pred = model(X)
         y_true.extend(list(Y.detach().numpy()))
-        print()
-        y_pred.extend(list(pred.argmax(1).to('cpu').detach().numpy()))
-        print(np.subtract(pred.argmax(1).to('cpu').detach().numpy(),Y.detach().numpy()))
+        y_pred.extend(list(pred.round().to('cpu').detach().numpy()))
+        #print(np.subtract(pred.round().to('cpu').detach().numpy(),Y.detach().numpy()))
 
 f, ax = plt.subplots()
 ax.set_title('Vibrotactile Audio Confusion Matrix')
-_ = ConfusionMatrixDisplay.from_predictions(y_true, y_pred, display_labels=np.array(['fail','success']), ax=ax)
+_ = ConfusionMatrixDisplay.from_predictions(y_true, y_pred, display_labels=np.array(class_map), ax=ax)
 
 plt.show()

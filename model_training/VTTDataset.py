@@ -11,15 +11,13 @@ from typing import List
 
 from argparse import ArgumentParser
 
-VOLUMES = ['25', '50', '75', '100']
+VOLUMES = ['75']
 BRICK_TYPES = ['2x1', '2x2', '2x4', '4x2', '4x1']
-VELOCITIES = ['0.01', '0.02', '0.05', 'rand']
+VELOCITIES = ['0.01', '0.02']
 LABELLING_OPTIONS = ['none',                # do not produce labels
                      'outcome_detector',    # label based on outcome detections
                      'policy_correction']   # label based on pose error
-SKILL_OPTIONS = ['MoveDown',
-                 'PickLego',
-                 'PlaceLego']
+SKILL_OPTIONS = ['MoveDown']
 
 class VTTDataset(Dataset):
     def __init__(self, 
