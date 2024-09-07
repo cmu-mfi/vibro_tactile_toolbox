@@ -15,6 +15,7 @@ import pandas as pd
 import os
 import glob
 from PIL import Image
+import argparse
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print('Using {} device'.format(device))
@@ -68,39 +69,6 @@ class VibrotactileDataset(Dataset):
   def __getitem__(self, i):
     return self.X[i], self.y[i]
 
-channels = [0,1,2,3]
-num_channels = len(channels)
-audio_dataset = VibrotactileDataset('lego',channels)
-print(len(audio_dataset))
-#split data to test and train
-#use 80% to train
-train_size = int(0.85 * len(audio_dataset))
-test_size = len(audio_dataset) - train_size
-audio_train_dataset, audio_test_dataset = torch.utils.data.random_split(audio_dataset, [train_size, test_size])
-
-print("Training size:", len(audio_train_dataset))
-print("Testing size:",len(audio_test_dataset))
-
-# from collections import Counter
-
-# # labels in training set
-# train_classes = [label for _, label in audio_train_dataset]
-# Counter(train_classes)
-
-
-train_dataloader = torch.utils.data.DataLoader(
-    audio_train_dataset,
-    batch_size=16,
-    num_workers=2,
-    shuffle=True
-)
-
-test_dataloader = torch.utils.data.DataLoader(
-    audio_test_dataset,
-    batch_size=16,
-    num_workers=2,
-    shuffle=True
-)
 
 class CNNet(nn.Module):
     def __init__(self):
@@ -128,17 +96,7 @@ class CNNet(nn.Module):
         x = F.sigmoid(self.fc3(x))
         return x
 
-model = CNNet().to(device)
-
-# cost function used to determine best parameters
-cost = torch.nn.BCELoss()
-
-# used to create optimal parameters
-learning_rate = 0.0001
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-
 # Create the training function
-
 def train(dataloader, model, loss, optimizer):
     model.train()
     size = len(dataloader.dataset)
@@ -155,12 +113,10 @@ def train(dataloader, model, loss, optimizer):
             loss, current = loss.item(), batch * len(X)
             print(f'loss: {loss:>7f}  [{current:>5d}/{size:>5d}]')
 
-
 # Create the validation/test function
 max_test_correct = 0.85
 min_test_loss = 0.05
-
-def test(dataloader, model):
+def test(dataloader, model, type):
     global max_test_correct, min_test_loss
     size = len(dataloader.dataset)
     model.eval()
@@ -177,20 +133,62 @@ def test(dataloader, model):
     test_loss /= size
     correct /= size
 
-    if correct >= max_test_correct and test_loss < min_test_loss:
+    if correct > max_test_correct or (correct == max_test_correct and test_loss < min_test_loss):
         max_test_correct = correct
         min_test_loss = test_loss
-        torch.save(model, 'models/audio_outcome_lego.pt')
+        torch.save(model, 'models/audio_outcome_'+type+'.pt')
         print("====================== SAVED MODEL ==========================")
 
     print(f'\nTest Error:\nacc: {(100*correct):>0.1f}%, avg loss: {test_loss:>8f}\n')
 
-epochs = 200
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--type', '-t', type=str, default='lego')
+    parser.add_argument('--train_ratio', '-r', type=float, default=0.85)
+    args = parser.parse_args()
 
-for t in range(epochs):
-    print(f'Epoch {t+1}\n-------------------------------')
-    train(train_dataloader, model, cost, optimizer)
-    test(test_dataloader, model)
-print('Done!')
+    channels = [0,1,2,3]
+    num_channels = len(channels)
+    audio_dataset = VibrotactileDataset(args.type,channels)
+    print(len(audio_dataset))
+    #split data to test and train
+    #use 80% to train
+    train_size = int(args.train_ratio * len(audio_dataset))
+    test_size = len(audio_dataset) - train_size
+    audio_train_dataset, audio_test_dataset = torch.utils.data.random_split(audio_dataset, [train_size, test_size])
 
-summary(model, input_size=(15, num_channels*4, 201, 221))
+    print("Training size:", len(audio_train_dataset))
+    print("Testing size:",len(audio_test_dataset))
+
+    train_dataloader = torch.utils.data.DataLoader(
+        audio_train_dataset,
+        batch_size=16,
+        num_workers=2,
+        shuffle=True
+    )
+
+    test_dataloader = torch.utils.data.DataLoader(
+        audio_test_dataset,
+        batch_size=16,
+        num_workers=2,
+        shuffle=True
+    )
+
+    model = CNNet().to(device)
+
+    # cost function used to determine best parameters
+    cost = torch.nn.BCELoss()
+
+    # used to create optimal parameters
+    learning_rate = 0.0001
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+
+    epochs = 200
+
+    for t in range(epochs):
+        print(f'Epoch {t+1}\n-------------------------------')
+        train(train_dataloader, model, cost, optimizer)
+        test(test_dataloader, model, args.type)
+    print('Done!')
+
+    summary(model, input_size=(15, num_channels*4, 201, 221))

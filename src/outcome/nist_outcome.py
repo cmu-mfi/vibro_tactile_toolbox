@@ -67,3 +67,27 @@ def send_end_fts_outcome_request(params):
     except rospy.ServiceException as e:
         print("Service call failed:", e)
         return None
+
+def send_audio_outcome_request(params, timestamp):
+    namespace = params['namespace']
+    rospy.wait_for_service(f"/{namespace}/audio_detector")
+
+    try:
+        detect_audio = rospy.ServiceProxy(f"/{namespace}/audio_detector", AudioOutcome)
+        audio_req = AudioOutcomeRequest()
+        audio_req.id = 0
+        audio_req.topic_name = params['topic_name']  
+        audio_req.stamp = timestamp
+        audio_req.model_path = params['model_path'] 
+        
+
+        audio_resp = detect_audio(audio_req)
+        audio_result = json.loads(audio_resp.result)
+        print("Audio Detector Response:", audio_resp.result)
+        
+        return audio_result
+
+
+    except rospy.ServiceException as e:
+        print("Service call failed:", e)
+        return None

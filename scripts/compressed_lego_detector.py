@@ -26,7 +26,7 @@ class LegoDetector:
     def __init__(self, namespace):
 
         self.cfg = get_cfg()
-        self.model_path = rospy.get_param('lego_detector_node/model_path')
+        self.model_path = rospy.get_param('compressed_lego_detector_node/model_path')
         self.cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
         self.cfg.MODEL.WEIGHTS = os.path.join(self.model_path)
         self.cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1
@@ -149,7 +149,7 @@ class LegoDetector:
 def main(args):
   namespace = rospy.get_namespace()
   namespace = namespace[1:-1]
-  rospy.init_node("lego_detector_node", anonymous=True)
+  rospy.init_node("compressed_lego_detector_node", anonymous=True)
   node = LegoDetector(namespace)
   try:
     rospy.spin()

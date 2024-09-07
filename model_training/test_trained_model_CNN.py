@@ -16,7 +16,7 @@ from torchinfo import summary
 import pandas as pd
 import os
 import glob
-
+import argparse
 import matplotlib.pyplot as plt
 
 
@@ -70,18 +70,6 @@ class VibrotactileDataset(Dataset):
   def __getitem__(self, i):
     return self.X[i], self.y[i]
 
-channels = [0,1,2,3]
-num_channels = len(channels)
-audio_dataset = VibrotactileDataset('lego',channels)
-print(len(audio_dataset))
-
-test_dataloader = torch.utils.data.DataLoader(
-    audio_dataset,
-    batch_size=16,
-    num_workers=2,
-    shuffle=False
-)
-
 class CNNet(nn.Module):
     def __init__(self):
         super().__init__()
@@ -108,27 +96,42 @@ class CNNet(nn.Module):
         x = F.sigmoid(self.fc3(x))
         return x
 
-model = CNNet()
-model = torch.load('./models/audio_outcome_lego.pt')
-model.eval()
-model.to(device)
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--type', '-t', type=str, default='lego')
+    args = parser.parse_args()
 
-class_map = ['fail', 'success']
+    channels = [0,1,2,3]
+    num_channels = len(channels)
+    audio_dataset = VibrotactileDataset(args.type,channels)
+    print(len(audio_dataset))
 
-y_true = []
-y_pred = []
+    test_dataloader = torch.utils.data.DataLoader(
+        audio_dataset,
+        batch_size=16,
+        num_workers=2,
+        shuffle=False
+    )
 
+    model = CNNet()
+    model = torch.load('./models/audio_outcome_'+args.type+'.pt')
+    model.eval()
+    model.to(device)
 
-with torch.no_grad():
-    for batch, (X, Y) in enumerate(test_dataloader):
-        X = X.to(device)
-        pred = model(X)
-        y_true.extend(list(Y.detach().numpy()))
-        y_pred.extend(list(pred.round().to('cpu').detach().numpy()))
-        #print(np.subtract(pred.round().to('cpu').detach().numpy(),Y.detach().numpy()))
+    class_map = ['fail', 'success']
 
-f, ax = plt.subplots()
-ax.set_title('Vibrotactile Audio Confusion Matrix')
-_ = ConfusionMatrixDisplay.from_predictions(y_true, y_pred, display_labels=np.array(class_map), ax=ax)
+    y_true = []
+    y_pred = []
 
-plt.show()
+    with torch.no_grad():
+        for batch, (X, Y) in enumerate(test_dataloader):
+            X = X.to(device)
+            pred = model(X)
+            y_true.extend(list(Y.detach().numpy()))
+            y_pred.extend(list(pred.round().to('cpu').detach().numpy()))
+
+    f, ax = plt.subplots()
+    ax.set_title('Vibrotactile Audio Confusion Matrix for '+args.type)
+    _ = ConfusionMatrixDisplay.from_predictions(y_true, y_pred, display_labels=np.array(class_map), ax=ax)
+
+    plt.show()

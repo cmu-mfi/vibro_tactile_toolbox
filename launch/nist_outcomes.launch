@@ -1,0 +1,10 @@
+<launch>
+    <arg name="namespace" default="yk_builder"/>
+    <group ns="$(arg namespace)">
+        <node pkg="vibro_tactile_toolbox" name="audio_detector_node" type="audio_detector.py" output="screen">
+        </node>
+
+        <node pkg="vibro_tactile_toolbox" name="fts_detector_node" type="fts_detector.py" output="screen">
+        </node>
+    </group>
+</launch>

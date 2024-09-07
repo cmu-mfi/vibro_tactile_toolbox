@@ -180,6 +180,7 @@ catkin_install_python(PROGRAMS
   scripts/terminator_node.py
   scripts/termination_handler_node.py
   scripts/test_lego_audio_outcome.py
+  scripts/test_nist_audio_outcome.py
   scripts/pose_stamped_publisher.py
   scripts/go_home_task.py
   scripts/audio_detector.py

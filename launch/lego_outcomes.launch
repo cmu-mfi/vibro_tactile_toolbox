@@ -1,0 +1,14 @@
+<launch>
+    <arg name="namespace" default="yk_creator"/>
+    <group ns="$(arg namespace)">
+        <node pkg="vibro_tactile_toolbox" name="audio_detector_node" type="audio_detector.py" output="screen">
+        </node>
+
+        <node pkg="vibro_tactile_toolbox" name="fts_detector_node" type="fts_detector.py" output="screen">
+        </node>
+
+        <node pkg="vibro_tactile_toolbox" name="compressed_lego_detector_node" type="compressed_lego_detector.py" output="screen">
+            <param name="model_path" value="/home/mfi/repos/ros1_ws/src/kevin/vibro_tactile_toolbox/models/lego_model.pth" />
+        </node>
+    </group>
+</launch>

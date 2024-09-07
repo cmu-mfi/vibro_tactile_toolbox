@@ -3,7 +3,7 @@
 
 	<!-- Launch outcomes.launch from vibro_tactile_toolbox package -->
 	<include
-		file="$(find vibro_tactile_toolbox)/launch/outcomes.launch">
+		file="$(find vibro_tactile_toolbox)/launch/nist_outcomes.launch">
 		<arg name="namespace" value="$(arg namespace)"/>
 	</include>
 

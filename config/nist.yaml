@@ -24,6 +24,11 @@ reset_x_offset: 0.008
 reset_y_offset: 0.01
 lift_height: 0.01
 pull_up_velocity_scaling: 0.01
+audio_detector:
+  namespace: namespace
+  topic_name: '/namespace/audio'
+  dsub_model_path: '/home/mfi/repos/ros1_ws/src/kevin/vibro_tactile_toolbox/models/audio_outcome_dsub.pt'
+  waterproof_model_path: '/home/mfi/repos/ros1_ws/src/kevin/vibro_tactile_toolbox/models/audio_outcome_waterproof.pt'
 fts_detector:
   namespace: namespace
   topic_name: '/namespace/fts'
