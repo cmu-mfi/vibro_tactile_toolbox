@@ -18,8 +18,8 @@ for VOL in "${VOLS[@]}"; do
       TARGET_DST="${BASE_TARGET_DST}${VOL}/${BRICK}/vel_${VEL}"
       
       # Call the python script with the constructed paths
-      python scripts/parse_rosbag.py -w "$TARGET_DIR" -d "$TARGET_DIR"
-      python model_training/create_training_dataset.py -s "$TARGET_DIR" -d "$TARGET_DST"
+      python scripts/parse_rosbag.py -w "$TARGET_DIR" -d "$TARGET_DIR" -n "yk_creator"
+      python model_training/create_training_dataset.py -s "$TARGET_DIR" -d "$TARGET_DST" 
     done
   done
 done

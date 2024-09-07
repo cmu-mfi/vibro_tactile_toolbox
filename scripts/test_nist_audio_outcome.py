@@ -20,18 +20,18 @@ import yaml
 
 def run():
     # Start Node
-    rospy.init_node("collect_nist_tactile_data")
+    rospy.init_node("test_nist_audio_outcome_node")
 
     # Messaging Namespace
-    namespace = rospy.get_param("collect_nist_tactile_data/namespace")
-    root_pwd = rospy.get_param("collect_nist_tactile_data/root_pwd")
-    yaml_file = rospy.get_param("collect_nist_tactile_data/config")
-    num_trials = rospy.get_param("collect_nist_tactile_data/num_trials")
-    start_num = rospy.get_param("collect_nist_tactile_data/start_num")
-    connector_type = rospy.get_param("collect_nist_tactile_data/connector_type")
-    volume = rospy.get_param("collect_nist_tactile_data/volume")
-    velocity_scale = rospy.get_param("collect_nist_tactile_data/velocity_scale")
-    verbose = rospy.get_param("collect_nist_tactile_data/verbose")
+    namespace = rospy.get_param("test_nist_audio_outcome_node/namespace")
+    root_pwd = rospy.get_param("test_nist_audio_outcome_node/root_pwd")
+    yaml_file = rospy.get_param("test_nist_audio_outcome_node/config")
+    num_trials = rospy.get_param("test_nist_audio_outcome_node/num_trials")
+    start_num = rospy.get_param("test_nist_audio_outcome_node/start_num")
+    connector_type = rospy.get_param("test_nist_audio_outcome_node/connector_type")
+    volume = rospy.get_param("test_nist_audio_outcome_node/volume")
+    velocity_scale = rospy.get_param("test_nist_audio_outcome_node/velocity_scale")
+    verbose = rospy.get_param("test_nist_audio_outcome_node/verbose")
 
     with open(root_pwd+'/config/'+yaml_file) as stream:
         try:
@@ -148,7 +148,7 @@ def run():
     }
 
     terminals = open_gripper_skill.execute_skill(None)
-    terminals = move_up_skill.execute_skill(execution_params, move_up_params)
+    #terminals = move_up_skill.execute_skill(execution_params, move_up_params)
     terminals = home_skill.execute_skill(None)
 
     reset_connector_skill.execute_skill(execution_params)

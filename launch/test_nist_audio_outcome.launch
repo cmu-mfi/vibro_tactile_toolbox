@@ -8,7 +8,7 @@
     <arg name="volume" default="75"/>
     <arg name="config" default="nist.yaml"/>
     <group ns="$(arg namespace)">
-        <node pkg="vibro_tactile_toolbox" name="test_nist_tactile_data" type="test_nist_tactile_data.py" output="screen">
+        <node pkg="vibro_tactile_toolbox" name="test_nist_audio_outcome_node" type="test_nist_audio_outcome.py" output="screen">
             <param name="namespace" value="$(arg namespace)"/>
             <param name="root_pwd" value="$(find vibro_tactile_toolbox)"/>
             <param name="num_trials" value="$(arg num_trials)"/>

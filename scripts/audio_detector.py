@@ -25,9 +25,9 @@ from collections import deque
 
 from torchvision import transforms
 import torch
-import torchaudio
 import torch.nn as nn
 import torch.nn.functional as F
+import torchaudio
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -50,13 +50,12 @@ def segment_audio(audio_data, sample_rate, t_start, t_end):
 
     num_channels = audio_data.shape[0]
     
-    combined_image_rgb = None
     audio_segment = audio_data[:,start_idx:end_idx]
     rgb_images = []
     for ch_num in range(num_channels):
         channel_audio_segment = audio_segment[ch_num,:]
         transform = torchaudio.transforms.Spectrogram()
-        spec_tensor = transform(channel_audio_segment)
+        spec_tensor = transform(torch.from_numpy(channel_audio_segment))
         spec_np = spec_tensor.log2().numpy()
         spec_np = np.flipud(spec_np)
 
@@ -72,33 +71,6 @@ def segment_audio(audio_data, sample_rate, t_start, t_end):
         # End from matplotlib.image.imsave
 
     return audio_segment, rgb_images
-
-class CNNet(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv1 = nn.Conv2d(num_channels*4, 16, kernel_size=5)
-        self.conv2 = nn.Conv2d(16, 32, kernel_size=5)
-        self.conv2_drop = nn.Dropout2d()
-        self.conv3 = nn.Conv2d(32, 16, kernel_size=5)
-        self.flatten = nn.Flatten()
-        self.fc1 = nn.Linear(8064, 512)
-        self.fc2 = nn.Linear(512, 256)
-        self.fc3 = nn.Linear(256, 1)
-
-
-    def forward(self, x):
-        x = F.relu(F.max_pool2d(self.conv1(x), 2))
-        x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
-        x = F.relu(F.max_pool2d(self.conv3(x), 2))
-        #x = x.view(x.size(0), -1)
-        x = self.flatten(x)
-        x = F.relu(self.fc1(x))
-        x = F.dropout(x, training=self.training)
-        x = F.relu(self.fc2(x))
-        x = F.dropout(x, training=self.training)
-        x = F.sigmoid(self.fc3(x))
-        return x
-
 
 class AudioBuffer:
     def __init__(self, sample_rate, buffer_duration):
@@ -125,16 +97,14 @@ class AudioBuffer:
         timestamps = [stamp for (stamp, _) in current_buffer]
 
         closest_timestamp_index = np.argmin(np.abs(np.array(timestamps) - start_time.to_sec()))
-        print(closest_timestamp_index)
         print(start_time.to_sec())
-        #deque_slice = collections.deque(itertools.islice(self.buffer, closest_timestamp_index, len(self.buffer)-1))
         print(current_buffer[closest_timestamp_index][0])
 
         audio_buffer = np.hstack(tuple([buffer for (stamp,buffer) in current_buffer[closest_timestamp_index:]]))
         
         # Process the audio data as needed
-        audio_segment, image_rgb = segment_audio(audio_buffer, self.sample_rate, 0.0, lagging_buffer+leading_buffer)
-        return audio_segment, image_rgb
+        audio_segment, rgb_images = segment_audio(audio_buffer, self.sample_rate, 0.0, lagging_buffer+leading_buffer)
+        return audio_segment, rgb_images
 
 
 class AudioDetector:
@@ -150,8 +120,7 @@ class AudioDetector:
         # Model config - torchaudio stuff
 
         self.bridge = CvBridge()
-        self.model = CNNet()
-
+        self.model = None
         self.service = rospy.Service(f"/{namespace}/audio_detector", AudioOutcome, self.detect_audio)
 
         self.outcome_repub = rospy.Publisher(f"/{namespace}/outcome/audio_detector", AudioOutcomeRepub, queue_size=1)
@@ -161,7 +130,7 @@ class AudioDetector:
     def detect_audio(self, req):
         print("Received Request")
         resp = AudioOutcomeResponse()
-        self.model = torch.load(req.model_path)
+        self.model = torch.jit.load(req.model_path)
         self.model.eval()
         self.model.to(device)
 
@@ -169,24 +138,23 @@ class AudioDetector:
 
         X = torch.zeros([1,4*num_channels,201,221])
 
-        combined_image = np.zeros((num_channels*221,201,3))
+        combined_image = np.zeros((num_channels*201,221,3), dtype=np.uint8)
         for channel in range(num_channels):
-            X[:,channel,:,:] = transforms.ToTensor()(rgb_images[channel]).unsqueeze_(0)
-
-            opencv_image = cv2.cvtColor(np.array(image_rgb), cv2.COLOR_RGBA2RGB)
+            X[:,channel*4:(channel+1)*4,:,:] = transforms.ToTensor()(rgb_images[channel]).unsqueeze_(0)
+            opencv_image = cv2.cvtColor(np.array(rgb_images[channel]), cv2.COLOR_RGBA2RGB)
             pil_image = Image.fromarray(opencv_image)
             cv_image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
-            combined_image[channel*221:(channel+1)*221,:,:] = cv_image
+            combined_image[channel*201:(channel+1)*201,:,:] = cv_image
         
-        # pil_image_tensor = transforms.functional.to_tensor(pil_image)
-        # X = torch.reshape(pil_image_tensor, (1,3,201,221)).to(device)
+
+        X = X.to(device)
         pred = self.model(X)
         cpu_pred = pred.to('cpu')
         label = int(np.argmax(cpu_pred.detach().numpy()))
         print(label)
 
         success = (label == 1)
-        resp.result = json.dumps({'pred' : label,
+        resp.result = json.dumps({'result' : f"Audio Model predicted: {label}",
                                   'success': success})
     
         combined_img_msg = self.bridge.cv2_to_imgmsg(combined_image, "bgr8")

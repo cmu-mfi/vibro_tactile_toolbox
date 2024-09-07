@@ -9,17 +9,6 @@ import json
 import soundfile as sf
 from sounddevice_ros.msg import AudioInfo, AudioData
 
-namespace = "yk_creator"
-AUDIO_TOPIC = f'/{namespace}/audio'
-CAMERA_1_COLOR_TOPIC = f'/{namespace}/wrist_camera/color/image_raw/compressed'
-CAMERA_2_COLOR_TOPIC = f'/{namespace}/side_camera/color/image_cropped/compressed'
-FTS_TOPIC = f'/{namespace}/fts'
-JOINT_STATE_TOPIC = f'/{namespace}/joint_states'
-SKILL_PARAM_TOPIC = f'/{namespace}/skill/param'
-SKILL_TERMINATION_TOPIC = f'/{namespace}/terminator/skill_termination_signal'
-LEGO_OUTCOME_TOPIC = f'/{namespace}/outcome/lego_detector'
-FTS_OUTCOME_TOPIC = f'/{namespace}/outcome/fts_detector'
-
 def create_dir_if_not_exists(dir_path):
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
@@ -96,7 +85,7 @@ def save_video(bag, save_dir, filenames=[], image_topics=[], video_latency=0.0):
     skipped_frames = {image_topics[0]: 0, image_topics[1]: 0}
     for topic, msg, t in bag.read_messages(topics=image_topics):
         t = t.to_sec() - bag.get_start_time() - video_latency
-        if t < 0 and topic == CAMERA_2_COLOR_TOPIC:
+        if t < 0 and topic == image_topics[1]:
             skipped_frames[topic] += 1
             continue
         timestamps[topic].append(t)
@@ -115,7 +104,7 @@ def save_video(bag, save_dir, filenames=[], image_topics=[], video_latency=0.0):
         # cv2.waitKey(1) 
  
     
-    print(f"/SIDE_CAMERA t0: {timestamps[CAMERA_2_COLOR_TOPIC][0]}, tf: {timestamps[CAMERA_2_COLOR_TOPIC][-1]}")
+    print(f"/SIDE_CAMERA t0: {timestamps[image_topics[1]][0]}, tf: {timestamps[image_topics[1]][-1]}")
 
     for image_topic in image_topics:
         if image_topic in video_dict.keys():
@@ -257,7 +246,21 @@ def save_outcomes(bag, save_dir, filenames=[], outcome_topics=[], outcome_latenc
         os.mkdir(lego_detections_dir)
 
     for i, outcome_topic in enumerate(outcome_topics):
-        if "fts" in outcome_topic:
+        if "audio" in outcome_topic:
+            text_file = os.path.join(save_dir, "audio_outcomes.txt")
+            with open(text_file, 'w') as f:
+                f.write(f"# audio_detector.py outcomes\n")
+                f.write(f"# file: '{bag.filename}'\n")
+                f.write(f"# timestamp, result, success\n")
+                for topic, msg, t in bag.read_messages(topics=outcome_topic):
+                    t_trial = t.to_sec() - bag.get_start_time()
+                    print(f"audio_detector outcome message at time {t_trial}")
+                    outcome = json.loads(msg.result)
+                    result = outcome['result'].strip()
+                    success = outcome['success']
+
+                    f.write(f"{t_trial}, {result}, {success}\n")
+        elif "fts" in outcome_topic:
             text_file = os.path.join(save_dir, "fts_outcomes.txt")
             with open(text_file, 'w') as f:
                 f.write(f"# fts_detector.py outcomes\n")
@@ -271,7 +274,6 @@ def save_outcomes(bag, save_dir, filenames=[], outcome_topics=[], outcome_latenc
                     success = outcome['success']
 
                     f.write(f"{t_trial}, {result}, {success}\n")
-
         elif "lego" in outcome_topic:
             text_file = os.path.join(save_dir, "lego_outcomes.txt")
             with open(text_file, 'w') as f:
@@ -291,8 +293,6 @@ def save_outcomes(bag, save_dir, filenames=[], outcome_topics=[], outcome_latenc
                     print(f"Saving annotated image to {img_path}")
                     cv2.imwrite(img_path, img_ann)
                     f.write(f"{t_trial}, {result}, {success}, lego_detections/{img_name}\n")
-                
-
         else:
             print(f"Unhandled outcome topic requested for parsing: {outcome_topic}")
             continue
@@ -300,6 +300,19 @@ def save_outcomes(bag, save_dir, filenames=[], outcome_topics=[], outcome_latenc
 
 def parse(args, bagfile, save_dir):
     assert os.path.exists(bagfile), "Rosbag does not exist"
+
+    namespace = args.namespace
+    AUDIO_TOPIC = f'/{namespace}/audio'
+    CAMERA_1_COLOR_TOPIC = f'/{namespace}/wrist_camera/color/image_raw/compressed'
+    CAMERA_2_COLOR_TOPIC = f'/{namespace}/side_camera/color/image_cropped/compressed'
+    FTS_TOPIC = f'/{namespace}/fts'
+    JOINT_STATE_TOPIC = f'/{namespace}/joint_states'
+    SKILL_PARAM_TOPIC = f'/{namespace}/skill/param'
+    SKILL_TERMINATION_TOPIC = f'/{namespace}/terminator/skill_termination_signal'
+    AUDIO_OUTCOME_TOPIC = f'/{namespace}/outcome/audio_detector'
+    LEGO_OUTCOME_TOPIC = f'/{namespace}/outcome/lego_detector'
+    FTS_OUTCOME_TOPIC = f'/{namespace}/outcome/fts_detector'
+
 
     bag = rosbag.Bag(bagfile)
     print(f"BAG: t0: {bag.get_start_time()}, tf: {bag.get_end_time()}")
@@ -338,7 +351,8 @@ def parse(args, bagfile, save_dir):
         save_termination_signals(bag, save_folder, 'termination_signals', termination_topics)
 
     if args.save_outcome:
-        outcome_topics = [LEGO_OUTCOME_TOPIC,
+        outcome_topics = [AUDIO_OUTCOME_TOPIC,
+                          LEGO_OUTCOME_TOPIC,
                           FTS_OUTCOME_TOPIC]
         save_outcomes(bag, save_folder, 'outcomes', outcome_topics, outcome_latency=args.lego_detector_latency)
 
@@ -364,6 +378,8 @@ if __name__ == '__main__':
    
     parser.add_argument('--save_dir', '-d', type=str, required=True,
                         help='Path to save rosbag data such as audio and video')
+    parser.add_argument('--namespace', '-n', type=str, required=True,
+                        help='Robot namespace')
     parser.add_argument('--skip', '-s', type=bool, default=True,
                         help='True if skip rosbags already processed. Default True.')
     parser.add_argument('--save_audio', '-a', type=bool, default=True,
