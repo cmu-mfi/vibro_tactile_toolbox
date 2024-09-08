@@ -49,7 +49,7 @@ def is_valid_dataset(dataset_dir):
             return False
     return True
 
-def segment_audio(audio_data, sample_rate, t_start, t_end):
+def segment_audio(audio_data, sample_rate, t_start, t_end, resample_num=0):
     """
     Segment audio and save spectrogram images
     
@@ -60,7 +60,6 @@ def segment_audio(audio_data, sample_rate, t_start, t_end):
 
     num_channels = audio_data.shape[0]
     
-    combined_image_rgb = None
     audio_segment = audio_data[:,start_idx:end_idx]
     rgb_images = []
     for ch_num in range(num_channels):
@@ -80,6 +79,33 @@ def segment_audio(audio_data, sample_rate, t_start, t_end):
         rgb_images.append(image_rgb)
 
         # End from matplotlib.image.imsave
+    if resample_num > 0:
+        for i in range(resample_num):
+            random_offset = np.random.random()*0.4 - 0.2
+            start_idx = int((t_start + random_offset) * sample_rate)
+            end_idx = int((t_end + random_offset) * sample_rate)
+
+            num_channels = audio_data.shape[0]
+            
+            current_audio_segment = audio_data[:,start_idx:end_idx]
+            
+            for ch_num in range(num_channels):
+                channel_audio_segment = current_audio_segment[ch_num,:]
+                transform = torchaudio.transforms.Spectrogram()
+                spec_tensor = transform(channel_audio_segment)
+                spec_np = spec_tensor.log2().numpy()
+                spec_np = np.flipud(spec_np)
+
+                # Begin from matplotlib.image.imsave
+                sm = cm.ScalarMappable(cmap='viridis')
+                sm.set_clim(None, None)
+                rgba = sm.to_rgba(spec_np, bytes=True)
+                pil_shape = (rgba.shape[1], rgba.shape[0])
+                image_rgb = Image.frombuffer(
+                        "RGBA", pil_shape, rgba, "raw", "RGBA", 0, 1)
+                rgb_images.append(image_rgb)
+
+                # End from matplotlib.image.imsave
 
     return audio_segment, rgb_images
 
@@ -100,7 +126,7 @@ def segment_fts(fts_data, t_start, t_end):
     fts_segment = fts_data[start_idx:end_idx, :]
     return fts_segment
 
-def segment_trial(dataset_dir, lagging_buffer=0.5, leading_buffer=0.5):
+def segment_trial(dataset_dir, lagging_buffer=0.5, leading_buffer=0.5, num_resample=0):
     """
     Segment a trial into audio, fts, and vision data segments established by termination signals with outcome labels
 
@@ -185,7 +211,7 @@ def segment_trial(dataset_dir, lagging_buffer=0.5, leading_buffer=0.5):
         t_start = t_terminal - lagging_buffer
         t_end = t_terminal + leading_buffer
 
-        audio_seg, spec = segment_audio(audio_data, sample_rate, t_start, t_end)
+        audio_seg, spec = segment_audio(audio_data, sample_rate, t_start, t_end, 20)
         fts_seg = segment_fts(fts_data, t_start, t_end)
         side_cam_seg = segment_video(side_cam, t_terminal)
         wrist_cam_seg = segment_video(wrist_cam, t_terminal)
@@ -278,7 +304,7 @@ def main(args):
             continue
 
         # Split trial into segments near terminal events
-        segments = segment_trial(dataset_dir, lagging_buffer=args.lagging_buffer, leading_buffer=args.leading_buffer)
+        segments = segment_trial(dataset_dir, lagging_buffer=args.lagging_buffer, leading_buffer=args.leading_buffer, num_resample=args.num_resample)
 
         # Save trial segments to dataset
         with open(trials_pth, 'a') as f:
@@ -315,7 +341,10 @@ def main(args):
 
             if skill_name not in RECORDED_SKILLS:
                 skill_name = 'misc'
-            label_pth = 'success' if (label.lower() == 'true') else 'fail'
+            if args.type == 'lego':
+                label_pth = 'success' if (label.lower() == 'true') else 'fail'
+            elif args.type == 'nist':
+                label_pth = 'success' if (label.lower() == 'false') else 'fail'
             subdir = os.path.join(skill_name, label_pth)
 
             # Write labels.txt with label and corresponding segment files
@@ -339,7 +368,12 @@ def main(args):
             # save audio segment spectrogram
             if seg_data['audio_spec'] is not None:
                 for (i,audio_spec) in enumerate(seg_data['audio_spec']):
-                    audio_spec.save(os.path.join(args.save_dir, subdir, audio_spec_pth + '_' + str(i) + '.png'))
+                    #opencv_image = cv2.cvtColor(np.array(audio_spec), cv2.COLOR_RGBA2BGR)
+                    opencv_image = cv2.cvtColor(np.array(audio_spec), cv2.COLOR_RGBA2RGB)
+                    pil_image = Image.fromarray(opencv_image)
+                    pil_image.save(os.path.join(args.save_dir, subdir, audio_spec_pth + '_' + str(i) + '.png'))
+                    #cv2.imwrite(os.path.join(args.save_dir, subdir, audio_spec_pth + '_' + str(i) + '.png'), opencv_image)
+                    #audio_spec.save()
             
             # save fts segment
             if seg_data['fts'] is not None:
@@ -364,10 +398,14 @@ if __name__ == '__main__':
                         help='Path to folder containing parsed trial datasets')
     parser.add_argument('--save_dir', '-d', type=str, required=True,
                         help='Path to save trial dataset')
-    parser.add_argument('--leading_buffer', type=float, required=False, default=0.5,
-                        help='Specify the seconds ahead of terminals to segment data. Default is 0.5s')
-    parser.add_argument('--lagging_buffer', type=float, required=False, default=0.5,
-                    help='Specify the seconds behind terminals to segment data. Default is 0.5s')
+    parser.add_argument('--type', '-t', type=str, required=True,
+                        help='Data Type')
+    parser.add_argument('--leading_buffer', type=float, required=False, default=0.3,
+                        help='Specify the seconds ahead of terminals to segment data. Default is 0.3s')
+    parser.add_argument('--lagging_buffer', type=float, required=False, default=0.7,
+                    help='Specify the seconds behind terminals to segment data. Default is 0.7s')
+    parser.add_argument('--num_resample', '-n', type=int, required=False, default=20,
+                    help='Number of times to resample the audio segments.')
     args = parser.parse_args()
 
     main(args)

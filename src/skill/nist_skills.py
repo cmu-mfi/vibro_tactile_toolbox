@@ -124,7 +124,7 @@ class MoveToAbovePerturbConnectorPose(BaseSkill):
 
         self.skill_steps = [
             {'step_name': 'go_to_approach_pose',
-             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.approach_pose_msg, wait=False),
+             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.approach_pose_msg, wait=False, velocity_scaling=self.velocity_scaling),
              'termination_cfg': lambda param: add_termination_pose(rapid_termination_config, self.approach_pose_msg)},
         ]
 
@@ -132,6 +132,8 @@ class MoveToAbovePerturbConnectorPose(BaseSkill):
         # QOL 
         if 'T_connector_world' not in skill_params:
             print(f"MoveToAbovePerturbConnectorPose expects target connector pose transform: skill_params['T_connector_world'] = RigidTransform()")
+        if 'velocity_scaling' not in skill_params:
+            print(f"MoveToAbovePerturbConnectorPose expects an approach height offset (meters): skill_params['velocity_scaling'] = float(0.010 m)")
         if 'approach_height_offset' not in skill_params:
             print(f"MoveToAbovePerturbConnectorPose expects an approach height offset (meters): skill_params['approach_height_offset'] = float(0.010 m)")
         if 'place_perturbation' not in skill_params:
@@ -142,6 +144,7 @@ class MoveToAbovePerturbConnectorPose(BaseSkill):
 
         self.T_connector_world = skill_params['T_connector_world']
         self.approach_height_offset = skill_params['approach_height_offset']
+        self.velocity_scaling = skill_params['velocity_scaling']
 
         self.T_place_target = self.T_connector_world.copy()
 
@@ -397,8 +400,56 @@ class PickConnector(BaseSkill):
              'termination_cfg': lambda param: add_termination_pose(rapid_termination_config, self.approach_pose_msg)},
         ]
 
-
 class PlaceConnector(BaseSkill):
+
+    def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
+
+        super().__init__(robot_commander, gripper_controller, namespace, params)
+
+        if 'T_hande_ee' not in self.params:
+            print(f"PlaceConnector expects end effector transform: params['T_hande_ee'] = RigidTransform()")
+
+        self.T_hande_ee = self.params['T_hande_ee']
+
+        if 'T_connector_world' not in self.params:
+            print(f"PlaceConnector expects target connector pose transform: params['T_connector_world'] = RigidTransform()")
+
+        self.T_connector_world = self.params['T_connector_world']
+
+        if 'approach_height_offset' not in self.params:
+            print(f"PlaceConnector expects an approach height offset (meters): params['approach_height_offset'] = float(0.010 m)")
+
+        self.approach_height_offset = self.params['approach_height_offset']
+
+        self.connector_pose = self.T_connector_world.copy()
+        self.robot_connector_pose = self.connector_pose * self.T_hande_ee.inverse()
+        self.connector_pose_msg = self.robot_connector_pose.pose_msg
+
+        self.T_connector_approach = RigidTransform(
+            translation=np.array([0.0, 0.0, -abs(self.approach_height_offset)]),
+            from_frame='hande', to_frame='hande'
+        )
+
+        self.approach_pose = self.connector_pose * self.T_connector_approach * self.T_hande_ee.inverse()
+        self.approach_pose_msg = self.approach_pose.pose_msg
+
+
+        self.skill_steps = [
+            {'step_name': 'go_to_approach_pose',
+             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.approach_pose_msg, wait=False),
+             'termination_cfg': lambda param: add_termination_pose(rapid_termination_config, self.approach_pose_msg)},
+            {'step_name': 'go_to_connector_pose',
+             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.connector_pose_msg, wait=False),
+             'termination_cfg': lambda param: add_termination_pose(rapid_termination_config, self.connector_pose_msg)},
+            {'step_name': 'open_gripper',
+             'robot_command': lambda param: self.gripper_controller.open(),
+             'termination_cfg': None},
+            {'step_name': 'go_to_approach_pose',
+             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.approach_pose_msg, wait=False),
+             'termination_cfg': lambda param: add_termination_pose(rapid_termination_config, self.approach_pose_msg)},
+        ]
+
+class PlaceConnectorReset(BaseSkill):
 
     def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
 

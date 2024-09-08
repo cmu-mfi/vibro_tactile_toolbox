@@ -19,7 +19,7 @@ for VOL in "${VOLS[@]}"; do
       
       # Call the python script with the constructed paths
       python scripts/parse_rosbag.py -w "$TARGET_DIR" -d "$TARGET_DIR" -n "yk_creator"
-      python model_training/create_training_dataset.py -s "$TARGET_DIR" -d "$TARGET_DST" 
+      python model_training/create_training_dataset.py -s "$TARGET_DIR" -d "$TARGET_DST" -t "lego" -n 10
     done
   done
 done

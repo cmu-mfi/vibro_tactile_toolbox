@@ -18,6 +18,8 @@ import os
 import glob
 import argparse
 import matplotlib.pyplot as plt
+from PIL import Image
+import cv2
 
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -34,35 +36,43 @@ class VibrotactileDataset(Dataset):
     num_channels = len(channels)
 
     if dataset_type == 'lego':
-        paths = glob.glob('/mnt/hdd1/vibrotactile_data/lego_dataset/*/*/*/MoveDown/*/audio/*_0.png')
+        paths = glob.glob('/mnt/hdd1/vibrotactile_data/lego_dataset/*/*/*/MoveDown/*/audio/*.png')
     elif dataset_type == 'dsub':
-        paths = glob.glob('/mnt/hdd1/vibrotactile_data/nist_dataset/*/dsub/*/MoveDown/*/audio/*_0.png')
+        paths = glob.glob('/mnt/hdd1/vibrotactile_data/nist_dataset/*/dsub/test_vel*/MoveDown/*/audio/*.png')
     elif dataset_type == 'waterproof':
-        paths = glob.glob('/mnt/hdd1/vibrotactile_data/nist_dataset/*/waterproof/*/MoveDown/*/audio/*_0.png')
+        paths = glob.glob('/mnt/hdd1/vibrotactile_data/nist_dataset/*/waterproof/test_vel*/MoveDown/*/audio/*.png')
 
-    self.total_length = len(paths)
+    print(len(paths))
+    self.total_length = int(len(paths) / 4) + 1
+    print(self.total_length)
 
-    self.X = torch.zeros([self.total_length,4*num_channels,201,221])
-    self.y = torch.zeros([self.total_length,1])
+    self.X = torch.zeros([self.total_length,3*num_channels,201,221])
+    self.y = torch.zeros([self.total_length])
 
     current_trial = 0
     for path in paths:
-      print(current_trial)
-      channel_num = 0
-      label = path[path.find('MoveDown')+len('MoveDown')+1:path.find('audio')-1]
-      if label == 'fail':
-        self.y[current_trial] = 0
-      elif label == 'success':
-        self.y[current_trial] = 1
+      current_num = int(path[path.rfind('_')+1:-4])
+      if current_num % 4 == 0:
+          print(current_trial)
+          channel_num = 0
+          label = path[path.find('MoveDown')+len('MoveDown')+1:path.find('audio')-1]
+          if label == 'fail':
+            self.y[current_trial] = 0
+          elif label == 'success':
+            self.y[current_trial] = 1
 
-      for channel in channels:
-        torch_image = torchvision.io.read_image(path[:-5]+str(channel)+'.png')
-        self.X[current_trial,channel_num*4:(channel_num+1)*4] = torch_image #transforms.ToTensor()(pil_image).unsqueeze_(0)
-        
-      current_trial += 1
+          for channel in channels:
+            #Load image by OpenCV
+            cv_image = cv2.imread(path[:path.rfind('_')+1]+str(current_num+channel)+'.png')
 
-      self.X.to(device)
-      self.y.to(device)
+            #Convert img to RGB
+            rgb_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
+            pil_image = Image.fromarray(rgb_image)
+            image_tensor = transforms.ToTensor()(pil_image)
+            self.X[current_trial,channel_num*3:(channel_num+1)*3,:,:] = image_tensor
+            channel_num += 1
+            
+          current_trial += 1
 
   def __len__(self):
     return self.total_length
@@ -101,7 +111,8 @@ if __name__ == '__main__':
             X = X.to(device)
             pred = model(X)
             y_true.extend(list(Y.detach().numpy()))
-            y_pred.extend(list(pred.round().to('cpu').detach().numpy()))
+            y_pred.extend(list(pred.argmax(1).to('cpu').detach().numpy()))
+            print(list(pred.to('cpu').detach().numpy()))
 
     f, ax = plt.subplots()
     ax.set_title('Vibrotactile Audio Confusion Matrix for '+args.type)

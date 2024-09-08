@@ -96,7 +96,10 @@ def send_end_fts_outcome_request(params):
 
 def send_start_vision_outcome_request(params):
     namespace = params['namespace']
+    print('here')
+    print(f"/{namespace}/lego_detector")
     rospy.wait_for_service(f"/{namespace}/lego_detector")
+    print('here2')
 
     try:
         detect_lego = rospy.ServiceProxy(f"/{namespace}/lego_detector", LegoOutcome)

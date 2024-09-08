@@ -32,6 +32,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 from PIL import Image
+import cv2
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print('Using {} device'.format(device))
@@ -131,26 +132,28 @@ class AudioDetector:
         print("Received Request")
         resp = AudioOutcomeResponse()
         self.model = torch.jit.load(req.model_path)
+        print(req.model_path)
         self.model.eval()
         self.model.to(device)
 
-        audio_segment, rgb_images = self.audio_buffer.get_audio_segment(req.stamp)
+        audio_segment, rgb_images = self.audio_buffer.get_audio_segment(req.stamp, 0.7, 0.3)
 
-        X = torch.zeros([1,4*num_channels,201,221])
+        X = torch.zeros([1,3*num_channels,201,221])
 
         combined_image = np.zeros((num_channels*201,221,3), dtype=np.uint8)
         for channel in range(num_channels):
-            X[:,channel*4:(channel+1)*4,:,:] = transforms.ToTensor()(rgb_images[channel]).unsqueeze_(0)
             opencv_image = cv2.cvtColor(np.array(rgb_images[channel]), cv2.COLOR_RGBA2RGB)
             pil_image = Image.fromarray(opencv_image)
-            cv_image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
+            #pil_image.save(f'/mnt/hdd1/test_{channel}.png')
+            X[:,channel*3:(channel+1)*3,:,:] = transforms.ToTensor()(pil_image)
+            cv_image = cv2.cvtColor(np.array(rgb_images[channel]), cv2.COLOR_RGBA2BGR)
             combined_image[channel*201:(channel+1)*201,:,:] = cv_image
-        
 
         X = X.to(device)
         pred = self.model(X)
-        cpu_pred = pred.to('cpu')
-        label = int(np.argmax(cpu_pred.detach().numpy()))
+        cpu_pred = pred.to('cpu').detach().numpy()
+        print(cpu_pred.reshape(-1,))
+        label = int(np.argmax(cpu_pred.reshape(-1,)))
         print(label)
 
         success = (label == 1)

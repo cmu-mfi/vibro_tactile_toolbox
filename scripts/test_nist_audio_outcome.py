@@ -9,7 +9,7 @@ from gripper_controller.robotiq_hande_controller import RobotiqHandEController
 
 from autolab_core import RigidTransform
 
-from skill.nist_skills import PullUp, MoveToAboveConnectorPose, MoveToAbovePerturbConnectorPose, PickConnector, PlaceConnector, MoveDown, MoveUp, OpenGripper, ResetConnector
+from skill.nist_skills import *
 from skill.util_skills import GoHomeSkill
 from outcome.nist_outcome import *
 
@@ -31,6 +31,8 @@ def run():
     connector_type = rospy.get_param("test_nist_audio_outcome_node/connector_type")
     volume = rospy.get_param("test_nist_audio_outcome_node/volume")
     velocity_scale = rospy.get_param("test_nist_audio_outcome_node/velocity_scale")
+    reset = rospy.get_param("test_nist_audio_outcome_node/reset")
+    lift = rospy.get_param("test_nist_audio_outcome_node/lift")
     verbose = rospy.get_param("test_nist_audio_outcome_node/verbose")
 
     with open(root_pwd+'/config/'+yaml_file) as stream:
@@ -48,14 +50,14 @@ def run():
 
     print(config['fts_detector'])
 
-    data_dir = config['data_dir']+'volume_'+str(volume)+'/'+connector_type+'/vel_'+str(velocity_scale)+'/'
+    data_dir = config['data_dir']+'volume_'+str(volume)+'/'+connector_type+'/test_vel_'+str(velocity_scale)+'/'
 
     if not os.path.exists(config['data_dir']+'volume_'+str(volume)):
         os.mkdir(config['data_dir']+'volume_'+str(volume))
     if not os.path.exists(config['data_dir']+'volume_'+str(volume)+'/'+connector_type):
         os.mkdir(config['data_dir']+'volume_'+str(volume)+'/'+connector_type)
-    if not os.path.exists(config['data_dir']+'volume_'+str(volume)+'/'+connector_type+'/vel_'+str(velocity_scale)):
-        os.mkdir(config['data_dir']+'volume_'+str(volume)+'/'+connector_type+'/vel_'+str(velocity_scale))    
+    if not os.path.exists(config['data_dir']+'volume_'+str(volume)+'/'+connector_type+'/test_vel_'+str(velocity_scale)):
+        os.mkdir(config['data_dir']+'volume_'+str(volume)+'/'+connector_type+'/test_vel_'+str(velocity_scale))    
 
     if str(velocity_scale) == '0.01':
         move_down_velocity_scaling = 0.01
@@ -96,13 +98,19 @@ def run():
         'T_hande_ee': T_hande_ee, 
         'verbose': verbose,
         'T_connector_world': T_connector_world_pick,
-        'approach_height_offset': config['approach_height'],
+        'approach_height_offset': config['pick_approach_height'],
     }
     place_connector_params = {
         'T_hande_ee': T_hande_ee, 
         'verbose': verbose,
+        'T_connector_world': T_connector_world_pick,
+        'approach_height_offset': config['place_approach_height'],
+    }
+    place_connector_reset_params = {
+        'T_hande_ee': T_hande_ee, 
+        'verbose': verbose,
         'T_connector_world': T_connector_world_place_reset,
-        'approach_height_offset': config['approach_height'],
+        'approach_height_offset': config['place_approach_height'],
         'reset_x_offset': config['reset_x_offset'],
     }
     reset_connector_params = {
@@ -112,7 +120,7 @@ def run():
         'T_connector_world_reset_y': T_connector_world_reset_y,
         'reset_x_offset': config['reset_x_offset'],
         'reset_y_offset': config['reset_y_offset'],
-        'height_offset': config['approach_height'],
+        'height_offset': config['pick_approach_height'],
     }
 
     move_to_above_connector_pose_skill = MoveToAboveConnectorPose(robot_commander, gripper_controller, namespace, params)
@@ -122,6 +130,7 @@ def run():
     move_down_skill = MoveDown(robot_commander, gripper_controller, namespace, params)
     pick_connector_skill = PickConnector(robot_commander, gripper_controller, namespace, pick_connector_params)
     place_connector_skill = PlaceConnector(robot_commander, gripper_controller, namespace, place_connector_params)
+    place_connector_reset_skill = PlaceConnectorReset(robot_commander, gripper_controller, namespace, place_connector_reset_params)
 
     reset_connector_skill = ResetConnector(robot_commander, gripper_controller, namespace, reset_connector_params)
     home_skill = GoHomeSkill(robot_commander, gripper_controller, namespace, params)
@@ -144,14 +153,16 @@ def run():
     }
 
     move_up_params = {
-        'lift_height_offset': config['approach_height'],
+        'lift_height_offset': config['pick_approach_height'],
     }
 
     terminals = open_gripper_skill.execute_skill(None)
-    #terminals = move_up_skill.execute_skill(execution_params, move_up_params)
+    if lift:
+        terminals = move_up_skill.execute_skill(execution_params, move_up_params)
     terminals = home_skill.execute_skill(None)
 
-    reset_connector_skill.execute_skill(execution_params)
+    if reset:
+        reset_connector_skill.execute_skill(execution_params)
 
     # Tasks to do
     for trial_num in range(start_num, start_num+num_trials):
@@ -168,13 +179,14 @@ def run():
         # 2. Determine Skill Parameters
         move_to_above_perturb_connector_params = {
             'T_connector_world': T_connector_world_place,
-            'approach_height_offset': config['approach_height'],
-            'place_perturbation': [x_perturb, y_perturb, theta_perturb]
+            'approach_height_offset': config['place_approach_height'],
+            'place_perturbation': [x_perturb, y_perturb, theta_perturb],
+            'velocity_scaling': config['velocity_scaling_large_movements']
         }
 
         move_to_above_connector_params = {
             'T_connector_world': T_connector_world_place,
-            'approach_height_offset': config['approach_height'],
+            'approach_height_offset': config['place_approach_height']
         }
 
         pull_up_params = {
@@ -183,7 +195,7 @@ def run():
         }
 
         move_down_params = {
-            'height_offset': config['approach_height'],
+            'height_offset': config['place_approach_height'],
             'velocity_scaling': move_down_velocity_scaling
         }
 
@@ -238,10 +250,13 @@ def run():
         else:
             labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_failure.bag"
             os.rename(rosbag_path, labeled_rosbag_path)
-
-        place_connector_skill.execute_skill(execution_params)
         
-        reset_connector_skill.execute_skill(execution_params)
+        if reset:
+            place_connector_reset_skill.execute_skill(execution_params)
+            reset_connector_skill.execute_skill(execution_params)
+        else:
+            place_connector_skill.execute_skill(execution_params)
+            
     terminals = home_skill.execute_skill(None)
 
 if __name__ == "__main__":
