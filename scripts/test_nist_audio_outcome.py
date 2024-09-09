@@ -82,6 +82,11 @@ def run():
         T_connector_world_reset_x = RigidTransform.load(root_pwd+config['waterproof_world_reset_x_tf'])
         T_connector_world_reset_y = RigidTransform.load(root_pwd+config['waterproof_world_reset_y_tf'])
         config['audio_detector']['model_path'] = config['audio_detector']['waterproof_model_path']
+
+        push_down_params = {
+            'height_offset': config['waterproof_push_down_height_offset'],
+            'velocity_scaling': move_down_velocity_scaling
+        }
     elif connector_type == 'dsub':
         T_connector_world_pick = RigidTransform.load(root_pwd+config['dsub_world_pick_tf'])
         T_connector_world_place = RigidTransform.load(root_pwd+config['dsub_world_place_tf'])
@@ -89,6 +94,11 @@ def run():
         T_connector_world_reset_x = RigidTransform.load(root_pwd+config['dsub_world_reset_x_tf'])
         T_connector_world_reset_y = RigidTransform.load(root_pwd+config['dsub_world_reset_y_tf'])
         config['audio_detector']['model_path'] = config['audio_detector']['dsub_model_path']
+
+        push_down_params = {
+            'height_offset': config['dsub_push_down_height_offset'],
+            'velocity_scaling': move_down_velocity_scaling
+        }
 
     ### Skill Routine ###
     params = {'T_hande_ee': T_hande_ee, 
@@ -128,6 +138,7 @@ def run():
     pull_up_skill = PullUp(robot_commander, gripper_controller, namespace, params)
     move_up_skill = MoveUp(robot_commander, gripper_controller, namespace, params)
     move_down_skill = MoveDown(robot_commander, gripper_controller, namespace, params)
+    push_down_skill = PushDown(robot_commander, gripper_controller, namespace, params)
     pick_connector_skill = PickConnector(robot_commander, gripper_controller, namespace, pick_connector_params)
     place_connector_skill = PlaceConnector(robot_commander, gripper_controller, namespace, place_connector_params)
     place_connector_reset_skill = PlaceConnectorReset(robot_commander, gripper_controller, namespace, place_connector_reset_params)
@@ -221,7 +232,7 @@ def run():
 
         outcomes = send_end_fts_outcome_request(config['fts_detector'])
 
-        if audio_outcomes['success'] == False:
+        if outcomes['success'] == True:
         
             terminals = move_to_above_connector_pose_skill.execute_skill(execution_params, move_to_above_perturb_connector_params)
 
@@ -237,7 +248,10 @@ def run():
 
             outcomes = send_end_fts_outcome_request(config['fts_detector'])
 
-        terminals = move_to_above_connector_pose_skill.execute_skill(execution_params, move_to_above_perturb_connector_params)
+        if outcomes['success'] == False:
+            terminals = push_down_skill.execute_skill(execution_params, push_down_params)
+
+        terminals = move_to_above_connector_pose_skill.execute_skill(execution_params, move_to_above_connector_params)
 
         # 3. End rosbag recording
         data_recorder.stop_recording()

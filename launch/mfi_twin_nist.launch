@@ -19,5 +19,10 @@
 			<param name="frequency" value="100" />
 		</node>
 
+		<!-- Start audio_outcome_republisher node -->
+		<node name="audio_outcome_republisher_node" pkg="vibro_tactile_toolbox" type="audio_outcome_republisher.py" output="screen">
+			<param name="frequency" value="10" />
+			<param name="time_delay" value="5" />
+		</node>
 	</group>
 </launch>

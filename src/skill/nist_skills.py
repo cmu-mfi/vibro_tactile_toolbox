@@ -47,6 +47,24 @@ z_engage_termination_config = {
             }}
 }
 
+high_z_engage_termination_config = {
+    'time': {'duration': 10.0},
+    'pose': {'pos_tolerance': 0.0001,
+                'orient_tolerance': 0.01,
+                'pose': None},
+    'fts': {'check_rate_ns': 1E6,
+            'threshold': {
+                'force': {
+                    'x': [-10, 10],
+                    'y': [-10, 10],
+                    'z': [-10, 10]},
+                'torque': {
+                    'x': [-1, 1],
+                    'y': [-1, 1],
+                    'z': [-1, 1]}
+            }}
+}
+
 engage_termination_config = {
     'time': {'duration': 10.0},
     'pose': {'pos_tolerance': 0.0001,
@@ -293,6 +311,43 @@ class MoveDown(BaseSkill):
         # QOL 
         if 'height_offset' not in skill_params:
             print(f"MoveDown expects a height offset (meters): skill_params['height_offset'] = float(0.001 m)")
+        if 'velocity_scaling' not in skill_params:
+            self.velocity_scaling = 0.01
+            print(f"No initial velocity scaling specified, using: {self.velocity_scaling}")
+        else:
+            self.velocity_scaling = skill_params['velocity_scaling']
+
+        current_pose_msg = self.robot_commander.get_current_pose()
+        current_pose = RigidTransform.from_pose_msg(current_pose_msg, from_frame='ee')
+
+        self.height_offset = skill_params['height_offset']
+
+        self.T_move_down = RigidTransform(
+            translation=np.array([0.0, 0.0, abs(self.height_offset)]),
+            from_frame='ee', to_frame='ee'
+        )
+
+        self.move_down_pose = current_pose * self.T_move_down
+        self.move_down_pose_msg = self.move_down_pose.pose_msg
+
+        return super().execute_skill(execution_params)
+
+class PushDown(BaseSkill):
+
+    def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
+
+        super().__init__(robot_commander, gripper_controller, namespace, params)
+
+        self.skill_steps = [
+            {'step_name': 'move_down',
+             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.move_down_pose_msg, wait=False, velocity_scaling=self.velocity_scaling),
+             'termination_cfg': lambda param: add_termination_pose(high_z_engage_termination_config, self.move_down_pose_msg)},
+        ]
+
+    def execute_skill(self, execution_params, skill_params) -> Tuple[List[TerminationSignal], List[int]]:
+        # QOL 
+        if 'height_offset' not in skill_params:
+            print(f"PushDown expects a height offset (meters): skill_params['height_offset'] = float(0.001 m)")
         if 'velocity_scaling' not in skill_params:
             self.velocity_scaling = 0.01
             print(f"No initial velocity scaling specified, using: {self.velocity_scaling}")

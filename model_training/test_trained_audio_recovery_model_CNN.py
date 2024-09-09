@@ -28,19 +28,16 @@ class VibrotactileDataset(Dataset):
   Prepare the Vibrotactile dataset for Prediction
   '''
 
-  def __init__(self, dataset_type, channels):
+  def __init__(self, dataset_type, channels, glob_path):
 
     self.total_length = 0
     num_channels = len(channels)
 
+    paths = glob.glob(glob_path)
+
     if dataset_type == 'lego':
-        paths = glob.glob('/mnt/hdd1/vibrotactile_data/lego_dataset/*/*/*/MoveDown/fail/audio/*.png')
         paths = [path for path in paths if 'connection_failure' not in path]
-    elif dataset_type == 'dsub':
-        paths = glob.glob('/mnt/hdd1/vibrotactile_data/nist_dataset/*/dsub/test_vel*/MoveDown/fail/audio/*.png')
-        paths = [path for path in paths if 'failure' not in path]
-    elif dataset_type == 'waterproof':
-        paths = glob.glob('/mnt/hdd1/vibrotactile_data/nist_dataset/*/waterproof/test_vel*/MoveDown/fail/audio/*.png')
+    else:
         paths = [path for path in paths if 'failure' not in path]
 
     print(len(paths))
@@ -93,7 +90,10 @@ if __name__ == '__main__':
 
     channels = [0,1,2,3]
     num_channels = len(channels)
-    audio_dataset = VibrotactileDataset(args.type,channels)
+    if args.type == 'lego':
+        audio_dataset = VibrotactileDataset(args.type,channels, f'/mnt/hdd1/vibrotactile_data/lego_dataset/*/*/test*/MoveDown/*/audio/*.png')
+    else:
+        audio_dataset = VibrotactileDataset(args.type,channels, f'/mnt/hdd1/vibrotactile_data/nist_dataset/*/{args.type}/test*/MoveDown/*/audio/*.png')
     print(len(audio_dataset))
 
     test_dataloader = torch.utils.data.DataLoader(

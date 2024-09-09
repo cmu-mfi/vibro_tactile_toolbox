@@ -184,6 +184,7 @@ catkin_install_python(PROGRAMS
   scripts/pose_stamped_publisher.py
   scripts/go_home_task.py
   scripts/audio_detector.py
+  scripts/audio_outcome_republisher.py
   scripts/lego_detector.py
   scripts/fts_detector.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

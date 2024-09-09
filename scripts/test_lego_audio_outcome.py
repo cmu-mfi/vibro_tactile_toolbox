@@ -9,7 +9,7 @@ from gripper_controller.lego_gripper_controller import LegoGripperController
 
 from autolab_core import RigidTransform
 
-from skill.lego_skills import MoveToAboveLegoPose, MoveToAbovePerturbLegoPose, PickLego, PlaceLego, MoveDown
+from skill.lego_skills import *
 from skill.util_skills import GoHomeSkill
 from outcome.lego_outcome import *
 
@@ -124,6 +124,7 @@ def run():
 
     move_to_above_lego_pose_skill = MoveToAboveLegoPose(robot_commander, gripper_controller, namespace, params)
     move_to_above_perturb_lego_skill = MoveToAbovePerturbLegoPose(robot_commander, gripper_controller, namespace, params)
+    pull_up_skill = PullUp(robot_commander, gripper_controller, namespace, params)
     move_down_skill = MoveDown(robot_commander, gripper_controller, namespace, params)
     place_lego_skill = PlaceLego(robot_commander, gripper_controller, namespace, params)
     pick_lego_skill = PickLego(robot_commander, gripper_controller, namespace, params)
@@ -141,7 +142,6 @@ def run():
         'topics': topics
     }
 
-    # Tasks to do
     for trial_num in range(start_num, start_num+num_trials):
         # Load temporary lego block registration pose 
         tmp_T_lego_world = RigidTransform.load(root_pwd+config['tmp_lego_world_tf'])
@@ -173,6 +173,11 @@ def run():
             'approach_height_offset': config['approach_height'],
         }
 
+        pull_up_params = {
+            'lift_height_offset': config['lift_height'],
+            'velocity_scaling': config['pull_up_velocity_scaling']
+        }
+
         move_down_params = {
             'height_offset': config['approach_height'],
             'velocity_scaling': move_down_velocity_scaling
@@ -194,7 +199,7 @@ def run():
 
         terminals = move_to_above_perturb_lego_skill.execute_skill(execution_params, move_to_above_perturb_lego_params)
 
-        outcomes = send_start_vision_outcome_request(config['lego_detector'])
+        outcomes = send_start_outcome_request({k: config[k] for k in ('fts_detector', 'lego_detector')})
 
         if outcomes['starting_top'] == 1 and outcomes['starting_bottom'] == 0:
             skill_type = "place"
@@ -213,14 +218,19 @@ def run():
             break
 
         terminals = move_down_skill.execute_skill(execution_params, move_down_params)
-        print(terminals[0].stamp)
 
-        outcomes = send_audio_outcome_request(config['audio_detector'], terminals[0].stamp)
+        audio_outcomes = send_audio_outcome_request(config['audio_detector'], terminals[0].stamp)
+
+        print(audio_outcomes['success'])
+
+        terminals = pull_up_skill.execute_skill(execution_params, pull_up_params)
+
+        outcomes = send_end_fts_outcome_request(config['fts_detector'])
 
         if outcomes['success'] == False:
             terminals = move_to_above_lego_pose_skill.execute_skill(execution_params, move_to_above_lego_params)
 
-            outcomes = send_start_vision_outcome_request(config['lego_detector'])
+            outcomes = send_start_outcome_request({k: config[k] for k in ('fts_detector', 'lego_detector')})
 
             if outcomes['starting_top'] == 1 and outcomes['starting_bottom'] == 0:
                 skill_type = "place"
@@ -240,10 +250,16 @@ def run():
 
             terminals = move_down_skill.execute_skill(execution_params, move_down_params)
 
-            outcomes = send_audio_outcome_request(config['audio_detector'], terminals[0].stamp)
+            audio_outcomes = send_audio_outcome_request(config['audio_detector'], terminals[0].stamp)
+
+            print(audio_outcomes['success'])
+
+            terminals = pull_up_skill.execute_skill(execution_params, pull_up_params)
+
+            outcomes = send_end_fts_outcome_request(config['fts_detector'])
 
         if outcomes['success'] == False:
-            print("Failed to make contact with lego. Skipping trial")
+            print("Failed to pull up lego. Skipping trial")
             data_recorder.stop_recording()
 
             rospy.sleep(1)

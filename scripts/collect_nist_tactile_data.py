@@ -226,7 +226,7 @@ def run():
 
             outcomes = send_end_fts_outcome_request(config['fts_detector'])
 
-        terminals = move_to_above_connector_pose_skill.execute_skill(execution_params, move_to_above_perturb_connector_params)
+        terminals = move_to_above_connector_pose_skill.execute_skill(execution_params, move_to_above_connector_params)
 
         # 3. End rosbag recording
         data_recorder.stop_recording()

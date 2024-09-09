@@ -28,19 +28,12 @@ class VibrotactileDataset(Dataset):
   Prepare the Vibrotactile dataset for Prediction
   '''
 
-  def __init__(self, dataset_type, channels):
+  def __init__(self, channels, glob_path):
 
     self.total_length = 0
     num_channels = len(channels)
 
-    if dataset_type == 'lego':
-        paths = glob.glob('/mnt/hdd1/vibrotactile_data/lego_dataset/*/*/*/MoveDown/*/audio/*.png')
-    elif dataset_type == 'dsub':
-        paths = glob.glob('/mnt/hdd1/vibrotactile_data/nist_dataset/*/dsub/old_vel*/MoveDown/*/audio/*.png')
-        paths += glob.glob('/mnt/hdd1/vibrotactile_data/nist_dataset/*/dsub/vel*/MoveDown/*/audio/*.png')
-    elif dataset_type == 'waterproof':
-        paths = glob.glob('/mnt/hdd1/vibrotactile_data/nist_dataset/*/waterproof/*/MoveDown/*/audio/*.png')
-        
+    paths = glob.glob(glob_path)
 
     print(len(paths))
     self.total_length = int(len(paths) / 4) + 1
@@ -94,62 +87,6 @@ class VibrotactileDataset(Dataset):
         img_input[j] += aug_noise.reshape(201,221)
 
     return img_input, self.y[i]
-
-class TestVibrotactileDataset(Dataset):
-  '''
-  Prepare the Vibrotactile dataset for Prediction
-  '''
-
-  def __init__(self, dataset_type, channels):
-
-    self.total_length = 0
-    num_channels = len(channels)
-
-    if dataset_type == 'lego':
-        paths = glob.glob('/mnt/hdd1/vibrotactile_data/lego_dataset/*/*/*/MoveDown/*/audio/*.png')
-    elif dataset_type == 'dsub':
-        paths = glob.glob('/mnt/hdd1/vibrotactile_data/nist_dataset/*/dsub/test_vel*/MoveDown/*/audio/*.png')
-    elif dataset_type == 'waterproof':
-        paths = glob.glob('/mnt/hdd1/vibrotactile_data/nist_dataset/*/waterproof/test_vel*/MoveDown/*/audio/*.png')
-        
-
-    print(len(paths))
-    self.total_length = int(len(paths) / 4) + 1
-    print(self.total_length)
-
-    self.X = torch.zeros([self.total_length,3*num_channels,201,221])
-    self.y = torch.zeros([self.total_length,2])
-
-    current_trial = 0
-    for path in paths:
-      current_num = int(path[path.rfind('_')+1:-4])
-      if current_num % 4 == 0:
-          print(current_trial)
-          channel_num = 0
-          label = path[path.find('MoveDown')+len('MoveDown')+1:path.find('audio')-1]
-          if label == 'fail':
-            self.y[current_trial,0] = 1
-          elif label == 'success':
-            self.y[current_trial,1] = 1
-
-          for channel in channels:
-            #Load image by OpenCV
-            cv_image = cv2.imread(path[:path.rfind('_')+1]+str(current_num+channel)+'.png')
-
-            #Convert img to RGB
-            rgb_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
-            pil_image = Image.fromarray(rgb_image)
-            image_tensor = transforms.ToTensor()(pil_image)
-            self.X[current_trial,channel_num*3:(channel_num+1)*3,:,:] = image_tensor
-            channel_num += 1
-            
-          current_trial += 1
-
-  def __len__(self):
-    return self.total_length
-
-  def __getitem__(self, i):
-    return self.X[i], self.y[i]
 
 
 class CNNet_old(nn.Module):
@@ -283,16 +220,28 @@ if __name__ == '__main__':
     num_channels = len(channels)
 
     if args.type == 'lego':
-      audio_dataset = VibrotactileDataset(args.type,channels)
-      print(len(audio_dataset))
-      #split data to test and train
-      #use 80% to train
-      train_size = int(args.train_ratio * len(audio_dataset))
-      test_size = len(audio_dataset) - train_size
-      audio_train_dataset, audio_test_dataset = torch.utils.data.random_split(audio_dataset, [train_size, test_size])
+        paths = glob.glob(f'/mnt/hdd1/vibrotactile_data/lego_dataset/*/*/test*/MoveDown/*/audio/*.png')
     else:
-      audio_train_dataset = VibrotactileDataset(args.type,channels)
-      audio_test_dataset = TestVibrotactileDataset(args.type,channels)
+        paths = glob.glob(f'/mnt/hdd1/vibrotactile_data/nist_dataset/*/{args.type}/test*/MoveDown/*/audio/*.png')
+    if paths is not None:
+        if args.type == 'lego':
+            audio_train_dataset = VibrotactileDataset(channels,f'/mnt/hdd1/vibrotactile_data/lego_dataset/*/*/vel*/MoveDown/*/audio/*.png')
+            audio_test_dataset = VibrotactileDataset(channels, f'/mnt/hdd1/vibrotactile_data/lego_dataset/*/*/test*/MoveDown/*/audio/*.png')
+        else:
+            audio_train_dataset = VibrotactileDataset(channels,f'/mnt/hdd1/vibrotactile_data/nist_dataset/*/{args.type}/vel*/MoveDown/*/audio/*.png')
+            audio_test_dataset = VibrotactileDataset(channels, f'/mnt/hdd1/vibrotactile_data/nist_dataset/*/{args.type}/test*/MoveDown/*/audio/*.png')
+    else:
+        if args.type == 'lego':
+            audio_dataset = VibrotactileDataset(channels, f'/mnt/hdd1/vibrotactile_data/lego_dataset/*/{args.type}/vel*/MoveDown/*/audio/*.png')
+        else:
+            audio_dataset = VibrotactileDataset(channels, f'/mnt/hdd1/vibrotactile_data/nist_dataset/*/{args.type}/vel*/MoveDown/*/audio/*.png')
+        print(len(audio_dataset))
+        #split data to test and train
+        #use 80% to train
+        train_size = int(args.train_ratio * len(audio_dataset))
+        test_size = len(audio_dataset) - train_size
+        audio_train_dataset, audio_test_dataset = torch.utils.data.random_split(audio_dataset, [train_size, test_size])
+      
 
     print("Training size:", len(audio_train_dataset))
     print("Testing size:",len(audio_test_dataset))
