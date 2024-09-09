@@ -281,15 +281,18 @@ if __name__ == '__main__':
 
     channels = [0,1,2,3]
     num_channels = len(channels)
-    #audio_train_dataset = VibrotactileDataset(args.type,channels)
-    #audio_test_dataset = TestVibrotactileDataset(args.type,channels)
-    audio_dataset = VibrotactileDataset(args.type,channels)
-    print(len(audio_dataset))
-    #split data to test and train
-    #use 80% to train
-    train_size = int(args.train_ratio * len(audio_dataset))
-    test_size = len(audio_dataset) - train_size
-    audio_train_dataset, audio_test_dataset = torch.utils.data.random_split(audio_dataset, [train_size, test_size])
+
+    if args.type == 'lego':
+      audio_dataset = VibrotactileDataset(args.type,channels)
+      print(len(audio_dataset))
+      #split data to test and train
+      #use 80% to train
+      train_size = int(args.train_ratio * len(audio_dataset))
+      test_size = len(audio_dataset) - train_size
+      audio_train_dataset, audio_test_dataset = torch.utils.data.random_split(audio_dataset, [train_size, test_size])
+    else:
+      audio_train_dataset = VibrotactileDataset(args.type,channels)
+      audio_test_dataset = TestVibrotactileDataset(args.type,channels)
 
     print("Training size:", len(audio_train_dataset))
     print("Testing size:",len(audio_test_dataset))

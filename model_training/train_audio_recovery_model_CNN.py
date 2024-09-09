@@ -133,7 +133,6 @@ class TestVibrotactileDataset(Dataset):
       current_num = int(path[path.rfind('_')+1:-4])
       if current_num % 4 == 0:
           print(current_trial)
-          print(path)
           perturbs = path[path.find('-p_')+3:]
           x_perturb = float(perturbs[:perturbs.find('_')])
           perturbs = perturbs[perturbs.find('_')+1:]
@@ -143,7 +142,7 @@ class TestVibrotactileDataset(Dataset):
           self.y[current_trial,0] = x_perturb
           self.y[current_trial,1] = y_perturb
           self.y[current_trial,2] = theta_perturb * np.pi / 180.0
-          print(self.y)
+          
           channel_num = 0
           for channel in channels:
             #Load image by OpenCV
@@ -288,15 +287,18 @@ if __name__ == '__main__':
 
     channels = [0,1,2,3]
     num_channels = len(channels)
-    #audio_train_dataset = VibrotactileDataset(args.type,channels)
-    #audio_test_dataset = TestVibrotactileDataset(args.type,channels)
-    audio_dataset = VibrotactileDataset(args.type,channels)
-    print(len(audio_dataset))
-    #split data to test and train
-    #use 80% to train
-    train_size = int(args.train_ratio * len(audio_dataset))
-    test_size = len(audio_dataset) - train_size
-    audio_train_dataset, audio_test_dataset = torch.utils.data.random_split(audio_dataset, [train_size, test_size])
+
+    if args.type == 'lego':
+      audio_dataset = VibrotactileDataset(args.type,channels)
+      print(len(audio_dataset))
+      #split data to test and train
+      #use 80% to train
+      train_size = int(args.train_ratio * len(audio_dataset))
+      test_size = len(audio_dataset) - train_size
+      audio_train_dataset, audio_test_dataset = torch.utils.data.random_split(audio_dataset, [train_size, test_size])
+    else:
+      audio_train_dataset = VibrotactileDataset(args.type,channels)
+      audio_test_dataset = TestVibrotactileDataset(args.type,channels)
 
     print("Training size:", len(audio_train_dataset))
     print("Testing size:",len(audio_test_dataset))
