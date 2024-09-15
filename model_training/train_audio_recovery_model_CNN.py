@@ -45,7 +45,7 @@ class VibrotactileDataset(Dataset):
     print(self.total_length)
 
     self.X = torch.zeros([self.total_length,3*num_channels,201,221])
-    self.y = torch.zeros([self.total_length,2])
+    self.y = torch.zeros([self.total_length,3])
 
     self.num_channels = num_channels
 
@@ -54,11 +54,15 @@ class VibrotactileDataset(Dataset):
       current_num = int(path[path.rfind('_')+1:-4])
       if current_num % 4 == 0:
           print(current_trial)
-          label = path[path.find('MoveDown')+len('MoveDown')+1:path.find('audio')-1]
-          if label == 'fail':
-            self.y[current_trial,0] = 1
-          elif label == 'success':
-            self.y[current_trial,1] = 1
+          perturbs = path[path.find('-p_')+3:]
+          x_perturb = float(perturbs[:perturbs.find('_')])
+          perturbs = perturbs[perturbs.find('_')+1:]
+          y_perturb = float(perturbs[:perturbs.find('_')])
+          perturbs = perturbs[perturbs.find('_')+1:]
+          theta_perturb = float(perturbs[:perturbs.find('_')])
+          self.y[current_trial,0] = x_perturb
+          self.y[current_trial,1] = y_perturb
+          self.y[current_trial,2] = theta_perturb * np.pi / 180.0
 
           channel_num = 0
           for channel in channels:

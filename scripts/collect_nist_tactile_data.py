@@ -48,8 +48,6 @@ def run():
             if 'topic_name' in config[key]:
                 config[key]['topic_name'] = config[key]['topic_name'].replace("namespace", namespace)
 
-    print(config['fts_detector'])
-
     data_dir = config['data_dir']+'volume_'+str(volume)+'/'+connector_type+'/vel_'+str(velocity_scale)+'/'
 
     if not os.path.exists(config['data_dir']+'volume_'+str(volume)):
@@ -73,20 +71,11 @@ def run():
     gripper_controller = RobotiqHandEController(namespace)
 
     # Load End-Effector Kinematics
-    T_hande_ee = RigidTransform.load(root_pwd+config['hande_ee_tf'])
+    T_hande_ee = RigidTransform.load(root_pwd+config['transforms_dir']+config['hande_ee_tf'])
 
-    if connector_type == 'waterproof':
-        T_connector_world_pick = RigidTransform.load(root_pwd+config['waterproof_world_pick_tf'])
-        T_connector_world_place = RigidTransform.load(root_pwd+config['waterproof_world_place_tf'])
-        T_connector_world_place_reset = RigidTransform.load(root_pwd+config['waterproof_world_place_reset_tf'])
-        T_connector_world_reset_x = RigidTransform.load(root_pwd+config['waterproof_world_reset_x_tf'])
-        T_connector_world_reset_y = RigidTransform.load(root_pwd+config['waterproof_world_reset_y_tf'])
-    elif connector_type == 'dsub':
-        T_connector_world_pick = RigidTransform.load(root_pwd+config['dsub_world_pick_tf'])
-        T_connector_world_place = RigidTransform.load(root_pwd+config['dsub_world_place_tf'])
-        T_connector_world_place_reset = RigidTransform.load(root_pwd+config['dsub_world_place_reset_tf'])
-        T_connector_world_reset_x = RigidTransform.load(root_pwd+config['dsub_world_reset_x_tf'])
-        T_connector_world_reset_y = RigidTransform.load(root_pwd+config['dsub_world_reset_y_tf'])
+    T_connector_world_pick = RigidTransform.load(root_pwd+config['transforms_dir']+connector_type+'/world_pick.tf')
+    T_connector_world_place = RigidTransform.load(root_pwd+config['transforms_dir']+connector_type+'/world_place.tf')
+       
 
     ### Skill Routine ###
     params = {'T_hande_ee': T_hande_ee, 
@@ -104,22 +93,31 @@ def run():
         'T_connector_world': T_connector_world_pick,
         'approach_height_offset': config['place_approach_height'],
     }
-    place_connector_reset_params = {
-        'T_hande_ee': T_hande_ee, 
-        'verbose': verbose,
-        'T_connector_world': T_connector_world_place_reset,
-        'approach_height_offset': config['place_approach_height'],
-        'reset_x_offset': config['reset_x_offset'],
-    }
-    reset_connector_params = {
-        'T_hande_ee': T_hande_ee, 
-        'verbose': verbose,
-        'T_connector_world_reset_x': T_connector_world_reset_x,
-        'T_connector_world_reset_y': T_connector_world_reset_y,
-        'reset_x_offset': config['reset_x_offset'],
-        'reset_y_offset': config['reset_y_offset'],
-        'height_offset': config['pick_approach_height'],
-    }
+    
+    if reset:
+        T_connector_world_place_reset = RigidTransform.load(root_pwd+config['transforms_dir']+connector_type+'/world_place_reset.tf')
+        T_connector_world_reset_x = RigidTransform.load(root_pwd+config['transforms_dir']+connector_type+'/world_reset_x.tf')
+        T_connector_world_reset_y = RigidTransform.load(root_pwd+config['transforms_dir']+connector_type+'/world_reset_y.tf')
+
+        place_connector_reset_params = {
+            'T_hande_ee': T_hande_ee, 
+            'verbose': verbose,
+            'T_connector_world': T_connector_world_place_reset,
+            'approach_height_offset': config['place_approach_height'],
+            'reset_x_offset': config['reset_x_offset'],
+        }
+        reset_connector_params = {
+            'T_hande_ee': T_hande_ee, 
+            'verbose': verbose,
+            'T_connector_world_reset_x': T_connector_world_reset_x,
+            'T_connector_world_reset_y': T_connector_world_reset_y,
+            'reset_x_offset': config['reset_x_offset'],
+            'reset_y_offset': config['reset_y_offset'],
+            'height_offset': config['pick_approach_height'],
+        }
+
+        place_connector_reset_skill = PlaceConnectorReset(robot_commander, gripper_controller, namespace, place_connector_reset_params)
+        reset_connector_skill = ResetConnector(robot_commander, gripper_controller, namespace, reset_connector_params)
 
     move_to_above_connector_pose_skill = MoveToAboveConnectorPose(robot_commander, gripper_controller, namespace, params)
     move_to_above_perturb_connector_skill = MoveToAbovePerturbConnectorPose(robot_commander, gripper_controller, namespace, params)
@@ -128,9 +126,7 @@ def run():
     move_down_skill = MoveDown(robot_commander, gripper_controller, namespace, params)
     pick_connector_skill = PickConnector(robot_commander, gripper_controller, namespace, pick_connector_params)
     place_connector_skill = PlaceConnector(robot_commander, gripper_controller, namespace, place_connector_params)
-    place_connector_reset_skill = PlaceConnectorReset(robot_commander, gripper_controller, namespace, place_connector_reset_params)
-
-    reset_connector_skill = ResetConnector(robot_commander, gripper_controller, namespace, reset_connector_params)
+    
     home_skill = GoHomeSkill(robot_commander, gripper_controller, namespace, params)
     open_gripper_skill = OpenGripper(robot_commander, gripper_controller, namespace, params)
     data_recorder = RosbagDataRecorder()

@@ -1,4 +1,4 @@
-hande_ee_tf: "/transforms/hande_ee.tf"
+
 waterproof_world_pick_tf: "/transforms/waterproof_world_pick.tf"
 waterproof_world_place_tf: "/transforms/waterproof_world_place.tf"
 waterproof_world_place_reset_tf: "/transforms/waterproof_world_place_reset.tf"
@@ -9,6 +9,8 @@ dsub_world_place_tf: "/transforms/dsub_world_place.tf"
 dsub_world_place_reset_tf: "/transforms/dsub_world_place_reset.tf"
 dsub_world_reset_x_tf: "/transforms/dsub_world_reset_x.tf"
 dsub_world_reset_y_tf: "/transforms/dsub_world_reset_y.tf"
+transforms_dir: "/transforms/"
+hande_ee_tf: "hande_ee.tf"
 data_dir: "/mnt/hdd1/vibrotactile_data/nist/"
 x_range:
   - -0.005
