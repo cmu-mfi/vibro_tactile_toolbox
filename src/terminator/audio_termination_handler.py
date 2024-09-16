@@ -73,6 +73,7 @@ class AudioTerminationHandler(BaseTerminationHandler):
 
         self.audio_buffer = AudioBuffer(sample_rate, buffer_duration_s)
 
+        self.input_data_class = AudioData
         self.check_rate_ns = 10E6 # 10 ms default
         self.model = None
 

@@ -3,6 +3,7 @@
 import json
 
 from terminator.base_termination_handler import BaseTerminationHandler
+from terminator.audio_termination_handler import AudioTerminationHandler
 from terminator.fts_termination_handler import FTSTerminationHandler
 from terminator.time_termination_handler import TimeTerminationHandler
 from terminator.pose_termination_handler import PoseTerminationHandler
@@ -17,6 +18,8 @@ from typing import Tuple, List
 def get_handler_from_name(handler_name: str):
     if handler_name == 'AbstractBase':
         return BaseTerminationHandler()
+    elif handler_name == 'audio':
+        return AudioTerminationHandler()
     elif handler_name == 'fts':
         return FTSTerminationHandler()
     elif handler_name == 'time':
