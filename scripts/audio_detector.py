@@ -130,6 +130,10 @@ class AudioDetector:
         resp = AudioOutcomeResponse()
         self.model = torch.jit.load(req.model_path)
         print(req.model_path)
+        if 'outcome' in req.model_path:
+            model_type = 'outcome'
+        elif 'recovery' in req.model_path:
+            model_type = 'recovery'
         self.model.eval()
         self.model.to(device)
 
@@ -149,13 +153,23 @@ class AudioDetector:
         X = X.to(device)
         pred = self.model(X)
         cpu_pred = pred.to('cpu').detach().numpy()
-        print(cpu_pred.reshape(-1,))
-        label = int(np.argmax(cpu_pred.reshape(-1,)))
-        print(label)
 
-        success = (label == 1)
-        resp.result = json.dumps({'result' : f"Audio Model predicted: {label}",
-                                  'success': success})
+        if model_type == 'outcome':
+            print(cpu_pred.reshape(-1,))
+            label = int(np.argmax(cpu_pred.reshape(-1,)))
+            print(label)
+
+            success = (label == 1)
+            resp.result = json.dumps({'result' : f"Audio Model predicted: {label}",
+                                      'success': success})
+        elif model_type == 'recovery':
+            print(cpu_pred.reshape(-1,))
+            label = cpu_pred.reshape(-1,)
+            print(label)
+
+            success = True
+            resp.result = json.dumps({'result' : f"Audio Model predicted: {label}",
+                                      'success': success})
     
         combined_img_msg = self.bridge.cv2_to_imgmsg(combined_image, "bgr8")
         self.image_pub.publish(combined_img_msg)

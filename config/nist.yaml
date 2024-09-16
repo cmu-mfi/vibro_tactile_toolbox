@@ -17,8 +17,7 @@ reset_x_offset: 0.008
 reset_y_offset: 0.01
 lift_height: 0.01
 pull_up_velocity_scaling: 0.01
-dsub_push_down_height_offset: 0.01
-waterproof_push_down_height_offset: 0.02
+push_down_height_offset: 0.01
 velocity_scaling_large_movements: 0.5
 audio_detector:
   namespace: namespace

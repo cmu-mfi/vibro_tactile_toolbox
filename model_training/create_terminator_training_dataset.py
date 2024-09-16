@@ -327,10 +327,10 @@ if __name__ == '__main__':
                         help='Path to save trial dataset')
     parser.add_argument('--type', '-t', type=str, required=True,
                         help='Data Type')
-    parser.add_argument('--time_offset', type=float, required=False, default=0.2,
-                        help='Time to subtract from the terminate message. Default is 0.2s.')
-    parser.add_argument('--audio_segment_length', type=float, required=False, default=0.2,
-                        help='Specify the length of each audio segment. Default is 0.2s.')
+    parser.add_argument('--time_offset', type=float, required=False, default=0.3,
+                        help='Time to subtract from the terminate message. Default is 0.3s.')
+    parser.add_argument('--audio_segment_length', type=float, required=False, default=0.5,
+                        help='Specify the length of each audio segment. Default is 0.5s.')
     parser.add_argument('--sample_time_range', type=float, required=False, default=0.2,
                     help='Specify the range of sampling each sample. Default is 0.2s.')
     parser.add_argument('--num_resample', '-n', type=int, required=False, default=20,

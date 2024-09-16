@@ -78,7 +78,7 @@ def send_audio_outcome_request(params, timestamp):
         audio_req.id = 0
         audio_req.topic_name = params['topic_name']  
         audio_req.stamp = timestamp
-        audio_req.model_path = params['outcome_model_path'] 
+        audio_req.model_path = params['model_path'] 
         
 
         audio_resp = detect_audio(audio_req)

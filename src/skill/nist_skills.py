@@ -34,7 +34,7 @@ z_engage_termination_config = {
     'pose': {'pos_tolerance': 0.0001,
                 'orient_tolerance': 0.01,
                 'pose': None},
-    'fts': {'check_rate_ns': 1E6,
+    'fts': {'check_rate_ns': 1E7,
             'threshold': {
                 'force': {
                     'x': [-10, 10],
@@ -44,7 +44,7 @@ z_engage_termination_config = {
                     'x': [-1, 1],
                     'y': [-1, 1],
                     'z': [-1, 1]}
-            }}
+            }},
 }
 
 high_z_engage_termination_config = {
@@ -52,7 +52,7 @@ high_z_engage_termination_config = {
     'pose': {'pos_tolerance': 0.0001,
                 'orient_tolerance': 0.01,
                 'pose': None},
-    'fts': {'check_rate_ns': 1E6,
+    'fts': {'check_rate_ns': 1E7,
             'threshold': {
                 'force': {
                     'x': [-10, 10],
@@ -70,7 +70,7 @@ engage_termination_config = {
     'pose': {'pos_tolerance': 0.0001,
                 'orient_tolerance': 0.01,
                 'pose': None},
-    'fts': {'check_rate_ns': 1E6,
+    'fts': {'check_rate_ns': 1E7,
             'threshold': {
                 'force': {
                     'x': [-10, 10],
@@ -90,7 +90,7 @@ release_termination_config = {
     'pose': {'pos_tolerance': 0.001,
                 'orient_tolerance': 0.01,
                 'pose': None},
-    'fts': {'check_rate_ns': 1E6,
+    'fts': {'check_rate_ns': 1E7,
             'threshold': {
                 'force': {
                     'x': [-50, 50],
@@ -110,7 +110,7 @@ servo_termination_config = {
     'pose': {'pos_tolerance': 0.001,
                 'orient_tolerance': 0.01,
                 'pose': None},
-    'fts': {'check_rate_ns': 1E6,
+    'fts': {'check_rate_ns': 1E7,
             'threshold': {
                 'force': {
                     'x': [-30, 30],               # any substantial reaction force in x-y
@@ -126,6 +126,14 @@ servo_termination_config = {
 def add_termination_pose(termination_config, pose : Pose):
     t_cfg = copy.deepcopy(termination_config)
     t_cfg['pose']['pose'] = t_utils.pose_to_dict(pose)
+    return t_cfg
+
+def add_termination_pose_and_audio_model(termination_config, pose : Pose, model_path: str):
+    t_cfg = copy.deepcopy(termination_config)
+    t_cfg['pose']['pose'] = t_utils.pose_to_dict(pose)
+    if model_path is not None:
+        t_cfg['audio'] = {'check_rate_ns': 1E7,
+                          'model_path': model_path}
     return t_cfg
 
 
@@ -301,16 +309,20 @@ class MoveDown(BaseSkill):
 
         super().__init__(robot_commander, gripper_controller, namespace, params)
 
+        self.model_path = None
+
         self.skill_steps = [
             {'step_name': 'move_down',
              'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.move_down_pose_msg, wait=False, velocity_scaling=self.velocity_scaling),
-             'termination_cfg': lambda param: add_termination_pose(z_engage_termination_config, self.move_down_pose_msg)},
+             'termination_cfg': lambda param: add_termination_pose_and_audio_model(z_engage_termination_config, self.move_down_pose_msg, self.model_path)},
         ]
 
     def execute_skill(self, execution_params, skill_params) -> Tuple[List[TerminationSignal], List[int]]:
         # QOL 
         if 'height_offset' not in skill_params:
             print(f"MoveDown expects a height offset (meters): skill_params['height_offset'] = float(0.001 m)")
+        if 'model_path' in skill_params:
+            self.model_path = skill_params['model_path']
         if 'velocity_scaling' not in skill_params:
             self.velocity_scaling = 0.01
             print(f"No initial velocity scaling specified, using: {self.velocity_scaling}")

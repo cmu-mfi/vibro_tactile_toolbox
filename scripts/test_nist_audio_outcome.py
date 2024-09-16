@@ -33,6 +33,8 @@ def run():
     velocity_scale = rospy.get_param("test_nist_audio_outcome_node/velocity_scale")
     reset = rospy.get_param("test_nist_audio_outcome_node/reset")
     lift = rospy.get_param("test_nist_audio_outcome_node/lift")
+    demo = rospy.get_param("test_nist_audio_outcome_node/demo")
+    use_audio_terminator = rospy.get_param("test_nist_audio_outcome_node/use_audio_terminator")
     verbose = rospy.get_param("test_nist_audio_outcome_node/verbose")
 
     with open(root_pwd+'/config/'+yaml_file) as stream:
@@ -48,16 +50,21 @@ def run():
             if 'topic_name' in config[key]:
                 config[key]['topic_name'] = config[key]['topic_name'].replace("namespace", namespace)
 
-    print(config['fts_detector'])
+    data_type = ''
 
-    data_dir = config['data_dir']+'volume_'+str(volume)+'/'+connector_type+'/test_vel_'+str(velocity_scale)+'/'
+    if demo:
+        data_type = 'demo'
+    else:
+        data_type = 'test'
+
+    data_dir = config['data_dir']+'volume_'+str(volume)+'/'+connector_type+'/'+data_type+'_vel_'+str(velocity_scale)+'/'
 
     if not os.path.exists(config['data_dir']+'volume_'+str(volume)):
         os.mkdir(config['data_dir']+'volume_'+str(volume))
     if not os.path.exists(config['data_dir']+'volume_'+str(volume)+'/'+connector_type):
         os.mkdir(config['data_dir']+'volume_'+str(volume)+'/'+connector_type)
-    if not os.path.exists(config['data_dir']+'volume_'+str(volume)+'/'+connector_type+'/test_vel_'+str(velocity_scale)):
-        os.mkdir(config['data_dir']+'volume_'+str(volume)+'/'+connector_type+'/test_vel_'+str(velocity_scale))    
+    if not os.path.exists(config['data_dir']+'volume_'+str(volume)+'/'+connector_type+'/'+data_type+'_vel_'+str(velocity_scale)):
+        os.mkdir(config['data_dir']+'volume_'+str(volume)+'/'+connector_type+'/'+data_type+'_vel_'+str(velocity_scale))    
 
     if str(velocity_scale) == '0.01':
         move_down_velocity_scaling = 0.01
@@ -78,7 +85,10 @@ def run():
     T_connector_world_pick = RigidTransform.load(root_pwd+config['transforms_dir']+connector_type+'/world_pick.tf')
     T_connector_world_place = RigidTransform.load(root_pwd+config['transforms_dir']+connector_type+'/world_place.tf')
        
-    config['audio_detector']['outcome_model_path'] = root_pwd+config['models_dir']+'audio_outcome_'+connector_type+'.pt'
+    outcome_config = config['audio_detector'].copy()
+    outcome_config['model_path'] = root_pwd+config['model_dir']+'audio_outcome_'+connector_type+'.pt'
+    recovery_config = config['audio_detector'].copy()
+    recovery_config['model_path'] = root_pwd+config['model_dir']+'audio_recovery_'+connector_type+'.pt'
 
     ### Skill Routine ###
     params = {'T_hande_ee': T_hande_ee, 
@@ -154,6 +164,10 @@ def run():
         'lift_height_offset': config['pick_approach_height'],
     }
 
+    push_down_params = {
+        'height_offset': config['push_down_height_offset'],
+    }
+
     terminals = open_gripper_skill.execute_skill(None)
     if lift:
         terminals = move_up_skill.execute_skill(execution_params, move_up_params)
@@ -170,6 +184,7 @@ def run():
         x_perturb = np.random.uniform(config['x_range'][0], config['x_range'][1])
         y_perturb = np.random.uniform(config['y_range'][0], config['y_range'][1])
         theta_perturb = np.random.uniform(config['theta_range'][0], config['theta_range'][1])
+        print(f"Ground truth perturb values: {x_perturb}, {y_perturb}, {theta_perturb}")
 
         if move_down_velocity_scaling == -0.1:
             move_down_velocity_scaling = np.random.uniform(0.01, 0.1)
@@ -197,6 +212,9 @@ def run():
             'velocity_scaling': move_down_velocity_scaling
         }
 
+        if use_audio_terminator:
+            move_down_params['model_path'] = root_pwd+config['model_dir']+'audio_terminator_'+connector_type+'.pt'
+
         terminals = move_to_above_perturb_connector_skill.execute_skill(execution_params, move_to_above_perturb_connector_params)
 
         # 1. Begin rosbag recording
@@ -209,34 +227,49 @@ def run():
 
         terminals = move_down_skill.execute_skill(execution_params, move_down_params)
 
-        audio_outcomes = send_audio_outcome_request(config['audio_detector'], terminals[0].stamp)
+        audio_outcomes = send_audio_outcome_request(outcome_config, terminals[0].stamp)
 
         print(audio_outcomes['success'])
+        if demo:
+            if audio_outcomes['success'] == False:
 
-        outcomes = send_start_outcome_request(config['fts_detector'])
-
-        terminals = pull_up_skill.execute_skill(execution_params, pull_up_params)
-
-        outcomes = send_end_fts_outcome_request(config['fts_detector'])
-
-        if outcomes['success'] == True:
+                audio_recovery = send_audio_outcome_request(recovery_config, terminals[0].stamp)
+                print(audio_recovery['result'])
         
-            terminals = move_to_above_connector_pose_skill.execute_skill(execution_params, move_to_above_perturb_connector_params)
+                terminals = move_to_above_connector_pose_skill.execute_skill(execution_params, move_to_above_perturb_connector_params)
 
-            terminals = move_down_skill.execute_skill(execution_params, move_down_params)
+                terminals = move_down_skill.execute_skill(execution_params, move_down_params)
 
-            audio_outcomes = send_audio_outcome_request(config['audio_detector'], terminals[0].stamp)
+                audio_outcomes = send_audio_outcome_request(outcome_config, terminals[0].stamp)
 
-            print(audio_outcomes['success'])
+            if audio_outcomes['success'] == True:
+                terminals = push_down_skill.execute_skill(execution_params, push_down_params)
 
+        else:    
             outcomes = send_start_outcome_request(config['fts_detector'])
 
             terminals = pull_up_skill.execute_skill(execution_params, pull_up_params)
 
             outcomes = send_end_fts_outcome_request(config['fts_detector'])
 
-        if outcomes['success'] == False:
-            terminals = push_down_skill.execute_skill(execution_params, push_down_params)
+            if outcomes['success'] == True:
+            
+                terminals = move_to_above_connector_pose_skill.execute_skill(execution_params, move_to_above_perturb_connector_params)
+
+                terminals = move_down_skill.execute_skill(execution_params, move_down_params)
+
+                audio_outcomes = send_audio_outcome_request(outcome_config, terminals[0].stamp)
+
+                print(audio_outcomes['success'])
+
+                outcomes = send_start_outcome_request(config['fts_detector'])
+
+                terminals = pull_up_skill.execute_skill(execution_params, pull_up_params)
+
+                outcomes = send_end_fts_outcome_request(config['fts_detector'])
+
+            if outcomes['success'] == False:
+                terminals = push_down_skill.execute_skill(execution_params, push_down_params)
 
         terminals = move_to_above_connector_pose_skill.execute_skill(execution_params, move_to_above_connector_params)
 

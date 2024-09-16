@@ -29,6 +29,45 @@ from terminator.base_termination_handler import BaseTerminationHandler
 
 import terminator.utils as t_utils
 
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+print('Using {} device'.format(device))
+
+channels = [0,1,2,3]
+num_channels = len(channels)
+
+def segment_audio(audio_data, sample_rate, t_start, t_end):
+    """
+    Segment audio and save spectrogram images
+    
+    audio_data, sample_rate = torchaudio.load(filepath)
+    """
+    start_idx = int(t_start * sample_rate)
+    end_idx = int(t_end * sample_rate)
+
+    num_channels = audio_data.shape[0]
+    
+    audio_segment = audio_data[:,start_idx:end_idx]
+    rgb_images = []
+    for ch_num in range(num_channels):
+        channel_audio_segment = audio_segment[ch_num,:]
+        transform = torchaudio.transforms.Spectrogram()
+        spec_tensor = transform(torch.from_numpy(channel_audio_segment))
+        spec_np = spec_tensor.log2().numpy()
+        spec_np = np.flipud(spec_np)
+
+        # Begin from matplotlib.image.imsave
+        sm = cm.ScalarMappable(cmap='viridis')
+        sm.set_clim(None, None)
+        rgba = sm.to_rgba(spec_np, bytes=True)
+        pil_shape = (rgba.shape[1], rgba.shape[0])
+        image_rgb = Image.frombuffer(
+                "RGBA", pil_shape, rgba, "raw", "RGBA", 0, 1)
+        rgb_images.append(image_rgb)
+
+        # End from matplotlib.image.imsave
+
+    return audio_segment, rgb_images
+
 class AudioBuffer:
     def __init__(self, sample_rate, buffer_duration):
         self.sample_rate = sample_rate
@@ -42,25 +81,23 @@ class AudioBuffer:
         audio_samples = (msg.header.stamp.to_sec(), np.asarray(msg.data).reshape((-1,self.num_channels)).transpose())
         self.buffer.append(audio_samples)
 
-    def get_audio_segment(self, t_target, lagging_buffer=0.5, leading_buffer=0.5):
+    def get_audio_segment(self, t_target, time_offset, audio_segment_length=0.2):
         # Convert buffer to a numpy array for processing
         # find t_target
-        # find t_target - lagging_buffer
-        # find t_target + leading_buffer
-        start_time = t_target - rospy.Duration(lagging_buffer)
+        # find t_target - time_offset
+        # find t_target + audio_segment_length
+        start_time = t_target - rospy.Duration(time_offset)
 
         current_buffer = list(self.buffer)
 
         timestamps = [stamp for (stamp, _) in current_buffer]
 
         closest_timestamp_index = np.argmin(np.abs(np.array(timestamps) - start_time.to_sec()))
-        print(start_time.to_sec())
-        print(current_buffer[closest_timestamp_index][0])
 
         audio_buffer = np.hstack(tuple([buffer for (stamp,buffer) in current_buffer[closest_timestamp_index:]]))
         
         # Process the audio data as needed
-        audio_segment, rgb_images = segment_audio(audio_buffer, self.sample_rate, 0.0, lagging_buffer+leading_buffer)
+        audio_segment, rgb_images = segment_audio(audio_buffer, self.sample_rate, 0.0, audio_segment_length)
         return audio_segment, rgb_images
 
 
@@ -92,9 +129,9 @@ class AudioTerminationHandler(BaseTerminationHandler):
             self.id = cfg_json['id']
             audio_cfg = cfg_json['audio']
             if 'check_rate_ns' in audio_cfg:
-                self.check_rate_ns = pose_cfg['check_rate_ns']
+                self.check_rate_ns = audio_cfg['check_rate_ns']
             if 'model_path' in audio_cfg:
-                self.model = torch.jit.load(cfg_json['model_path'])
+                self.model = torch.jit.load(audio_cfg['model_path'])
                 self.model.eval()
                 self.model.to(device)
         else:
@@ -113,11 +150,11 @@ class AudioTerminationHandler(BaseTerminationHandler):
         terminate = False
         cause = ''
 
-        audio_segment, rgb_images = self.audio_buffer.get_audio_segment(rospy.Time.now(), 0.2, 0.0)
+        audio_segment, rgb_images = self.audio_buffer.get_audio_segment(rospy.Time.now(), 0.52, 0.5)
 
-        X = torch.zeros([1,3*num_channels,201,45])
+        X = torch.zeros([1,3*num_channels,201,111])
 
-        combined_image = np.zeros((num_channels*201,45,3), dtype=np.uint8)
+        combined_image = np.zeros((num_channels*201,111,3), dtype=np.uint8)
         for channel in range(num_channels):
             opencv_image = cv2.cvtColor(np.array(rgb_images[channel]), cv2.COLOR_RGBA2RGB)
             pil_image = Image.fromarray(opencv_image)
@@ -129,14 +166,9 @@ class AudioTerminationHandler(BaseTerminationHandler):
         X = X.to(device)
         pred = self.model(X)
         cpu_pred = pred.to('cpu').detach().numpy()
-        print(cpu_pred.reshape(-1,))
         label = int(np.argmax(cpu_pred.reshape(-1,)))
-        print(label)
 
         terminate = (label == 1)
-
-        resp.id = req.id
-        resp.spec = combined_img_msg
 
         if terminate:
             cause = 'Audio termination handler caused by: predicted terminate.'

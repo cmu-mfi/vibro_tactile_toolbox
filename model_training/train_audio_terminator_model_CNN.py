@@ -40,7 +40,7 @@ class VibrotactileDataset(Dataset):
     self.total_length = int(len(paths) / 4) + 1
     print(self.total_length)
 
-    self.X = torch.zeros([self.total_length,3*num_channels,201,45])
+    self.X = torch.zeros([self.total_length,3*num_channels,201,111])
     self.y = torch.zeros([self.total_length,2])
 
     self.num_channels = num_channels
@@ -80,15 +80,15 @@ class VibrotactileDataset(Dataset):
   def __getitem__(self, i):
     img_input = self.X[i]
     #print(img_input)
-    total_elem = 201*45
+    total_elem = 201*111
     num_noise = int(1/20 * total_elem)
     
     for j in range(self.num_channels*3):
-        aug_noise = np.zeros(201*45)
+        aug_noise = np.zeros(201*111)
         idx = np.random.choice(len(aug_noise), num_noise, replace=False).astype(int)
         aug_noise[idx] = (np.random.random(num_noise) * 0.04) - 0.02
 
-        img_input[j] += aug_noise.reshape(201,45)
+        img_input[j] += aug_noise.reshape(201,111)
 
     return img_input, self.y[i]
 
@@ -219,4 +219,4 @@ if __name__ == '__main__':
         test(test_dataloader, model, args.type)
     print('Done!')
 
-    summary(model, input_size=(15, num_channels*3, 201, 45))
+    summary(model, input_size=(15, num_channels*3, 201, 111))
