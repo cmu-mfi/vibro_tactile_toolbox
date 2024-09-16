@@ -18,6 +18,7 @@ import argparse
 import matplotlib.pyplot as plt
 from PIL import Image
 import cv2
+import yaml
 
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -33,12 +34,24 @@ class VibrotactileDataset(Dataset):
     self.total_length = 0
     num_channels = len(channels)
 
-    paths = glob.glob(glob_path)
+    paths = glob.glob(glob_path + 'fail/audio/*.png')
 
     if dataset_type == 'lego':
         paths = [path for path in paths if 'connection_failure' not in path]
+        yaml_path = 'config/lego.yaml'
     else:
         paths = [path for path in paths if 'failure' not in path]
+        yaml_path = 'config/nist.yaml'
+
+    with open(yaml_path) as stream:
+        try:
+            config = yaml.safe_load(stream)
+        except yaml.YAMLError as error:
+            print(error)
+
+    x_perturb_range = config['x_range']
+    y_perturb_range = config['y_range']
+    theta_perturb_range = config['theta_range']
 
     print(len(paths))
     self.total_length = int(len(paths) / 4) + 1
@@ -53,14 +66,14 @@ class VibrotactileDataset(Dataset):
       if current_num % 4 == 0:
           print(current_trial)
           perturbs = path[path.find('-p_')+3:]
-          x_perturb = float(perturbs[:perturbs.find('_')])
+          x_perturb = (float(perturbs[:perturbs.find('_')]) - x_perturb_range[0]) / (x_perturb_range[1] - x_perturb_range[0])
           perturbs = perturbs[perturbs.find('_')+1:]
-          y_perturb = float(perturbs[:perturbs.find('_')])
+          y_perturb = (float(perturbs[:perturbs.find('_')]) - y_perturb_range[0]) / (y_perturb_range[1] - y_perturb_range[0])
           perturbs = perturbs[perturbs.find('_')+1:]
-          theta_perturb = float(perturbs[:perturbs.find('_')])
+          theta_perturb = (float(perturbs[:perturbs.find('_')]) - theta_perturb_range[0]) / (theta_perturb_range[1] - theta_perturb_range[0])
           self.y[current_trial,0] = x_perturb
           self.y[current_trial,1] = y_perturb
-          self.y[current_trial,2] = theta_perturb * np.pi / 180.0
+          self.y[current_trial,2] = theta_perturb
 
           channel_num = 0
 
@@ -91,15 +104,14 @@ if __name__ == '__main__':
     channels = [0,1,2,3]
     num_channels = len(channels)
     if args.type == 'lego':
-        audio_dataset = VibrotactileDataset(args.type,channels, f'/mnt/hdd1/vibrotactile_data/lego_dataset/*/*/test*/MoveDown/*/audio/*.png')
+        audio_dataset = VibrotactileDataset(args.type,channels, f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/*/test*/MoveDown/')
     else:
-        audio_dataset = VibrotactileDataset(args.type,channels, f'/mnt/hdd1/vibrotactile_data/nist_dataset/*/{args.type}/test*/MoveDown/*/audio/*.png')
+        audio_dataset = VibrotactileDataset(args.type,channels, f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/test*/MoveDown/')
     print(len(audio_dataset))
 
     test_dataloader = torch.utils.data.DataLoader(
         audio_dataset,
         batch_size=16,
-        num_workers=2,
         shuffle=False
     )
 

@@ -35,7 +35,8 @@ class VibrotactileDataset(Dataset):
     self.total_length = 0
     num_channels = len(channels)
 
-    paths = glob.glob(glob_path)
+    paths = glob.glob(glob_path + 'success/audio/*.png')
+    paths += glob.glob(glob_path + 'fail/audio/*.png')
 
     print(len(paths))
     self.total_length = int(len(paths) / 4) + 1
@@ -84,15 +85,14 @@ if __name__ == '__main__':
     num_channels = len(channels)
 
     if args.type == 'lego':
-        audio_dataset = VibrotactileDataset(channels, f'/mnt/hdd1/vibrotactile_data/lego_dataset/*/*/test*/MoveDown/*/audio/*.png')
+        audio_dataset = VibrotactileDataset(channels, f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/*/test*/MoveDown/')
     else:
-        audio_dataset = VibrotactileDataset(channels, f'/mnt/hdd1/vibrotactile_data/nist_dataset/*/{args.type}/test*/MoveDown/*/audio/*.png')
+        audio_dataset = VibrotactileDataset(channels, f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/test*/MoveDown/')
     print(len(audio_dataset))
 
     test_dataloader = torch.utils.data.DataLoader(
         audio_dataset,
         batch_size=16,
-        num_workers=2,
         shuffle=False
     )
 

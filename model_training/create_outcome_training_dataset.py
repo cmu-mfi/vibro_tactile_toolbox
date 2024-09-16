@@ -49,7 +49,7 @@ def is_valid_dataset(dataset_dir):
             return False
     return True
 
-def segment_audio(audio_data, sample_rate, t_start, t_end, resample_num=0):
+def segment_audio(audio_data, sample_rate, t_start, t_end, resample_num=0, time_offset=0.2):
     """
     Segment audio and save spectrogram images
     
@@ -81,7 +81,7 @@ def segment_audio(audio_data, sample_rate, t_start, t_end, resample_num=0):
         # End from matplotlib.image.imsave
     if resample_num > 0:
         for i in range(resample_num):
-            random_offset = np.random.random()*0.4 - 0.2
+            random_offset = np.random.random()*(time_offset*2) - time_offset
             start_idx = int((t_start + random_offset) * sample_rate)
             end_idx = int((t_end + random_offset) * sample_rate)
 
@@ -126,7 +126,7 @@ def segment_fts(fts_data, t_start, t_end):
     fts_segment = fts_data[start_idx:end_idx, :]
     return fts_segment
 
-def segment_trial(dataset_dir, lagging_buffer=0.5, leading_buffer=0.5, num_resample=0):
+def segment_trial(dataset_dir, lagging_buffer=0.5, leading_buffer=0.5, num_resample=20, time_offset=0.2):
     """
     Segment a trial into audio, fts, and vision data segments established by termination signals with outcome labels
 
@@ -211,7 +211,7 @@ def segment_trial(dataset_dir, lagging_buffer=0.5, leading_buffer=0.5, num_resam
         t_start = t_terminal - lagging_buffer
         t_end = t_terminal + leading_buffer
 
-        audio_seg, spec = segment_audio(audio_data, sample_rate, t_start, t_end, 20)
+        audio_seg, spec = segment_audio(audio_data, sample_rate, t_start, t_end, num_resample, time_offset)
         fts_seg = segment_fts(fts_data, t_start, t_end)
         side_cam_seg = segment_video(side_cam, t_terminal)
         wrist_cam_seg = segment_video(wrist_cam, t_terminal)

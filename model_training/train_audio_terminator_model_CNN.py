@@ -18,7 +18,7 @@ from PIL import Image
 import argparse
 import cv2
 import matplotlib.pyplot as plt
-import yaml
+
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print('Using {} device'.format(device))
@@ -28,37 +28,20 @@ class VibrotactileDataset(Dataset):
   Prepare the Vibrotactile dataset for Prediction
   '''
 
-  def __init__(self, dataset_type, channels, glob_path):
+  def __init__(self, channels, glob_path):
 
     self.total_length = 0
     num_channels = len(channels)
 
-    paths = glob.glob(glob_path + 'fail/audio/*.png')
-    
-    if dataset_type == 'lego':
-        paths = [path for path in paths if 'connection_failure' not in path]
-        yaml_path = 'config/lego.yaml'
-    else:
-        paths = [path for path in paths if 'failure' not in path]
-        yaml_path = 'config/nist.yaml'
-
-    with open(yaml_path) as stream:
-        try:
-            config = yaml.safe_load(stream)
-        except yaml.YAMLError as error:
-            print(error)
-
-    x_perturb_range = config['x_range']
-    y_perturb_range = config['y_range']
-    theta_perturb_range = config['theta_range']
-
+    paths = glob.glob(glob_path + 'nominal/audio/*.png')
+    paths += glob.glob(glob_path + 'terminate/audio/*.png')
 
     print(len(paths))
     self.total_length = int(len(paths) / 4) + 1
     print(self.total_length)
 
-    self.X = torch.zeros([self.total_length,3*num_channels,201,221])
-    self.y = torch.zeros([self.total_length,3])
+    self.X = torch.zeros([self.total_length,3*num_channels,201,45])
+    self.y = torch.zeros([self.total_length,2])
 
     self.num_channels = num_channels
 
@@ -67,23 +50,14 @@ class VibrotactileDataset(Dataset):
       current_num = int(path[path.rfind('_')+1:-4])
       if current_num % 4 == 0:
           label = path[path.find('MoveDown')+len('MoveDown')+1:path.find('audio')-1]
-          if label == 'fail':
+          if label == 'nominal':
             self.y[current_trial,0] = 1
-          elif label == 'success':
+          elif label == 'terminate':
             self.y[current_trial,1] = 1
           else:
             continue
 
           print(current_trial)
-          perturbs = path[path.find('-p_')+3:]
-          x_perturb = (float(perturbs[:perturbs.find('_')]) - x_perturb_range[0]) / (x_perturb_range[1] - x_perturb_range[0])
-          perturbs = perturbs[perturbs.find('_')+1:]
-          y_perturb = (float(perturbs[:perturbs.find('_')]) - y_perturb_range[0]) / (y_perturb_range[1] - y_perturb_range[0])
-          perturbs = perturbs[perturbs.find('_')+1:]
-          theta_perturb = (float(perturbs[:perturbs.find('_')]) - theta_perturb_range[0]) / (theta_perturb_range[1] - theta_perturb_range[0])
-          self.y[current_trial,0] = x_perturb
-          self.y[current_trial,1] = y_perturb
-          self.y[current_trial,2] = theta_perturb
 
           channel_num = 0
           for channel in channels:
@@ -106,77 +80,17 @@ class VibrotactileDataset(Dataset):
   def __getitem__(self, i):
     img_input = self.X[i]
     #print(img_input)
-    total_elem = 201*221
+    total_elem = 201*45
     num_noise = int(1/20 * total_elem)
     
     for j in range(self.num_channels*3):
-        aug_noise = np.zeros(201*221)
+        aug_noise = np.zeros(201*45)
         idx = np.random.choice(len(aug_noise), num_noise, replace=False).astype(int)
         aug_noise[idx] = (np.random.random(num_noise) * 0.04) - 0.02
 
-        img_input[j] += aug_noise.reshape(201,221)
+        img_input[j] += aug_noise.reshape(201,45)
 
     return img_input, self.y[i]
-
-
-class CNNet_old(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv1 = nn.Conv2d(num_channels*3, 32, kernel_size=5)
-        self.conv2 = nn.Conv2d(32, 16, kernel_size=5)
-        self.conv2_drop = nn.Dropout2d()
-        self.conv3 = nn.Conv2d(16, 8, kernel_size=5)
-        self.flatten = nn.Flatten()
-        self.fc1 = nn.Linear(4032, 512)
-        self.fc2 = nn.Linear(512, 256)
-        self.fc3 = nn.Linear(256, 1)
-
-
-    def forward(self, x):
-        x = F.relu(F.max_pool2d(self.conv1(x), 2))
-        x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
-        x = F.relu(F.max_pool2d(self.conv3(x), 2))
-        #x = x.view(x.size(0), -1)
-        x = self.flatten(x)
-        x = F.relu(self.fc1(x))
-        x = F.dropout(x, training=self.training)
-        x = F.relu(self.fc2(x))
-        x = F.dropout(x, training=self.training)
-        x = F.sigmoid(self.fc3(x))
-        return x
-
-class CNNet_try2(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv1 = nn.Conv2d(num_channels*3, 32, kernel_size=3)
-        self.bn1 = nn.BatchNorm2d(32)
-        self.conv2 = nn.Conv2d(32, 32, kernel_size=3)
-        self.conv2_drop = nn.Dropout2d()
-        self.bn2 = nn.BatchNorm2d(32)
-        self.conv3 = nn.Conv2d(32, 16, kernel_size=3)
-        self.bn3 = nn.BatchNorm2d(16)
-        self.conv4 = nn.Conv2d(16, 8, kernel_size=3)
-        self.bn4 = nn.BatchNorm2d(8)
-        #self.aap2d = nn.AdaptiveAvgPool2d(1)
-        self.flatten = nn.Flatten()
-        self.fc1 = nn.Linear(81408, 1024)
-        self.fc2 = nn.Linear(1024, 256)
-        self.fc3 = nn.Linear(256, 2)
-
-
-    def forward(self, x):
-        x = F.relu(self.bn1(self.conv1(x)))
-        x = F.relu(self.bn2(self.conv2_drop(self.conv2(x))))
-        x = F.relu(self.bn3(self.conv3(x)))
-        x = F.max_pool2d(F.relu(self.bn4(self.conv4(x))),2)
-        #x = x.view(x.size(0), -1)
-        x = self.flatten(x)
-        x = self.fc1(x)
-        x = F.dropout(x, training=self.training)
-        x = self.fc2(x)
-        x = F.dropout(x, training=self.training)
-        x = self.fc3(x)
-        return x
 
 class CNNet(nn.Module):
     def __init__(self):
@@ -184,7 +98,7 @@ class CNNet(nn.Module):
         model = models.resnet18()
         model.conv1 = nn.Conv2d(12, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
         # new_module_list = list(model.modules())[:-1]
-        model.fc = nn.Linear(in_features=512, out_features=3, bias=True)
+        model.fc = nn.Linear(in_features=512, out_features=2, bias=True)
         self.model = model #nn.Sequential(*new_module_list)
         # self.fc = nn.Linear(512, 2)
 
@@ -212,27 +126,32 @@ def train(dataloader, model, loss, optimizer):
             print(f'loss: {loss:>7f}  [{current:>5d}/{size:>5d}]')
 
 # Create the validation/test function
-min_test_loss = 2.0
+max_test_correct = 0.85
+min_test_loss = 0.05
 def test(dataloader, model, type):
-    global min_test_loss
+    global max_test_correct, min_test_loss
     size = len(dataloader.dataset)
     model.eval()
-    test_loss = 0
+    test_loss, correct = 0, 0
 
     with torch.no_grad():
         for batch, (X, Y) in enumerate(dataloader):
             X, Y = X.to(device), Y.to(device)
             pred = model(X)
-            #print(pred.to('cpu').detach().numpy())
             test_loss += cost(pred, Y).item()
+            correct += (pred.argmax(1) == Y.argmax(1)).type(torch.float).sum().item()
 
-    if  (test_loss < min_test_loss):
+    test_loss /= size
+    correct /= size
+
+    if correct > max_test_correct or (correct == max_test_correct and test_loss < min_test_loss):
+        max_test_correct = correct
         min_test_loss = test_loss
         model_scripted = torch.jit.script(model) # Export to TorchScript
-        model_scripted.save('models/audio_recovery_'+type+'.pt') # Save
+        model_scripted.save('models/audio_terminator_'+type+'.pt') # Save
         print("====================== SAVED MODEL ==========================")
 
-    print(f'\nTest loss: {test_loss:>8f}\n')
+    print(f'\nTest Error:\nacc: {(100*correct):>0.1f}%, avg loss: {test_loss:>8f}\n')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -244,28 +163,28 @@ if __name__ == '__main__':
     num_channels = len(channels)
 
     if args.type == 'lego':
-        paths = glob.glob(f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/*/test*/MoveDown/fail/audio/*.png')
+        paths = glob.glob(f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/*/test*/MoveDown/nominal/audio/*.png')
     else:
-        paths = glob.glob(f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/test*/MoveDown/fail/audio/*.png')
-    if paths is not None:
+        paths = glob.glob(f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/test*/MoveDown/nominal/audio/*.png')
+    if paths is not None and len(paths) > 0:
         if args.type == 'lego':
-            audio_train_dataset = VibrotactileDataset(args.type,channels,f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/*/vel*/MoveDown/')
-            audio_test_dataset = VibrotactileDataset(args.type,channels, f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/*/test*/MoveDown/')
+            audio_train_dataset = VibrotactileDataset(channels,f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/*/vel*/MoveDown/')
+            audio_test_dataset = VibrotactileDataset(channels, f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/*/test*/MoveDown/')
         else:
-            audio_train_dataset = VibrotactileDataset(args.type,channels,f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/vel*/MoveDown/')
-            audio_test_dataset = VibrotactileDataset(args.type,channels, f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/test*/MoveDown/')
+            audio_train_dataset = VibrotactileDataset(channels,f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/vel*/MoveDown/')
+            audio_test_dataset = VibrotactileDataset(channels, f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/test*/MoveDown/')
     else:
         if args.type == 'lego':
-            audio_dataset = VibrotactileDataset(args.type,channels, f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/{args.type}/vel*/MoveDown/')
+            audio_dataset = VibrotactileDataset(channels, f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/{args.type}/vel*/MoveDown/')
         else:
-            audio_dataset = VibrotactileDataset(args.type,channels, f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/vel*/MoveDown/')
-
+            audio_dataset = VibrotactileDataset(channels, f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/vel*/MoveDown/')
         print(len(audio_dataset))
         #split data to test and train
         #use 80% to train
         train_size = int(args.train_ratio * len(audio_dataset))
         test_size = len(audio_dataset) - train_size
         audio_train_dataset, audio_test_dataset = torch.utils.data.random_split(audio_dataset, [train_size, test_size])
+      
 
     print("Training size:", len(audio_train_dataset))
     print("Testing size:",len(audio_test_dataset))
@@ -286,7 +205,7 @@ if __name__ == '__main__':
     model = CNNet().to(device)
 
     # cost function used to determine best parameters
-    cost = torch.nn.MSELoss()
+    cost = torch.nn.CrossEntropyLoss()
 
     # used to create optimal parameters
     learning_rate = 0.0001
@@ -300,5 +219,4 @@ if __name__ == '__main__':
         test(test_dataloader, model, args.type)
     print('Done!')
 
-    summary(model, input_size=(15, num_channels*3, 201, 221))
-
+    summary(model, input_size=(15, num_channels*3, 201, 45))

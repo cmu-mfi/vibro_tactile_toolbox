@@ -33,6 +33,7 @@ class TerminatorNode:
       queue_size=1
     )
 
+    self.audio_handler_sub = rospy.Subscriber(f"/{namespace}/terminator/audio_termination_signal", TerminationSignal, self.audio_handler_cb)
     self.fts_handler_sub = rospy.Subscriber(f"/{namespace}/terminator/fts_termination_signal", TerminationSignal, self.fts_handler_cb)
     self.timeout_handler_sub = rospy.Subscriber(f"/{namespace}/terminator/time_termination_signal", TerminationSignal, self.timeout_handler_cb)
     self.joint_handler_sub = rospy.Subscriber(f"/{namespace}/terminator/joint_termination_signal", TerminationSignal, self.joint_handler_cb)
@@ -54,6 +55,11 @@ class TerminatorNode:
     self.use_audio_handler = 'audio' in cfg_json
     self.use_vision_handler = 'vision' in cfg_json
     self.published = False
+
+  def audio_handler_cb(self, audio_termination_signal: TerminationSignal):
+    if self.use_audio_handler and audio_termination_signal.id == self.id and not self.published:
+      self.termination_pub.publish(audio_termination_signal)
+      self.published = True
 
   def fts_handler_cb(self, fts_termination_signal: TerminationSignal):
     if self.use_fts_handler and fts_termination_signal.id == self.id and not self.published:

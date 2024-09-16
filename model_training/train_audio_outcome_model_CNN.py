@@ -33,7 +33,8 @@ class VibrotactileDataset(Dataset):
     self.total_length = 0
     num_channels = len(channels)
 
-    paths = glob.glob(glob_path)
+    paths = glob.glob(glob_path + 'success/audio/*.png')
+    paths += glob.glob(glob_path + 'fail/audio/*.png')
 
     print(len(paths))
     self.total_length = int(len(paths) / 4) + 1
@@ -48,12 +49,15 @@ class VibrotactileDataset(Dataset):
     for path in paths:
       current_num = int(path[path.rfind('_')+1:-4])
       if current_num % 4 == 0:
-          print(current_trial)
           label = path[path.find('MoveDown')+len('MoveDown')+1:path.find('audio')-1]
           if label == 'fail':
             self.y[current_trial,0] = 1
           elif label == 'success':
             self.y[current_trial,1] = 1
+          else:
+            continue
+
+          print(current_trial)
 
           channel_num = 0
           for channel in channels:
@@ -220,21 +224,21 @@ if __name__ == '__main__':
     num_channels = len(channels)
 
     if args.type == 'lego':
-        paths = glob.glob(f'/mnt/hdd1/vibrotactile_data/lego_dataset/*/*/test*/MoveDown/*/audio/*.png')
+        paths = glob.glob(f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/*/test*/MoveDown/success/audio/*.png')
     else:
-        paths = glob.glob(f'/mnt/hdd1/vibrotactile_data/nist_dataset/*/{args.type}/test*/MoveDown/*/audio/*.png')
-    if paths is not None:
+        paths = glob.glob(f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/test*/MoveDown/success/audio/*.png')
+    if paths is not None and len(paths) > 0:
         if args.type == 'lego':
-            audio_train_dataset = VibrotactileDataset(channels,f'/mnt/hdd1/vibrotactile_data/lego_dataset/*/*/vel*/MoveDown/*/audio/*.png')
-            audio_test_dataset = VibrotactileDataset(channels, f'/mnt/hdd1/vibrotactile_data/lego_dataset/*/*/test*/MoveDown/*/audio/*.png')
+            audio_train_dataset = VibrotactileDataset(channels,f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/*/vel*/MoveDown/')
+            audio_test_dataset = VibrotactileDataset(channels, f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/*/test*/MoveDown/')
         else:
-            audio_train_dataset = VibrotactileDataset(channels,f'/mnt/hdd1/vibrotactile_data/nist_dataset/*/{args.type}/vel*/MoveDown/*/audio/*.png')
-            audio_test_dataset = VibrotactileDataset(channels, f'/mnt/hdd1/vibrotactile_data/nist_dataset/*/{args.type}/test*/MoveDown/*/audio/*.png')
+            audio_train_dataset = VibrotactileDataset(channels,f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/vel*/MoveDown/')
+            audio_test_dataset = VibrotactileDataset(channels, f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/test*/MoveDown/')
     else:
         if args.type == 'lego':
-            audio_dataset = VibrotactileDataset(channels, f'/mnt/hdd1/vibrotactile_data/lego_dataset/*/{args.type}/vel*/MoveDown/*/audio/*.png')
+            audio_dataset = VibrotactileDataset(channels, f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/{args.type}/vel*/MoveDown/')
         else:
-            audio_dataset = VibrotactileDataset(channels, f'/mnt/hdd1/vibrotactile_data/nist_dataset/*/{args.type}/vel*/MoveDown/*/audio/*.png')
+            audio_dataset = VibrotactileDataset(channels, f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/vel*/MoveDown/')
         print(len(audio_dataset))
         #split data to test and train
         #use 80% to train
@@ -250,14 +254,12 @@ if __name__ == '__main__':
     train_dataloader = torch.utils.data.DataLoader(
         audio_train_dataset,
         batch_size=64,
-        num_workers=2,
         shuffle=True
     )
 
     test_dataloader = torch.utils.data.DataLoader(
         audio_test_dataset,
         batch_size=64,
-        num_workers=2,
         shuffle=True
     )
 

@@ -1,17 +1,7 @@
-
-waterproof_world_pick_tf: "/transforms/waterproof_world_pick.tf"
-waterproof_world_place_tf: "/transforms/waterproof_world_place.tf"
-waterproof_world_place_reset_tf: "/transforms/waterproof_world_place_reset.tf"
-waterproof_world_reset_x_tf: "/transforms/waterproof_world_reset_x.tf"
-waterproof_world_reset_y_tf: "/transforms/waterproof_world_reset_y.tf"
-dsub_world_pick_tf: "/transforms/dsub_world_pick.tf"
-dsub_world_place_tf: "/transforms/dsub_world_place.tf"
-dsub_world_place_reset_tf: "/transforms/dsub_world_place_reset.tf"
-dsub_world_reset_x_tf: "/transforms/dsub_world_reset_x.tf"
-dsub_world_reset_y_tf: "/transforms/dsub_world_reset_y.tf"
 transforms_dir: "/transforms/"
 hande_ee_tf: "hande_ee.tf"
 data_dir: "/mnt/hdd1/vibrotactile_data/nist/"
+model_dir: "/models/"
 x_range:
   - -0.005
   - 0.005
@@ -33,8 +23,6 @@ velocity_scaling_large_movements: 0.5
 audio_detector:
   namespace: namespace
   topic_name: '/namespace/audio'
-  dsub_model_path: '/home/mfi/repos/ros1_ws/src/kevin/vibro_tactile_toolbox/models/audio_outcome_dsub.pt'
-  waterproof_model_path: '/home/mfi/repos/ros1_ws/src/kevin/vibro_tactile_toolbox/models/audio_outcome_waterproof.pt'
 fts_detector:
   namespace: namespace
   topic_name: '/namespace/fts'

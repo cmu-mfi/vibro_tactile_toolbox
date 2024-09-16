@@ -11,7 +11,7 @@ NUM_RESAMPLES=10
 
 # Define the base paths
 BASE_TARGET_DIR="/mnt/hdd1/vibrotactile_data/lego/volume_"
-BASE_TARGET_DST="/mnt/hdd1/vibrotactile_data/lego_dataset/volume_"
+BASE_TARGET_DST="/home/mfi/Documents/vibrotactile_data/lego_dataset/volume_"
 
 # Iterate through each combination of volume, brick, and velocity
 for VOL in "${VOLS[@]}"; do
@@ -23,8 +23,9 @@ for VOL in "${VOLS[@]}"; do
         TARGET_DST="${BASE_TARGET_DST}${VOL}/${BRICK}/${DATA_TYPE}${VEL}"
         
         # Call the python script with the constructed paths
-        python scripts/parse_rosbag.py -w "$TARGET_DIR" -d "$TARGET_DIR" -n ${ROBOT_NAME}
-        python model_training/create_training_dataset.py -s "$TARGET_DIR" -d "$TARGET_DST" -t ${TYPE} -n ${NUM_RESAMPLES}
+        #python scripts/parse_rosbag.py -w "$TARGET_DIR" -d "$TARGET_DIR" -n ${ROBOT_NAME}
+        #python model_training/create_outcome_training_dataset.py -s "$TARGET_DIR" -d "$TARGET_DST" -t ${TYPE} -n ${NUM_RESAMPLES}
+        python model_training/create_terminator_training_dataset.py -s "$TARGET_DIR" -d "$TARGET_DST" -t ${TYPE} -n ${NUM_RESAMPLES}
       done
     done
   done
