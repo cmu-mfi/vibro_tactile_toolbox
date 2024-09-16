@@ -6,6 +6,8 @@
     <arg name="block_type" default="4x1"/>
     <arg name="velocity_scale" default="0.01"/>
     <arg name="volume" default="75"/>
+    <arg name="demo" default="true"/>
+    <arg name="use_audio_terminator" default="false"/>
     <arg name="config" default="lego.yaml"/>
     <group ns="$(arg namespace)">
         <node pkg="vibro_tactile_toolbox" name="test_lego_audio_outcome" type="test_lego_audio_outcome.py" output="screen">
@@ -16,6 +18,8 @@
             <param name="block_type" value="$(arg block_type)"/>
             <param name="velocity_scale" value="$(arg velocity_scale)"/>
             <param name="volume" value="$(arg volume)"/>
+            <param name="demo" value="$(arg demo)"/>
+            <param name="use_audio_terminator" value="$(arg use_audio_terminator)"/>
             <param name="verbose" value="$(arg verbose)"/>
             <param name="config" value="$(arg config)"/>
         </node>

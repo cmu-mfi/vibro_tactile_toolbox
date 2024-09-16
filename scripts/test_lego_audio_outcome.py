@@ -11,7 +11,7 @@ from autolab_core import RigidTransform
 
 from skill.lego_skills import *
 from skill.util_skills import GoHomeSkill
-from outcome.lego_outcome import *
+from outcome.outcome import *
 
 from data_recorder.rosbag_data_recorder import RosbagDataRecorder
 
@@ -65,6 +65,8 @@ def run():
     block_type = rospy.get_param("test_lego_audio_outcome/block_type")
     volume = rospy.get_param("test_lego_audio_outcome/volume")
     velocity_scale = rospy.get_param("test_lego_audio_outcome/velocity_scale")
+    demo = rospy.get_param("test_nist_audio_outcome_node/demo")
+    use_audio_terminator = rospy.get_param("test_nist_audio_outcome_node/use_audio_terminator")
     verbose = rospy.get_param("test_lego_audio_outcome/verbose")
 
     with open(root_pwd+'/config/'+yaml_file) as stream:
@@ -80,14 +82,20 @@ def run():
             if 'topic_name' in config[key]:
                 config[key]['topic_name'] = config[key]['topic_name'].replace("namespace", namespace)
 
-    data_dir = config['data_dir']+'volume_'+str(volume)+'/'+block_type+'/test_vel_'+str(velocity_scale)+'/'
+    data_type = ''
+    if demo:
+        data_type = 'demo'
+    else:
+        data_type = 'test'
+
+    data_dir = config['data_dir']+'volume_'+str(volume)+'/'+block_type+'/'+data_type+'_vel_'+str(velocity_scale)+'/'
 
     if not os.path.exists(config['data_dir']+'volume_'+str(volume)):
         os.mkdir(config['data_dir']+'volume_'+str(volume))
     if not os.path.exists(config['data_dir']+'volume_'+str(volume)+'/'+block_type):
         os.mkdir(config['data_dir']+'volume_'+str(volume)+'/'+block_type)
-    if not os.path.exists(config['data_dir']+'volume_'+str(volume)+'/'+block_type+'/test_vel_'+str(velocity_scale)):
-        os.mkdir(config['data_dir']+'volume_'+str(volume)+'/'+block_type+'/test_vel_'+str(velocity_scale))    
+    if not os.path.exists(config['data_dir']+'volume_'+str(volume)+'/'+block_type+'/'+data_type+'_vel_'+str(velocity_scale)):
+        os.mkdir(config['data_dir']+'volume_'+str(volume)+'/'+block_type+'/'+data_type+'_vel_'+str(velocity_scale))    
 
     if str(velocity_scale) == '0.01':
         move_down_velocity_scaling = 0.01
@@ -97,6 +105,11 @@ def run():
         move_down_velocity_scaling = 0.05
     elif str(velocity_scale) == 'random':
         move_down_velocity_scaling = -1
+
+    outcome_config = config['audio_detector'].copy()
+    outcome_config['model_path'] = root_pwd+config['model_dir']+'audio_outcome_lego.pt'
+    recovery_config = config['audio_detector'].copy()
+    recovery_config['model_path'] = root_pwd+config['model_dir']+'audio_recovery_lego.pt'
 
     # Instantiate robot controller for Yaskawa API
     robot_commander = YaskawaRobotController(namespace)
@@ -149,6 +162,7 @@ def run():
         x_perturb = np.random.uniform(config['x_range'][0], config['x_range'][1])
         y_perturb = np.random.uniform(config['y_range'][0], config['y_range'][1])
         theta_perturb = np.random.uniform(config['theta_range'][0], config['theta_range'][1])
+        print(f"Ground truth perturb values: {x_perturb}, {y_perturb}, {theta_perturb}")
 
         if move_down_velocity_scaling == -0.1:
             move_down_velocity_scaling = np.random.uniform(0.01, 0.1)
@@ -182,6 +196,8 @@ def run():
             'height_offset': config['approach_height'],
             'velocity_scaling': move_down_velocity_scaling
         }
+        if use_audio_terminator:
+            move_down_params['model_path'] = root_pwd+config['model_dir']+'audio_terminator_lego.pt'
 
         execution_params = {
             'skill_step_delay': 2.0
@@ -199,7 +215,8 @@ def run():
 
         terminals = move_to_above_perturb_lego_skill.execute_skill(execution_params, move_to_above_perturb_lego_params)
 
-        outcomes = send_start_outcome_request({k: config[k] for k in ('fts_detector', 'lego_detector')})
+        start_fts_outcome = send_start_fts_outcome_request(config['fts_detector'])
+        outcomes = send_start_vision_outcome_request(config['lego_detector'])
 
         if outcomes['starting_top'] == 1 and outcomes['starting_bottom'] == 0:
             skill_type = "place"
@@ -219,7 +236,7 @@ def run():
 
         terminals = move_down_skill.execute_skill(execution_params, move_down_params)
 
-        audio_outcomes = send_audio_outcome_request(config['audio_detector'], terminals[0].stamp)
+        audio_outcomes = send_audio_outcome_request(outcome_config, terminals[0].stamp)
 
         print(audio_outcomes['success'])
 
@@ -227,10 +244,15 @@ def run():
 
         outcomes = send_end_fts_outcome_request(config['fts_detector'])
 
-        if outcomes['success'] == False:
+        if (demo and audio_outcome['success'] == False) or (not demo and outcomes['success'] == False):
             terminals = move_to_above_lego_pose_skill.execute_skill(execution_params, move_to_above_lego_params)
 
-            outcomes = send_start_outcome_request({k: config[k] for k in ('fts_detector', 'lego_detector')})
+            audio_recovery = send_audio_outcome_request(recovery_config, terminals[0].stamp)
+
+            print(audio_recovery['result'])
+
+            start_fts_outcome = send_start_fts_outcome_request(config['fts_detector'])
+            outcomes = send_start_vision_outcome_request(config['lego_detector'])
 
             if outcomes['starting_top'] == 1 and outcomes['starting_bottom'] == 0:
                 skill_type = "place"
@@ -250,7 +272,7 @@ def run():
 
             terminals = move_down_skill.execute_skill(execution_params, move_down_params)
 
-            audio_outcomes = send_audio_outcome_request(config['audio_detector'], terminals[0].stamp)
+            audio_outcomes = send_audio_outcome_request(outcome_config, terminals[0].stamp)
 
             print(audio_outcomes['success'])
 
@@ -258,7 +280,7 @@ def run():
 
             outcomes = send_end_fts_outcome_request(config['fts_detector'])
 
-        if outcomes['success'] == False:
+        if (demo and audio_outcome['success'] == False) or (not demo and outcomes['success'] == False):
             print("Failed to pull up lego. Skipping trial")
             data_recorder.stop_recording()
 

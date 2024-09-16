@@ -11,7 +11,7 @@ from autolab_core import RigidTransform
 
 from skill.nist_skills import *
 from skill.util_skills import GoHomeSkill
-from outcome.nist_outcome import *
+from outcome.outcome import *
 
 from data_recorder.rosbag_data_recorder import RosbagDataRecorder
 
@@ -246,7 +246,7 @@ def run():
                 terminals = push_down_skill.execute_skill(execution_params, push_down_params)
 
         else:    
-            outcomes = send_start_outcome_request(config['fts_detector'])
+            outcomes = send_start_fts_outcome_request(config['fts_detector'])
 
             terminals = pull_up_skill.execute_skill(execution_params, pull_up_params)
 
@@ -262,7 +262,7 @@ def run():
 
                 print(audio_outcomes['success'])
 
-                outcomes = send_start_outcome_request(config['fts_detector'])
+                outcomes = send_start_fts_outcome_request(config['fts_detector'])
 
                 terminals = pull_up_skill.execute_skill(execution_params, pull_up_params)
 

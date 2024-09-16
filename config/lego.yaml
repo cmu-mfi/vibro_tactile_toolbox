@@ -25,7 +25,6 @@ pick_rotation: 15
 audio_detector:
   namespace: namespace
   topic_name: '/namespace/audio'
-  model_path: '/home/mfi/repos/ros1_ws/src/kevin/vibro_tactile_toolbox/models/audio_outcome_lego.pt'
 fts_detector:
   namespace: namespace
   topic_name: '/namespace/fts'

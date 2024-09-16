@@ -2,12 +2,12 @@
 
 # Define the arrays for volumes, connectors, and velocities
 VOLS=(75)
-CONNECTORS=("dsub" "waterproof")
+CONNECTORS=("dsub" "waterproof" "usb" "ethernet")
 #"dsub" "waterproof" 
 #"usb" "ethernet"
-VELS=(0.02)
+VELS=(0.01 0.02)
 #0.01 0.02
-TRAIN_VS_TEST=("vel_")
+TRAIN_VS_TEST=("vel_" "test_vel_")
 #"vel_" "test_vel_"
 ROBOT_NAME="yk_builder"
 TYPE="nist"
@@ -27,8 +27,8 @@ for VOL in "${VOLS[@]}"; do
         TARGET_DST="${BASE_TARGET_DST}${VOL}/${CONNECTOR}/${DATA_TYPE}${VEL}"
         
         # Call the python script with the constructed paths
-        #python scripts/parse_rosbag.py -w "$TARGET_DIR" -d "$TARGET_DIR" -n ${ROBOT_NAME}
-        #python model_training/create_outcome_training_dataset.py -s "$TARGET_DIR" -d "$TARGET_DST" -t ${TYPE} -n ${NUM_RESAMPLES}
+        python scripts/parse_rosbag.py -w "$TARGET_DIR" -d "$TARGET_DIR" -n ${ROBOT_NAME}
+        python model_training/create_outcome_training_dataset.py -s "$TARGET_DIR" -d "$TARGET_DST" -t ${TYPE} -n ${NUM_RESAMPLES}
         python model_training/create_terminator_training_dataset.py -s "$TARGET_DIR" -d "$TARGET_DST" -t ${TYPE} -n ${NUM_RESAMPLES}
       done
     done

@@ -11,7 +11,7 @@ from autolab_core import RigidTransform
 
 from skill.lego_skills import PullUp, MoveToAboveLegoPose, MoveToAbovePerturbLegoPose, PickLego, PlaceLego, MoveDown
 from skill.util_skills import GoHomeSkill
-from outcome.lego_outcome import *
+from outcome.outcome import *
 
 from data_recorder.rosbag_data_recorder import RosbagDataRecorder
 
@@ -200,7 +200,8 @@ def run():
 
         terminals = move_to_above_perturb_lego_skill.execute_skill(execution_params, move_to_above_perturb_lego_params)
 
-        outcomes = send_start_outcome_request({k: config[k] for k in ('fts_detector', 'lego_detector')})
+        start_fts_outcome = send_start_fts_outcome_request(config['fts_detector'])
+        outcomes = send_start_vision_outcome_request(config['lego_detector'])
 
         if outcomes['starting_top'] == 1 and outcomes['starting_bottom'] == 0:
             skill_type = "place"
@@ -227,7 +228,8 @@ def run():
         if outcomes['success'] == False:
             terminals = move_to_above_lego_pose_skill.execute_skill(execution_params, move_to_above_lego_params)
 
-            outcomes = send_start_outcome_request({k: config[k] for k in ('fts_detector', 'lego_detector')})
+            start_fts_outcome = send_start_fts_outcome_request(config['fts_detector'])
+            outcomes = send_start_vision_outcome_request(config['lego_detector'])
 
             if outcomes['starting_top'] == 1 and outcomes['starting_bottom'] == 0:
                 skill_type = "place"
