@@ -1,13 +1,13 @@
 <launch>
     <arg name="namespace" default="yk_builder"/>
-    <arg name="num_trials" default="10"/>
+    <arg name="num_trials" default="2"/>
     <arg name="start_num" default="1"/>
     <arg name="verbose" default="true"/>
-    <arg name="connector_type" default="usb"/>
+    <arg name="connector_type" default="waterproof"/>
     <arg name="velocity_scale" default="0.01"/>
     <arg name="volume" default="75"/>
-    <arg name="reset" default="false"/>
-    <arg name="lift" default="true"/>
+    <arg name="reset" default="true"/>
+    <arg name="lift" default="false"/>
     <arg name="demo" default="true"/>
     <arg name="use_audio_terminator" default="false"/>
     <arg name="config" default="nist.yaml"/>

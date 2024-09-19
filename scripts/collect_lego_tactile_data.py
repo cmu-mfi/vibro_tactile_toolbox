@@ -103,15 +103,15 @@ def run():
     gripper_controller = LegoGripperController(namespace)
 
     # Load End-Effector Kinematics
-    T_lego_ee = RigidTransform.load(root_pwd+config['lego_ee_tf'])
+    T_lego_ee = RigidTransform.load(root_pwd+config['transforms_dir']+config['lego_ee_tf'])
 
     # Load Lego block registration pose 
     T_lego_world = {}
 
-    for tf in os.listdir(root_pwd+config['lego_world_tf']):
+    for tf in os.listdir(root_pwd+config['transforms_dir']+config['lego_world_tf']):
         x_loc = tf.split('_')[2]
         y_loc = tf.split('_')[3][:-3]
-        T_lego_world[x_loc+','+y_loc] = RigidTransform.load(root_pwd+config['lego_world_tf']+tf)
+        T_lego_world[x_loc+','+y_loc] = RigidTransform.load(root_pwd+config['transforms_dir']+config['lego_world_tf']+tf)
 
     block_x_loc = np.random.randint(config['block_x_range'][0], config['block_x_range'][1])
     block_y_loc = np.random.randint(config['block_y_range'][0], config['block_y_range'][1])
@@ -145,7 +145,7 @@ def run():
     # Tasks to do
     for trial_num in range(start_num, start_num+num_trials):
         # Load temporary lego block registration pose 
-        tmp_T_lego_world = RigidTransform.load(root_pwd+config['tmp_lego_world_tf'])
+        tmp_T_lego_world = RigidTransform.load(root_pwd+config['transforms_dir']+config['tmp_lego_world_tf'])
 
         x_perturb = np.random.uniform(config['x_range'][0], config['x_range'][1])
         y_perturb = np.random.uniform(config['y_range'][0], config['y_range'][1])
@@ -268,7 +268,7 @@ def run():
 
                 tmp_T_lego_world = determine_next_pose(T_lego_world, block_x_loc, block_y_loc)
 
-                tmp_T_lego_world.save(root_pwd+config['tmp_lego_world_tf'])
+                tmp_T_lego_world.save(root_pwd+config['transforms_dir']+config['tmp_lego_world_tf'])
 
             terminals = home_skill.execute_skill(None)
             continue

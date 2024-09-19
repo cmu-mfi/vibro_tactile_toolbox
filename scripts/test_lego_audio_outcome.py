@@ -65,8 +65,8 @@ def run():
     block_type = rospy.get_param("test_lego_audio_outcome/block_type")
     volume = rospy.get_param("test_lego_audio_outcome/volume")
     velocity_scale = rospy.get_param("test_lego_audio_outcome/velocity_scale")
-    demo = rospy.get_param("test_nist_audio_outcome_node/demo")
-    use_audio_terminator = rospy.get_param("test_nist_audio_outcome_node/use_audio_terminator")
+    demo = rospy.get_param("test_lego_audio_outcome/demo")
+    use_audio_terminator = rospy.get_param("test_lego_audio_outcome/use_audio_terminator")
     verbose = rospy.get_param("test_lego_audio_outcome/verbose")
 
     with open(root_pwd+'/config/'+yaml_file) as stream:
@@ -116,15 +116,15 @@ def run():
     gripper_controller = LegoGripperController(namespace)
 
     # Load End-Effector Kinematics
-    T_lego_ee = RigidTransform.load(root_pwd+config['lego_ee_tf'])
+    T_lego_ee = RigidTransform.load(root_pwd+config['transforms_dir']+config['lego_ee_tf'])
 
     # Load Lego block registration pose 
     T_lego_world = {}
 
-    for tf in os.listdir(root_pwd+config['lego_world_tf']):
+    for tf in os.listdir(root_pwd+config['transforms_dir']+config['lego_world_tf']):
         x_loc = tf.split('_')[2]
         y_loc = tf.split('_')[3][:-3]
-        T_lego_world[x_loc+','+y_loc] = RigidTransform.load(root_pwd+config['lego_world_tf']+tf)
+        T_lego_world[x_loc+','+y_loc] = RigidTransform.load(root_pwd+config['transforms_dir']+config['lego_world_tf']+tf)
 
     block_x_loc = np.random.randint(config['block_x_range'][0], config['block_x_range'][1])
     block_y_loc = np.random.randint(config['block_y_range'][0], config['block_y_range'][1])
@@ -157,7 +157,7 @@ def run():
 
     for trial_num in range(start_num, start_num+num_trials):
         # Load temporary lego block registration pose 
-        tmp_T_lego_world = RigidTransform.load(root_pwd+config['tmp_lego_world_tf'])
+        tmp_T_lego_world = RigidTransform.load(root_pwd+config['transforms_dir']+config['tmp_lego_world_tf'])
 
         x_perturb = np.random.uniform(config['x_range'][0], config['x_range'][1])
         y_perturb = np.random.uniform(config['y_range'][0], config['y_range'][1])
@@ -244,12 +244,12 @@ def run():
 
         outcomes = send_end_fts_outcome_request(config['fts_detector'])
 
-        if (demo and audio_outcome['success'] == False) or (not demo and outcomes['success'] == False):
+        if (demo and audio_outcomes['success'] == False) or (not demo and outcomes['success'] == False):
             terminals = move_to_above_lego_pose_skill.execute_skill(execution_params, move_to_above_lego_params)
 
-            audio_recovery = send_audio_outcome_request(recovery_config, terminals[0].stamp)
+            # audio_recovery = send_audio_outcome_request(recovery_config, terminals[0].stamp)
 
-            print(audio_recovery['result'])
+            # print(audio_recovery['result'])
 
             start_fts_outcome = send_start_fts_outcome_request(config['fts_detector'])
             outcomes = send_start_vision_outcome_request(config['lego_detector'])
@@ -280,7 +280,7 @@ def run():
 
             outcomes = send_end_fts_outcome_request(config['fts_detector'])
 
-        if (demo and audio_outcome['success'] == False) or (not demo and outcomes['success'] == False):
+        if (demo and audio_outcomes['success'] == False) or (not demo and outcomes['success'] == False):
             print("Failed to pull up lego. Skipping trial")
             data_recorder.stop_recording()
 
@@ -295,7 +295,7 @@ def run():
 
                 tmp_T_lego_world = determine_next_pose(T_lego_world, block_x_loc, block_y_loc)
 
-                tmp_T_lego_world.save(root_pwd+config['tmp_lego_world_tf'])
+                tmp_T_lego_world.save(root_pwd+config['transforms_dir']+config['tmp_lego_world_tf'])
 
             terminals = home_skill.execute_skill(None)
             continue

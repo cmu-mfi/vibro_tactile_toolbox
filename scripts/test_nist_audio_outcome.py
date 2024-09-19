@@ -233,8 +233,8 @@ def run():
         if demo:
             if audio_outcomes['success'] == False:
 
-                audio_recovery = send_audio_outcome_request(recovery_config, terminals[0].stamp)
-                print(audio_recovery['result'])
+                # audio_recovery = send_audio_outcome_request(recovery_config, terminals[0].stamp)
+                # print(audio_recovery['result'])
         
                 terminals = move_to_above_connector_pose_skill.execute_skill(execution_params, move_to_above_perturb_connector_params)
 
@@ -278,12 +278,13 @@ def run():
 
         rospy.sleep(1)
 
-        if outcomes['success'] == False:
-            labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_success.bag"
-            os.rename(rosbag_path, labeled_rosbag_path)
-        else:
-            labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_failure.bag"
-            os.rename(rosbag_path, labeled_rosbag_path)
+        if not demo:
+            if outcomes['success'] == False:
+                labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_success.bag"
+                os.rename(rosbag_path, labeled_rosbag_path)
+            else:
+                labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_failure.bag"
+                os.rename(rosbag_path, labeled_rosbag_path)
         
         if reset:
             place_connector_reset_skill.execute_skill(execution_params)
