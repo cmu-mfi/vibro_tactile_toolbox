@@ -34,10 +34,8 @@ import cv2
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print('Using {} device'.format(device))
 
-channels = [0,1,2,3]
-num_channels = len(channels)
 
-def segment_audio(audio_data, sample_rate, t_start, t_end):
+def segment_audio(channels, audio_data, sample_rate, t_start, t_end):
     """
     Segment audio and save spectrogram images
     
@@ -50,7 +48,7 @@ def segment_audio(audio_data, sample_rate, t_start, t_end):
     
     audio_segment = audio_data[:,start_idx:end_idx]
     rgb_images = []
-    for ch_num in range(num_channels):
+    for ch_num in channels:
         channel_audio_segment = audio_segment[ch_num,:]
         transform = torchaudio.transforms.Spectrogram()
         spec_tensor = transform(torch.from_numpy(channel_audio_segment))
@@ -137,15 +135,17 @@ class AudioDetector:
         self.model.eval()
         self.model.to(device)
 
-        audio_segment, rgb_images = self.audio_buffer.get_audio_segment(req.stamp, 0.7, 0.3)
+        num_channels = len(req.channels)
+
+        audio_segment, rgb_images = self.audio_buffer.get_audio_segment(req.channels, req.stamp, 0.7, 0.3)
 
         X = torch.zeros([1,3*num_channels,201,221])
 
         combined_image = np.zeros((num_channels*201,221,3), dtype=np.uint8)
-        for channel in range(num_channels):
+        for channel in req.channels:
             opencv_image = cv2.cvtColor(np.array(rgb_images[channel]), cv2.COLOR_RGBA2RGB)
             pil_image = Image.fromarray(opencv_image)
-            #pil_image.save(f'/mnt/hdd1/test_{channel}.png')
+            pil_image.save(f'/home/mfi/Documents/debug_audio_detector/{req.id}_{channel}.png')
             X[:,channel*3:(channel+1)*3,:,:] = transforms.ToTensor()(pil_image)
             cv_image = cv2.cvtColor(np.array(rgb_images[channel]), cv2.COLOR_RGBA2BGR)
             combined_image[channel*201:(channel+1)*201,:,:] = cv_image

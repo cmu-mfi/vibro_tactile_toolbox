@@ -1,6 +1,7 @@
 int32 id
 string topic_name
 time stamp
+int32[] channels
 string model_path
 ---
 int32 id

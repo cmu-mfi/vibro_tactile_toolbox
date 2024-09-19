@@ -143,8 +143,9 @@ def send_audio_outcome_request(params, timestamp):
     try:
         detect_audio = rospy.ServiceProxy(f"/{namespace}/audio_detector", AudioOutcome)
         audio_req = AudioOutcomeRequest()
-        audio_req.id = 0
-        audio_req.topic_name = params['topic_name']  
+        audio_req.id = round(timestamp.to_sec())
+        audio_req.topic_name = params['topic_name'] 
+        audio_req.channels = [0,1,2,3] 
         audio_req.stamp = timestamp
         audio_req.model_path = params['model_path'] 
         
