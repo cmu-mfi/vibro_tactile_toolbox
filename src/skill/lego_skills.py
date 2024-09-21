@@ -103,7 +103,8 @@ def add_termination_pose_and_audio_model(termination_config, pose : Pose, model_
     t_cfg['pose']['pose'] = t_utils.pose_to_dict(pose)
     if model_path is not None:
         t_cfg['audio'] = {'check_rate_ns': 1E7,
-                          'model_path': model_path}
+                          'model_path': model_path,
+                          'channels': [0,1,2,3]}
     return t_cfg
 
 

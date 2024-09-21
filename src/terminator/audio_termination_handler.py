@@ -29,13 +29,13 @@ from terminator.base_termination_handler import BaseTerminationHandler
 
 import terminator.utils as t_utils
 
+import librosa
+
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print('Using {} device'.format(device))
 
-channels = [0,1,2,3]
-num_channels = len(channels)
 
-def segment_audio(audio_data, sample_rate, t_start, t_end):
+def segment_audio(channels, audio_data, sample_rate, t_start, t_end):
     """
     Segment audio and save spectrogram images
     
@@ -48,21 +48,12 @@ def segment_audio(audio_data, sample_rate, t_start, t_end):
     
     audio_segment = audio_data[:,start_idx:end_idx]
     rgb_images = []
-    for ch_num in range(num_channels):
+    for ch_num in channels:
         channel_audio_segment = audio_segment[ch_num,:]
-        transform = torchaudio.transforms.Spectrogram()
-        spec_tensor = transform(torch.from_numpy(channel_audio_segment))
-        spec_np = spec_tensor.log2().numpy()
-        spec_np = np.flipud(spec_np)
 
-        # Begin from matplotlib.image.imsave
-        sm = cm.ScalarMappable(cmap='viridis')
-        sm.set_clim(None, None)
-        rgba = sm.to_rgba(spec_np, bytes=True)
-        pil_shape = (rgba.shape[1], rgba.shape[0])
-        image_rgb = Image.frombuffer(
-                "RGBA", pil_shape, rgba, "raw", "RGBA", 0, 1)
-        rgb_images.append(image_rgb)
+        S = librosa.feature.melspectrogram(y=channel_audio_segment, sr=sample_rate, n_mels=256)
+        S_dB = librosa.power_to_db(S, ref=np.max)
+        rgb_images.append(S_dB)
 
         # End from matplotlib.image.imsave
 
@@ -81,23 +72,25 @@ class AudioBuffer:
         audio_samples = (msg.header.stamp.to_sec(), np.asarray(msg.data).reshape((-1,self.num_channels)).transpose())
         self.buffer.append(audio_samples)
 
-    def get_audio_segment(self, t_target, time_offset, audio_segment_length=0.2):
+    def get_audio_segment(self, channels, t_target, lagging_buffer=0.5, leading_buffer=0.5):
         # Convert buffer to a numpy array for processing
         # find t_target
-        # find t_target - time_offset
-        # find t_target + audio_segment_length
-        start_time = t_target - rospy.Duration(time_offset)
+        # find t_target - lagging_buffer
+        # find t_target + leading_buffer
+        start_time = t_target - rospy.Duration(lagging_buffer)
 
         current_buffer = list(self.buffer)
 
         timestamps = [stamp for (stamp, _) in current_buffer]
 
         closest_timestamp_index = np.argmin(np.abs(np.array(timestamps) - start_time.to_sec()))
+        print(start_time.to_sec())
+        print(current_buffer[closest_timestamp_index][0])
 
         audio_buffer = np.hstack(tuple([buffer for (stamp,buffer) in current_buffer[closest_timestamp_index:]]))
         
         # Process the audio data as needed
-        audio_segment, rgb_images = segment_audio(audio_buffer, self.sample_rate, 0.0, audio_segment_length)
+        audio_segment, rgb_images = segment_audio(channels, audio_buffer, self.sample_rate, 0.0, lagging_buffer+leading_buffer)
         return audio_segment, rgb_images
 
 
@@ -113,7 +106,7 @@ class AudioTerminationHandler(BaseTerminationHandler):
         self.input_data_class = AudioData
         self.check_rate_ns = 10E6 # 10 ms default
         self.model = None
-
+        self.channels = [0,1,2,3]
 
     def update_config(self, cfg: TerminationConfig):
         """
@@ -134,6 +127,8 @@ class AudioTerminationHandler(BaseTerminationHandler):
                 self.model = torch.jit.load(audio_cfg['model_path'])
                 self.model.eval()
                 self.model.to(device)
+            if 'channels' in audio_cfg:
+                self.channels = audio_cfg['channels']
         else:
             self.live = False
     
@@ -150,18 +145,23 @@ class AudioTerminationHandler(BaseTerminationHandler):
         terminate = False
         cause = ''
 
-        audio_segment, rgb_images = self.audio_buffer.get_audio_segment(rospy.Time.now(), 0.52, 0.5)
+        audio_segment, rgb_images = self.audio_buffer.get_audio_segment(self.channels, rospy.Time.now(), 0.52, 0.5)
 
-        X = torch.zeros([1,3*num_channels,201,111])
+        X = torch.zeros([1,num_channels,256,44])
 
-        combined_image = np.zeros((num_channels*201,111,3), dtype=np.uint8)
-        for channel in range(num_channels):
-            opencv_image = cv2.cvtColor(np.array(rgb_images[channel]), cv2.COLOR_RGBA2RGB)
-            pil_image = Image.fromarray(opencv_image)
-            #pil_image.save(f'/mnt/hdd1/test_{channel}.png')
-            X[:,channel*3:(channel+1)*3,:,:] = transforms.ToTensor()(pil_image)
-            cv_image = cv2.cvtColor(np.array(rgb_images[channel]), cv2.COLOR_RGBA2BGR)
-            combined_image[channel*201:(channel+1)*201,:,:] = cv_image
+        for channel in req.channels:
+            X[:,channel,:,:] = torch.from_numpy(rgb_images[channel])
+
+        # X = torch.zeros([1,3*num_channels,201,111])
+
+        # combined_image = np.zeros((num_channels*201,111,3), dtype=np.uint8)
+        # for channel in range(num_channels):
+        #     opencv_image = cv2.cvtColor(np.array(rgb_images[channel]), cv2.COLOR_RGBA2RGB)
+        #     pil_image = Image.fromarray(opencv_image)
+        #     #pil_image.save(f'/mnt/hdd1/test_{channel}.png')
+        #     X[:,channel*3:(channel+1)*3,:,:] = transforms.ToTensor()(pil_image)
+        #     cv_image = cv2.cvtColor(np.array(rgb_images[channel]), cv2.COLOR_RGBA2BGR)
+        #     combined_image[channel*201:(channel+1)*201,:,:] = cv_image
 
         X = X.to(device)
         pred = self.model(X)

@@ -13,10 +13,15 @@ import soundfile as sf
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from PIL import Image
+import librosa
+import torch
 
+import matplotlib
+matplotlib.use('Agg')
 import torchaudio
 
 AUDIO_NAME = 'audio.wav'
+AUDIO_NPY_NAME = 'audio.npy'
 FTS_NAME = 'fts.npy'
 SIDE_CAM_NAME = 'side_camera.mp4'
 WRIST_CAM_NAME = 'wrist_camera.mp4'
@@ -84,21 +89,27 @@ def segment_audio(audio_data, sample_rate, t_start, t_end, audio_segment_length=
         
         for ch_num in range(num_channels):
             channel_audio_segment = current_audio_segment[ch_num,:]
-            transform = torchaudio.transforms.Spectrogram()
-            spec_tensor = transform(channel_audio_segment)
-            spec_np = spec_tensor.log2().numpy()
-            spec_np = np.flipud(spec_np)
+            S = librosa.feature.melspectrogram(y=channel_audio_segment, sr=sample_rate, n_mels=256)
+            S_dB = librosa.power_to_db(S, ref=np.max)
 
-            # Begin from matplotlib.image.imsave
-            sm = cm.ScalarMappable(cmap='viridis')
-            sm.set_clim(None, None)
-            rgba = sm.to_rgba(spec_np, bytes=True)
-            pil_shape = (rgba.shape[1], rgba.shape[0])
-            image_rgb = Image.frombuffer(
-                    "RGBA", pil_shape, rgba, "raw", "RGBA", 0, 1)
-            nominal_rgb_images.append(image_rgb)
+            nominal_rgb_images.append(S_dB)
+            # transform = torchaudio.transforms.Spectrogram()
+            # spec_tensor = transform(channel_audio_segment)
+            # spec_np = spec_tensor.log2().numpy()
+            # spec_np = np.flipud(spec_np)
+
+            # # Begin from matplotlib.image.imsave
+            # sm = cm.ScalarMappable(cmap='viridis')
+            # sm.set_clim(None, None)
+            # rgba = sm.to_rgba(spec_np, bytes=True)
+            # pil_shape = (rgba.shape[1], rgba.shape[0])
+            # image_rgb = Image.frombuffer(
+            #         "RGBA", pil_shape, rgba, "raw", "RGBA", 0, 1)
+            # nominal_rgb_images.append(image_rgb)
 
             # End from matplotlib.image.imsave
+
+    audio_segment = torch.from_numpy(audio_segment)
 
     for i in range(num_terminate):
         random_start = np.random.random()*(terminate_time_length) + terminate_start_time
@@ -111,19 +122,25 @@ def segment_audio(audio_data, sample_rate, t_start, t_end, audio_segment_length=
         
         for ch_num in range(num_channels):
             channel_audio_segment = current_audio_segment[ch_num,:]
-            transform = torchaudio.transforms.Spectrogram()
-            spec_tensor = transform(channel_audio_segment)
-            spec_np = spec_tensor.log2().numpy()
-            spec_np = np.flipud(spec_np)
 
-            # Begin from matplotlib.image.imsave
-            sm = cm.ScalarMappable(cmap='viridis')
-            sm.set_clim(None, None)
-            rgba = sm.to_rgba(spec_np, bytes=True)
-            pil_shape = (rgba.shape[1], rgba.shape[0])
-            image_rgb = Image.frombuffer(
-                    "RGBA", pil_shape, rgba, "raw", "RGBA", 0, 1)
-            terminate_rgb_images.append(image_rgb)
+            S = librosa.feature.melspectrogram(y=channel_audio_segment, sr=sample_rate, n_mels=256)
+            S_dB = librosa.power_to_db(S, ref=np.max)
+
+            terminate_rgb_images.append(S_dB)
+
+            # transform = torchaudio.transforms.Spectrogram()
+            # spec_tensor = transform(channel_audio_segment)
+            # spec_np = spec_tensor.log2().numpy()
+            # spec_np = np.flipud(spec_np)
+
+            # # Begin from matplotlib.image.imsave
+            # sm = cm.ScalarMappable(cmap='viridis')
+            # sm.set_clim(None, None)
+            # rgba = sm.to_rgba(spec_np, bytes=True)
+            # pil_shape = (rgba.shape[1], rgba.shape[0])
+            # image_rgb = Image.frombuffer(
+            #         "RGBA", pil_shape, rgba, "raw", "RGBA", 0, 1)
+            # terminate_rgb_images.append(image_rgb)
 
             # End from matplotlib.image.imsave
 
@@ -147,7 +164,9 @@ def segment_trial(dataset_dir, desired_skill_names, audio_segment_length=0.2, nu
     """
 
     # Load audio
-    audio_data, sample_rate = torchaudio.load(os.path.join(dataset_dir, AUDIO_NAME))
+    #audio_data, sample_rate = torchaudio.load(os.path.join(dataset_dir, AUDIO_NAME))
+    audio_data = np.load(os.path.join(dataset_dir, AUDIO_NPY_NAME))
+    sample_rate = 44100
     
     # Load FTS
     fts_data = np.load(os.path.join(dataset_dir, FTS_NAME))
@@ -303,14 +322,16 @@ def main(args):
             # save audio segment spectrogram
             if seg_data['nominal_spec'] is not None:
                 for (i,nominal_spec) in enumerate(seg_data['nominal_spec']):
-                    opencv_image = cv2.cvtColor(np.array(nominal_spec), cv2.COLOR_RGBA2RGB)
-                    pil_image = Image.fromarray(opencv_image)
-                    pil_image.save(os.path.join(args.save_dir, skill_name, 'nominal', audio_spec_pth + '_' + str(i) + '.png'))
+                    np.save(os.path.join(args.save_dir, skill_name, 'nominal', audio_spec_pth + '_' + str(i) + '.npy'), nominal_spec)
+                    # opencv_image = cv2.cvtColor(np.array(nominal_spec), cv2.COLOR_RGBA2RGB)
+                    # pil_image = Image.fromarray(opencv_image)
+                    # pil_image.save(os.path.join(args.save_dir, skill_name, 'nominal', audio_spec_pth + '_' + str(i) + '.png'))
             if seg_data['terminate_spec'] is not None:
                 for (i,terminate_spec) in enumerate(seg_data['terminate_spec']):
-                    opencv_image = cv2.cvtColor(np.array(terminate_spec), cv2.COLOR_RGBA2RGB)
-                    pil_image = Image.fromarray(opencv_image)
-                    pil_image.save(os.path.join(args.save_dir, skill_name, 'terminate', audio_spec_pth + '_' + str(i) + '.png'))
+                    np.save(os.path.join(args.save_dir, skill_name, 'terminate', audio_spec_pth + '_' + str(i) + '.npy'), terminate_spec)
+                    # opencv_image = cv2.cvtColor(np.array(terminate_spec), cv2.COLOR_RGBA2RGB)
+                    # pil_image = Image.fromarray(opencv_image)
+                    # pil_image.save(os.path.join(args.save_dir, skill_name, 'terminate', audio_spec_pth + '_' + str(i) + '.png'))
             
             # save fts segment
             if seg_data['fts'] is not None:

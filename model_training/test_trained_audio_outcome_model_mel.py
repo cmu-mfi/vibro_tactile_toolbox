@@ -35,15 +35,15 @@ class VibrotactileDataset(Dataset):
     self.total_length = 0
     num_channels = len(channels)
 
-    paths = glob.glob(glob_path + 'success/audio/*.png')
-    paths += glob.glob(glob_path + 'fail/audio/*.png')
-    #paths = glob.glob(glob_path+'*.png')
+    paths = glob.glob(glob_path + 'success/audio/*.npy')
+    paths += glob.glob(glob_path + 'fail/audio/*.npy')
+    #paths = glob.glob(glob_path+'*.npy')
 
     print(len(paths))
     self.total_length = int(len(paths) / 4) 
     print(self.total_length)
 
-    self.X = torch.zeros([self.total_length,3*num_channels,201,221])
+    self.X = torch.zeros([self.total_length,num_channels,256,87])
     self.y = torch.zeros([self.total_length])
 
     current_trial = 0
@@ -53,28 +53,24 @@ class VibrotactileDataset(Dataset):
       if current_num % 4 == 0:
           print(current_trial)
           channel_num = 0
-          if 'fail' in path:
-            self.y[current_trial] = 0
-          elif 'success' in path:
-            self.y[current_trial] = 1
-          # label = path[path.find('MoveDown')+len('MoveDown')+1:path.find('audio')-1]
-          # if label == 'fail':
+          # if 'fail' in path:
           #   self.y[current_trial] = 0
-          # elif label == 'success':
+          # elif 'success' in path:
           #   self.y[current_trial] = 1
+          label = path[path.find('MoveDown')+len('MoveDown')+1:path.find('audio')-1]
+          if label == 'fail':
+            self.y[current_trial] = 0
+          elif label == 'success':
+            self.y[current_trial] = 1
 
           for channel in channels:
-            #Load image by OpenCV
-            cv_image = cv2.imread(path[:path.rfind('_')+1]+str(current_num+channel)+'.png')
-
-            #Convert img to RGB
-            rgb_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
-            pil_image = Image.fromarray(rgb_image)
-            image_tensor = transforms.ToTensor()(pil_image)
-            self.X[current_trial,channel_num*3:(channel_num+1)*3,:,:] = image_tensor
+            spec = np.load(path[:path.rfind('_')+1]+str(current_num+channel)+'.npy')
+            spec_tensor = torch.from_numpy(spec)
+            self.X[current_trial,channel_num,:,:] = spec_tensor
             channel_num += 1
             
           current_trial += 1
+    self.X = self.X.to(device)
 
   def __len__(self):
     return self.total_length
@@ -114,7 +110,7 @@ if __name__ == '__main__':
 
     with torch.no_grad():
         for batch, (X, Y) in enumerate(test_dataloader):
-            X = X.to(device)
+            #X = X.to(device)
             pred = model(X)
             y_true.extend(list(Y.detach().numpy()))
             y_pred.extend(list(pred.argmax(1).to('cpu').detach().numpy()))

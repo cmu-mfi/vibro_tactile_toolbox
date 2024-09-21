@@ -49,6 +49,19 @@ def save_audio(bag, save_dir, audio_file_name, audio_info, audio_topic):
     sound_file.close()
         
 
+def save_audio_npy(bag, save_dir, audio_file_name, audio_info, audio_topic):
+
+    audio_np_path = os.path.join(save_dir, audio_file_name)
+
+    audio_np_array = np.zeros((audio_info['num_channels'],0))
+
+    for topic, msg, t in bag.read_messages(topics=[audio_topic]):
+        audio_np_array = np.hstack((audio_np_array, np.asarray(msg.data).reshape((-1, audio_info['num_channels'])).transpose()))
+
+
+    np.save(audio_np_path, audio_np_array)
+        
+
 def save_video(bag, save_dir, filenames=[], image_topics=[], video_latency=0.0):
     '''Save videos for each image topic.
 
@@ -333,6 +346,7 @@ def parse(args, bagfile, save_dir):
         audio_info = get_audio_info(bag, AUDIO_TOPIC + '_info')
         save_audio_dir = os.path.join(save_dir, 'audio')
         save_audio(bag, save_folder, 'audio.wav', audio_info, AUDIO_TOPIC)
+        save_audio_npy(bag, save_folder, 'audio.npy', audio_info, AUDIO_TOPIC)
     
     if args.save_fts:
         fts_topics = [FTS_TOPIC]

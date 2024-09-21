@@ -13,10 +13,17 @@ import soundfile as sf
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from PIL import Image
+import librosa
+
+
+import matplotlib
+matplotlib.use('Agg')
 
 import torchaudio
+import torch
 
 AUDIO_NAME = 'audio.wav'
+AUDIO_NPY_NAME = 'audio.npy'
 FTS_NAME = 'fts.npy'
 SIDE_CAM_NAME = 'side_camera.mp4'
 WRIST_CAM_NAME = 'wrist_camera.mp4'
@@ -59,24 +66,48 @@ def segment_audio(audio_data, sample_rate, t_start, t_end, resample_num=0, time_
     end_idx = int(t_end * sample_rate)
 
     num_channels = audio_data.shape[0]
-    
+
     audio_segment = audio_data[:,start_idx:end_idx]
     rgb_images = []
     for ch_num in range(num_channels):
         channel_audio_segment = audio_segment[ch_num,:]
-        transform = torchaudio.transforms.Spectrogram()
-        spec_tensor = transform(channel_audio_segment)
-        spec_np = spec_tensor.log2().numpy()
-        spec_np = np.flipud(spec_np)
 
-        # Begin from matplotlib.image.imsave
-        sm = cm.ScalarMappable(cmap='viridis')
-        sm.set_clim(None, None)
-        rgba = sm.to_rgba(spec_np, bytes=True)
-        pil_shape = (rgba.shape[1], rgba.shape[0])
-        image_rgb = Image.frombuffer(
-                "RGBA", pil_shape, rgba, "raw", "RGBA", 0, 1)
-        rgb_images.append(image_rgb)
+        #fig=plt.figure()
+
+        #ax = fig.gca()
+        #D = librosa.amplitude_to_db(np.abs(librosa.stft(channel_audio_segment)), ref=np.max)
+        S = librosa.feature.melspectrogram(y=channel_audio_segment, sr=sample_rate, n_mels=256)
+        S_dB = librosa.power_to_db(S, ref=np.max)
+        print(S_dB.shape)
+        # img = librosa.display.specshow(S_dB, sr=sample_rate, ax=ax)
+
+        # fig.canvas.draw()  # Draw the canvas, cache the renderer
+
+        # image_flat = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')  # (H * W * 3,)
+        # # NOTE: reversed converts (W, H) from get_width_height to (H, W)
+        # image = image_flat.reshape(*reversed(fig.canvas.get_width_height()), 3)  # (H, W, 3)
+        # cropped_image = image[58:(58+370),80:(80+497),:]
+
+        rgb_images.append(S_dB)
+
+        # fig.clear()
+        # plt.close(fig)
+
+    audio_segment = torch.from_numpy(audio_segment)
+
+        # transform = torchaudio.transforms.Spectrogram()
+        # spec_tensor = transform(channel_audio_segment)
+        # spec_np = spec_tensor.log2().numpy()
+        # spec_np = np.flipud(spec_np)
+
+        # # Begin from matplotlib.image.imsave
+        # sm = cm.ScalarMappable(cmap='viridis')
+        # sm.set_clim(None, None)
+        # rgba = sm.to_rgba(spec_np, bytes=True)
+        # pil_shape = (rgba.shape[1], rgba.shape[0])
+        # image_rgb = Image.frombuffer(
+        #         "RGBA", pil_shape, rgba, "raw", "RGBA", 0, 1)
+        # rgb_images.append(image_rgb)
 
         # End from matplotlib.image.imsave
     if resample_num > 0:
@@ -84,26 +115,46 @@ def segment_audio(audio_data, sample_rate, t_start, t_end, resample_num=0, time_
             random_offset = np.random.random()*(time_offset*2) - time_offset
             start_idx = int((t_start + random_offset) * sample_rate)
             end_idx = int((t_end + random_offset) * sample_rate)
-
-            num_channels = audio_data.shape[0]
             
             current_audio_segment = audio_data[:,start_idx:end_idx]
             
             for ch_num in range(num_channels):
                 channel_audio_segment = current_audio_segment[ch_num,:]
-                transform = torchaudio.transforms.Spectrogram()
-                spec_tensor = transform(channel_audio_segment)
-                spec_np = spec_tensor.log2().numpy()
-                spec_np = np.flipud(spec_np)
 
-                # Begin from matplotlib.image.imsave
-                sm = cm.ScalarMappable(cmap='viridis')
-                sm.set_clim(None, None)
-                rgba = sm.to_rgba(spec_np, bytes=True)
-                pil_shape = (rgba.shape[1], rgba.shape[0])
-                image_rgb = Image.frombuffer(
-                        "RGBA", pil_shape, rgba, "raw", "RGBA", 0, 1)
-                rgb_images.append(image_rgb)
+                #fig=plt.figure()
+
+                #ax = fig.gca()
+                #D = librosa.amplitude_to_db(np.abs(librosa.stft(channel_audio_segment)), ref=np.max)
+                S = librosa.feature.melspectrogram(y=channel_audio_segment, sr=sample_rate, n_mels=256)
+                S_dB = librosa.power_to_db(S, ref=np.max)
+                # print(S_dB.shape)
+                # img = librosa.display.specshow(S_dB, sr=sample_rate, ax=ax)
+
+                # fig.canvas.draw()  # Draw the canvas, cache the renderer
+
+                # image_flat = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')  # (H * W * 3,)
+                # # NOTE: reversed converts (W, H) from get_width_height to (H, W)
+                # image = image_flat.reshape(*reversed(fig.canvas.get_width_height()), 3)  # (H, W, 3)
+                # cropped_image = image[58:(58+370),80:(80+497),:]
+
+                rgb_images.append(S_dB)
+
+                # fig.clear()
+                # plt.close(fig)
+
+                # transform = torchaudio.transforms.Spectrogram()
+                # spec_tensor = transform(channel_audio_segment)
+                # spec_np = spec_tensor.log2().numpy()
+                # spec_np = np.flipud(spec_np)
+
+                # # Begin from matplotlib.image.imsave
+                # sm = cm.ScalarMappable(cmap='viridis')
+                # sm.set_clim(None, None)
+                # rgba = sm.to_rgba(spec_np, bytes=True)
+                # pil_shape = (rgba.shape[1], rgba.shape[0])
+                # image_rgb = Image.frombuffer(
+                #         "RGBA", pil_shape, rgba, "raw", "RGBA", 0, 1)
+                # rgb_images.append(image_rgb)
 
                 # End from matplotlib.image.imsave
 
@@ -137,7 +188,9 @@ def segment_trial(dataset_dir, lagging_buffer=0.5, leading_buffer=0.5, num_resam
     """
 
     # Load audio
-    audio_data, sample_rate = torchaudio.load(os.path.join(dataset_dir, AUDIO_NAME))
+    #audio_data, sample_rate = torchaudio.load(os.path.join(dataset_dir, AUDIO_NAME))
+    audio_data = np.load(os.path.join(dataset_dir, AUDIO_NPY_NAME))
+    sample_rate = 44100
     
     # Load FTS
     fts_data = np.load(os.path.join(dataset_dir, FTS_NAME))
@@ -368,10 +421,11 @@ def main(args):
             # save audio segment spectrogram
             if seg_data['audio_spec'] is not None:
                 for (i,audio_spec) in enumerate(seg_data['audio_spec']):
+                    np.save(os.path.join(args.save_dir, subdir, audio_spec_pth + '_' + str(i) + '.npy'), audio_spec)
                     #opencv_image = cv2.cvtColor(np.array(audio_spec), cv2.COLOR_RGBA2BGR)
-                    opencv_image = cv2.cvtColor(np.array(audio_spec), cv2.COLOR_RGBA2RGB)
-                    pil_image = Image.fromarray(opencv_image)
-                    pil_image.save(os.path.join(args.save_dir, subdir, audio_spec_pth + '_' + str(i) + '.png'))
+                    #opencv_image = cv2.cvtColor(np.array(audio_spec), cv2.COLOR_RGBA2RGB)
+                    #pil_image = Image.fromarray(opencv_image)
+                    #pil_image.save(os.path.join(args.save_dir, subdir, audio_spec_pth + '_' + str(i) + '.png'))
                     #cv2.imwrite(os.path.join(args.save_dir, subdir, audio_spec_pth + '_' + str(i) + '.png'), opencv_image)
                     #audio_spec.save()
             
