@@ -18,7 +18,7 @@ from PIL import Image
 import argparse
 import cv2
 import matplotlib.pyplot as plt
-
+import yaml
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print('Using {} device'.format(device))
@@ -28,20 +28,37 @@ class VibrotactileDataset(Dataset):
   Prepare the Vibrotactile dataset for Prediction
   '''
 
-  def __init__(self, channels, glob_path):
+  def __init__(self, dataset_type, channels, glob_path):
 
     self.total_length = 0
     num_channels = len(channels)
 
-    paths = glob.glob(glob_path + 'success/audio/*.npy')
-    paths += glob.glob(glob_path + 'fail/audio/*.npy')
+    paths = glob.glob(glob_path + 'fail/audio/*.npy')
+    
+    if dataset_type == 'lego':
+        paths = [path for path in paths if 'connection_failure' not in path]
+        yaml_path = 'config/lego.yaml'
+    else:
+        paths = [path for path in paths if 'failure' not in path]
+        yaml_path = 'config/nist.yaml'
+
+    with open(yaml_path) as stream:
+        try:
+            config = yaml.safe_load(stream)
+        except yaml.YAMLError as error:
+            print(error)
+
+    x_perturb_range = config['x_range']
+    y_perturb_range = config['y_range']
+    theta_perturb_range = config['theta_range']
+
 
     print(len(paths))
     self.total_length = int(len(paths) / 4) + 1
     print(self.total_length)
 
     self.X = torch.zeros([self.total_length,num_channels,256,87])
-    self.y = torch.zeros([self.total_length,2])
+    self.y = torch.zeros([self.total_length,3])
 
     self.num_channels = num_channels
 
@@ -58,22 +75,35 @@ class VibrotactileDataset(Dataset):
             continue
 
           print(current_trial)
+          perturbs = path[path.find('-p_')+3:]
+          x_perturb = (float(perturbs[:perturbs.find('_')]) - x_perturb_range[0]) / (x_perturb_range[1] - x_perturb_range[0])
+          perturbs = perturbs[perturbs.find('_')+1:]
+          y_perturb = (float(perturbs[:perturbs.find('_')]) - y_perturb_range[0]) / (y_perturb_range[1] - y_perturb_range[0])
+          perturbs = perturbs[perturbs.find('_')+1:]
+          theta_perturb = (float(perturbs[:perturbs.find('_')]) - theta_perturb_range[0]) / (theta_perturb_range[1] - theta_perturb_range[0])
+          self.y[current_trial,0] = x_perturb
+          self.y[current_trial,1] = y_perturb
+          self.y[current_trial,2] = theta_perturb
 
           channel_num = 0
           for channel in channels:
             #Load image by OpenCV
             #print(current_num+channel)
-            #cv_image = cv2.imread(path[:path.rfind('_')+1]+str(current_num+channel)+'.npy')
+            # cv_image = cv2.imread(path[:path.rfind('_')+1]+str(current_num+channel)+'.npy')
+
+            # #Convert img to RGB
+            # rgb_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
+            # pil_image = Image.fromarray(rgb_image)
+            # image_tensor = transforms.ToTensor()(pil_image)
+            # self.X[current_trial,channel_num*3:(channel_num+1)*3,:,:] = image_tensor
             spec = np.load(path[:path.rfind('_')+1]+str(current_num+channel)+'.npy')
 
-            #Convert img to RGB
-            #rgb_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
-            #pil_image = Image.fromarray(rgb_image)
             spec_tensor = torch.from_numpy(spec)
             self.X[current_trial,channel_num,:,:] = spec_tensor
             channel_num += 1
             
           current_trial += 1
+
     self.X = self.X.to(device)
     self.y = self.y.to(device)
 
@@ -106,7 +136,7 @@ class CNNet_old(nn.Module):
         self.flatten = nn.Flatten()
         self.fc1 = nn.Linear(1568, 512)
         self.fc2 = nn.Linear(512, 256)
-        self.fc3 = nn.Linear(256, 2)
+        self.fc3 = nn.Linear(256, 3)
 
 
     def forward(self, x):
@@ -125,7 +155,7 @@ class CNNet_old(nn.Module):
 class CNNet_try2(nn.Module):
     def __init__(self):
         super().__init__()
-        self.conv1 = nn.Conv2d(num_channels, 32, kernel_size=3)
+        self.conv1 = nn.Conv2d(num_channels*3, 32, kernel_size=3)
         self.bn1 = nn.BatchNorm2d(32)
         self.conv2 = nn.Conv2d(32, 32, kernel_size=3)
         self.conv2_drop = nn.Dropout2d()
@@ -136,7 +166,7 @@ class CNNet_try2(nn.Module):
         self.bn4 = nn.BatchNorm2d(8)
         #self.aap2d = nn.AdaptiveAvgPool2d(1)
         self.flatten = nn.Flatten()
-        self.fc1 = nn.Linear(38688, 1024)
+        self.fc1 = nn.Linear(81408, 1024)
         self.fc2 = nn.Linear(1024, 256)
         self.fc3 = nn.Linear(256, 2)
 
@@ -159,9 +189,9 @@ class CNNet(nn.Module):
     def __init__(self):
         super().__init__()
         model = models.resnet18()
-        model.conv1 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+        model.conv1 = nn.Conv2d(12, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
         # new_module_list = list(model.modules())[:-1]
-        model.fc = nn.Linear(in_features=512, out_features=2, bias=True)
+        model.fc = nn.Linear(in_features=512, out_features=3, bias=True)
         self.model = model #nn.Sequential(*new_module_list)
         # self.fc = nn.Linear(512, 2)
 
@@ -189,33 +219,27 @@ def train(dataloader, model, loss, optimizer):
             print(f'loss: {loss:>7f}  [{current:>5d}/{size:>5d}]')
 
 # Create the validation/test function
-max_test_correct = 0.85
-min_test_loss = 0.05
+min_test_loss = 2.0
 def test(dataloader, model, type):
-    global max_test_correct, min_test_loss
+    global min_test_loss
     size = len(dataloader.dataset)
     model.eval()
-    test_loss, correct = 0, 0
+    test_loss = 0
 
     with torch.no_grad():
         for batch, (X, Y) in enumerate(dataloader):
             #X, Y = X.to(device), Y.to(device)
             pred = model(X)
+            #print(pred.to('cpu').detach().numpy())
             test_loss += cost(pred, Y).item()
-            correct += (pred.argmax(1) == Y.argmax(1)).type(torch.float).sum().item()
 
-    test_loss /= size
-    correct /= size
-
-    if correct > max_test_correct or (correct == max_test_correct and test_loss < min_test_loss):
-        max_test_correct = correct
+    if  (test_loss < min_test_loss):
         min_test_loss = test_loss
         model_scripted = torch.jit.script(model) # Export to TorchScript
-        model_scripted.save('models/audio_outcome_'+type+'.pt') # Save
-        #torch.save(model, 'models/audio_outcome_'+type+'.pt')
+        model_scripted.save('models/audio_recovery_'+type+'.pt') # Save
         print("====================== SAVED MODEL ==========================")
 
-    print(f'\nTest Error:\nacc: {(100*correct):>0.1f}%, avg loss: {test_loss:>8f}\n')
+    print(f'\nTest loss: {test_loss:>8f}\n')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -227,28 +251,28 @@ if __name__ == '__main__':
     num_channels = len(channels)
 
     if args.type == 'lego':
-        paths = glob.glob(f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/*/test*/MoveDown/success/audio/*.npy')
+        paths = glob.glob(f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/*/test*/MoveDown/fail/audio/*.npy')
     else:
-        paths = glob.glob(f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/test*/MoveDown/success/audio/*.npy')
-    if paths is not None and len(paths) > 0:
+        paths = glob.glob(f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/test*/MoveDown/fail/audio/*.npy')
+    if paths is not None:
         if args.type == 'lego':
-            audio_train_dataset = VibrotactileDataset(channels,f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/*/vel*/MoveDown/')
-            audio_test_dataset = VibrotactileDataset(channels, f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/*/test*/MoveDown/')
+            audio_train_dataset = VibrotactileDataset(args.type,channels,f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/*/vel*/MoveDown/')
+            audio_test_dataset = VibrotactileDataset(args.type,channels, f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/*/test*/MoveDown/')
         else:
-            audio_train_dataset = VibrotactileDataset(channels,f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/vel*/MoveDown/')
-            audio_test_dataset = VibrotactileDataset(channels, f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/test*/MoveDown/')
+            audio_train_dataset = VibrotactileDataset(args.type,channels,f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/vel*/MoveDown/')
+            audio_test_dataset = VibrotactileDataset(args.type,channels, f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/test*/MoveDown/')
     else:
         if args.type == 'lego':
-            audio_dataset = VibrotactileDataset(channels, f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/*/vel*/MoveDown/')
+            audio_dataset = VibrotactileDataset(args.type,channels, f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/{args.type}/vel*/MoveDown/')
         else:
-            audio_dataset = VibrotactileDataset(channels, f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/vel*/MoveDown/')
+            audio_dataset = VibrotactileDataset(args.type,channels, f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/vel*/MoveDown/')
+
         print(len(audio_dataset))
         #split data to test and train
         #use 80% to train
         train_size = int(args.train_ratio * len(audio_dataset))
         test_size = len(audio_dataset) - train_size
         audio_train_dataset, audio_test_dataset = torch.utils.data.random_split(audio_dataset, [train_size, test_size])
-      
 
     print("Training size:", len(audio_train_dataset))
     print("Testing size:",len(audio_test_dataset))
@@ -256,20 +280,20 @@ if __name__ == '__main__':
 
     train_dataloader = torch.utils.data.DataLoader(
         audio_train_dataset,
-        batch_size=32,
+        batch_size=64,
         shuffle=True
     )
 
     test_dataloader = torch.utils.data.DataLoader(
         audio_test_dataset,
-        batch_size=32,
+        batch_size=64,
         shuffle=True
     )
 
     model = CNNet_old().to(device)
 
     # cost function used to determine best parameters
-    cost = torch.nn.CrossEntropyLoss()
+    cost = torch.nn.MSELoss()
 
     # used to create optimal parameters
     learning_rate = 0.0001
@@ -284,3 +308,4 @@ if __name__ == '__main__':
     print('Done!')
 
     summary(model, input_size=(15, num_channels, 256, 87))
+

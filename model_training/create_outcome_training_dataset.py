@@ -78,7 +78,11 @@ def segment_audio(audio_data, sample_rate, t_start, t_end, resample_num=0, time_
         #D = librosa.amplitude_to_db(np.abs(librosa.stft(channel_audio_segment)), ref=np.max)
         S = librosa.feature.melspectrogram(y=channel_audio_segment, sr=sample_rate, n_mels=256)
         S_dB = librosa.power_to_db(S, ref=np.max)
-        print(S_dB.shape)
+        rgb_images.append(S_dB)
+
+        # D = librosa.amplitude_to_db(np.abs(librosa.stft(channel_audio_segment)),ref=np.max)
+        # print(D.shape)
+        # rgb_images.append(D)
         # img = librosa.display.specshow(S_dB, sr=sample_rate, ax=ax)
 
         # fig.canvas.draw()  # Draw the canvas, cache the renderer
@@ -88,7 +92,7 @@ def segment_audio(audio_data, sample_rate, t_start, t_end, resample_num=0, time_
         # image = image_flat.reshape(*reversed(fig.canvas.get_width_height()), 3)  # (H, W, 3)
         # cropped_image = image[58:(58+370),80:(80+497),:]
 
-        rgb_images.append(S_dB)
+        
 
         # fig.clear()
         # plt.close(fig)
@@ -127,6 +131,10 @@ def segment_audio(audio_data, sample_rate, t_start, t_end, resample_num=0, time_
                 #D = librosa.amplitude_to_db(np.abs(librosa.stft(channel_audio_segment)), ref=np.max)
                 S = librosa.feature.melspectrogram(y=channel_audio_segment, sr=sample_rate, n_mels=256)
                 S_dB = librosa.power_to_db(S, ref=np.max)
+                rgb_images.append(S_dB)
+
+                # D = librosa.amplitude_to_db(np.abs(librosa.stft(channel_audio_segment)),ref=np.max)
+                # rgb_images.append(D)
                 # print(S_dB.shape)
                 # img = librosa.display.specshow(S_dB, sr=sample_rate, ax=ax)
 
@@ -137,7 +145,7 @@ def segment_audio(audio_data, sample_rate, t_start, t_end, resample_num=0, time_
                 # image = image_flat.reshape(*reversed(fig.canvas.get_width_height()), 3)  # (H, W, 3)
                 # cropped_image = image[58:(58+370),80:(80+497),:]
 
-                rgb_images.append(S_dB)
+                
 
                 # fig.clear()
                 # plt.close(fig)

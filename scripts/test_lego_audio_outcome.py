@@ -12,7 +12,7 @@ from autolab_core import RigidTransform
 from skill.lego_skills import *
 from skill.util_skills import GoHomeSkill
 from outcome.outcome import *
-
+from std_msgs.msg import Int16, String
 from data_recorder.rosbag_data_recorder import RosbagDataRecorder
 
 import yaml
@@ -49,8 +49,6 @@ def determine_next_pose(T_lego_world, block_x_loc, block_y_loc):
 
     tmp_T_lego_world = closest_tf * place_perturb_pose
     return tmp_T_lego_world
-    
-
 
 def run():
     # Start Node
@@ -88,6 +86,9 @@ def run():
     else:
         data_type = 'test'
 
+    num_correct_predictions = 0
+    num_trials_completed = 0
+
     data_dir = config['data_dir']+'volume_'+str(volume)+'/'+block_type+'/'+data_type+'_vel_'+str(velocity_scale)+'/'
 
     if not os.path.exists(config['data_dir']+'volume_'+str(volume)):
@@ -106,7 +107,7 @@ def run():
     elif str(velocity_scale) == 'random':
         move_down_velocity_scaling = -1
 
-    outcome_config = config['audio_detector'].copy()
+    outcome_config = config['audio_detector'].copy() 
     outcome_config['model_path'] = root_pwd+config['model_dir']+'audio_outcome_lego.pt'
     recovery_config = config['audio_detector'].copy()
     recovery_config['model_path'] = root_pwd+config['model_dir']+'audio_recovery_lego.pt'
@@ -114,6 +115,8 @@ def run():
     # Instantiate robot controller for Yaskawa API
     robot_commander = YaskawaRobotController(namespace)
     gripper_controller = LegoGripperController(namespace)
+    expected_result_pub = rospy.Publisher(f'/{namespace}/expected_outcome_int', Int16, queue_size=10)
+    logger_pub = rospy.Publisher(f'/{namespace}/audio_detector_logger', String, queue_size=10)
 
     # Load End-Effector Kinematics
     T_lego_ee = RigidTransform.load(root_pwd+config['transforms_dir']+config['lego_ee_tf'])
@@ -166,6 +169,8 @@ def run():
 
         if move_down_velocity_scaling == -0.1:
             move_down_velocity_scaling = np.random.uniform(0.01, 0.1)
+
+        expected_result_pub.publish(0)
 
         # 1. Begin rosbag recording
         rosbag_name = f"trial_{trial_num}-p_{x_perturb:0.4f}_{y_perturb:0.4f}_{theta_perturb:0.4f}_{move_down_velocity_scaling:0.2f}.bag"
@@ -244,8 +249,16 @@ def run():
 
         outcomes = send_end_fts_outcome_request(config['fts_detector'])
 
+        if outcomes['success'] == audio_outcomes['success']:
+            num_correct_predictions += 1
+        num_trials_completed += 1
+        logger_string = str(num_correct_predictions) + '/' + str(num_trials_completed)
+        logger_pub.publish(logger_string)
+
         if (demo and audio_outcomes['success'] == False) or (not demo and outcomes['success'] == False):
             terminals = move_to_above_lego_pose_skill.execute_skill(execution_params, move_to_above_lego_params)
+
+            expected_result_pub.publish(1)
 
             # audio_recovery = send_audio_outcome_request(recovery_config, terminals[0].stamp)
 
@@ -280,6 +293,12 @@ def run():
 
             outcomes = send_end_fts_outcome_request(config['fts_detector'])
 
+            if outcomes['success'] == audio_outcomes['success']:
+                num_correct_predictions += 1
+            num_trials_completed += 1
+            logger_string = str(num_correct_predictions) + '/' + str(num_trials_completed)
+            logger_pub.publish(logger_string)
+
         if (demo and audio_outcomes['success'] == False) or (not demo and outcomes['success'] == False):
             print("Failed to pull up lego. Skipping trial")
             data_recorder.stop_recording()
@@ -312,6 +331,8 @@ def run():
         # 3. End rosbag recording
         data_recorder.stop_recording()
 
+        expected_result_pub.publish(2)
+
         rospy.sleep(1)
 
         if outcomes['starting_top'] + outcomes['starting_bottom'] == outcomes['ending_top'] + outcomes['ending_bottom']:
@@ -339,7 +360,7 @@ def run():
 
             tmp_T_lego_world = determine_next_pose(T_lego_world, block_x_loc, block_y_loc)
 
-            tmp_T_lego_world.save(root_pwd+config['tmp_lego_world_tf'])
+            tmp_T_lego_world.save(root_pwd+config['transforms_dir']+config['tmp_lego_world_tf'])
 
 if __name__ == "__main__":
     run()

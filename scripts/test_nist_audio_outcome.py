@@ -12,7 +12,7 @@ from autolab_core import RigidTransform
 from skill.nist_skills import *
 from skill.util_skills import GoHomeSkill
 from outcome.outcome import *
-
+from std_msgs.msg import Int16
 from data_recorder.rosbag_data_recorder import RosbagDataRecorder
 
 import yaml
@@ -78,6 +78,7 @@ def run():
     # Instantiate robot controller for Yaskawa API
     robot_commander = YaskawaRobotController(namespace)
     gripper_controller = RobotiqHandEController(namespace)
+    expected_result_pub = rospy.Publisher(f'/{namespace}/expected_outcome_int', Int16, queue_size=10)
 
     # Load End-Effector Kinematics
     T_hande_ee = RigidTransform.load(root_pwd+config['transforms_dir']+config['hande_ee_tf'])
@@ -176,6 +177,8 @@ def run():
     if reset:
         reset_connector_skill.execute_skill(execution_params)
 
+    expected_result_pub.publish(2)
+
     # Tasks to do
     for trial_num in range(start_num, start_num+num_trials):
 
@@ -217,6 +220,8 @@ def run():
 
         terminals = move_to_above_perturb_connector_skill.execute_skill(execution_params, move_to_above_perturb_connector_params)
 
+        expected_result_pub.publish(0)
+
         # 1. Begin rosbag recording
         rosbag_name = f"trial_{trial_num}-p_{x_perturb:0.4f}_{y_perturb:0.4f}_{theta_perturb:0.4f}_{move_down_velocity_scaling:0.2f}.bag"
         rosbag_path = os.path.join(data_dir, rosbag_name)
@@ -232,11 +237,12 @@ def run():
         print(audio_outcomes['success'])
         if demo:
             if audio_outcomes['success'] == False:
-
                 # audio_recovery = send_audio_outcome_request(recovery_config, terminals[0].stamp)
                 # print(audio_recovery['result'])
         
                 terminals = move_to_above_connector_pose_skill.execute_skill(execution_params, move_to_above_perturb_connector_params)
+
+                expected_result_pub.publish(1)
 
                 terminals = move_down_skill.execute_skill(execution_params, move_down_params)
 
@@ -255,6 +261,8 @@ def run():
             if outcomes['success'] == True:
             
                 terminals = move_to_above_connector_pose_skill.execute_skill(execution_params, move_to_above_perturb_connector_params)
+
+                expected_result_pub.publish(1)
 
                 terminals = move_down_skill.execute_skill(execution_params, move_down_params)
 
@@ -285,7 +293,9 @@ def run():
             else:
                 labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_failure.bag"
                 os.rename(rosbag_path, labeled_rosbag_path)
-        
+
+        expected_result_pub.publish(2)
+
         if reset:
             place_connector_reset_skill.execute_skill(execution_params)
             reset_connector_skill.execute_skill(execution_params)

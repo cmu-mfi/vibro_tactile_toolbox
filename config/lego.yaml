@@ -15,10 +15,10 @@ theta_range:
   - 10.0
 block_x_range: 
   - -12
-  - 0
+  - -2
 block_y_range:
-  - 0
-  - 16
+  - 4
+  - 13
 approach_height: 0.04
 lift_height: 0.01
 pull_up_velocity_scaling: 0.001

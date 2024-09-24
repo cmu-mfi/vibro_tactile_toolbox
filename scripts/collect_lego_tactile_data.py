@@ -312,7 +312,7 @@ def run():
 
             tmp_T_lego_world = determine_next_pose(T_lego_world, block_x_loc, block_y_loc)
 
-            tmp_T_lego_world.save(root_pwd+config['tmp_lego_world_tf'])
+            tmp_T_lego_world.save(root_pwd+config['transforms_dir']+config['tmp_lego_world_tf'])
 
 if __name__ == "__main__":
     run()

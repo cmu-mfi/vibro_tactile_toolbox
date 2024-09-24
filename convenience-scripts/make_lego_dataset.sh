@@ -2,12 +2,15 @@
 
 # Define the arrays for volumes, bricks, and velocities
 VOLS=(75)
-BRICKS=("2x1" "2x2" "2x4" "4x1" "4x2")
-VELS=(0.01 0.02)
-TRAIN_VS_TEST=("vel_" "test_vel_")
+BRICKS=("4x1")
+# "2x2" "2x4" "4x1" "4x2"
+VELS=(0.01)
+# 0.02 
+TRAIN_VS_TEST=("vel_")
+# "vel_" 
 ROBOT_NAME="yk_creator"
 TYPE="lego"
-NUM_RESAMPLES=10
+NUM_RESAMPLES=15
 NUM_RESAMPLES_TERMINATOR=50
 
 # Define the base paths
@@ -24,8 +27,8 @@ for VOL in "${VOLS[@]}"; do
         TARGET_DST="${BASE_TARGET_DST}${VOL}/${BRICK}/${DATA_TYPE}${VEL}"
         
         # Call the python script with the constructed paths
-        #python scripts/parse_rosbag.py -w "$TARGET_DIR" -d "$TARGET_DIR" -n ${ROBOT_NAME}
-        #python model_training/create_outcome_training_dataset.py -s "$TARGET_DIR" -d "$TARGET_DST" -t ${TYPE} -n ${NUM_RESAMPLES}
+        python scripts/parse_rosbag.py -w "$TARGET_DIR" -d "$TARGET_DIR" -n ${ROBOT_NAME}
+        python model_training/create_outcome_training_dataset.py -s "$TARGET_DIR" -d "$TARGET_DST" -t ${TYPE} -n ${NUM_RESAMPLES}
         python model_training/create_terminator_training_dataset.py -s "$TARGET_DIR" -d "$TARGET_DST" -t ${TYPE} -n ${NUM_RESAMPLES_TERMINATOR}
       done
     done
