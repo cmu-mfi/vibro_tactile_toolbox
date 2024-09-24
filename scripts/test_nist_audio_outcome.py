@@ -12,7 +12,7 @@ from autolab_core import RigidTransform
 from skill.nist_skills import *
 from skill.util_skills import GoHomeSkill
 from outcome.outcome import *
-from std_msgs.msg import Int16
+from std_msgs.msg import Int16, String
 from data_recorder.rosbag_data_recorder import RosbagDataRecorder
 
 import yaml
@@ -50,6 +50,9 @@ def run():
             if 'topic_name' in config[key]:
                 config[key]['topic_name'] = config[key]['topic_name'].replace("namespace", namespace)
 
+    num_correct_predictions = 0
+    num_trials_completed = 0
+
     data_type = ''
 
     if demo:
@@ -79,6 +82,7 @@ def run():
     robot_commander = YaskawaRobotController(namespace)
     gripper_controller = RobotiqHandEController(namespace)
     expected_result_pub = rospy.Publisher(f'/{namespace}/expected_outcome_int', Int16, queue_size=10)
+    logger_pub = rospy.Publisher(f'/{namespace}/audio_detector_logger', String, queue_size=10)
 
     # Load End-Effector Kinematics
     T_hande_ee = RigidTransform.load(root_pwd+config['transforms_dir']+config['hande_ee_tf'])
@@ -258,6 +262,12 @@ def run():
 
             outcomes = send_end_fts_outcome_request(config['fts_detector'])
 
+            if outcomes['success'] != audio_outcomes['success']:
+                num_correct_predictions += 1
+            num_trials_completed += 1
+            logger_string = str(num_correct_predictions) + '/' + str(num_trials_completed)
+            logger_pub.publish(logger_string)
+
             if outcomes['success'] == True:
             
                 terminals = move_to_above_connector_pose_skill.execute_skill(execution_params, move_to_above_perturb_connector_params)
@@ -275,6 +285,12 @@ def run():
                 terminals = pull_up_skill.execute_skill(execution_params, pull_up_params)
 
                 outcomes = send_end_fts_outcome_request(config['fts_detector'])
+
+                if outcomes['success'] != audio_outcomes['success']:
+                    num_correct_predictions += 1
+                num_trials_completed += 1
+                logger_string = str(num_correct_predictions) + '/' + str(num_trials_completed)
+                logger_pub.publish(logger_string)
 
             if outcomes['success'] == False:
                 terminals = push_down_skill.execute_skill(execution_params, push_down_params)

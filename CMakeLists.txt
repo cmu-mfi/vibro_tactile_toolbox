@@ -177,6 +177,7 @@ catkin_install_python(PROGRAMS
   scripts/compressed_image_cropped_republisher.py
   scripts/compressed_lego_detector.py
   scripts/image_cropped_republisher.py
+  scripts/nist_lego_demo.py
   scripts/terminator_node.py
   scripts/termination_handler_node.py
   scripts/test_lego_audio_outcome.py
