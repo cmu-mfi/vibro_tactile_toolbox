@@ -1,4 +1,4 @@
-from sklearn.metrics import ConfusionMatrixDisplay
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
@@ -117,8 +117,11 @@ if __name__ == '__main__':
             y_pred.extend(list(pred.argmax(1).to('cpu').detach().numpy()))
             print(list(pred.to('cpu').detach().numpy()))
 
-    f, ax = plt.subplots()
-    ax.set_title('Vibrotactile Audio Confusion Matrix for '+args.type)
-    _ = ConfusionMatrixDisplay.from_predictions(y_true, y_pred, display_labels=np.array(class_map), ax=ax)
+    # f, ax = plt.subplots()
+    # ax.set_title('Vibrotactile Audio Confusion Matrix for '+args.type)
+    # _ = ConfusionMatrixDisplay.from_predictions(y_true, y_pred, display_labels=np.array(class_map), ax=ax)
 
-    plt.show()
+    # plt.show()
+
+    cfm = confusion_matrix(y_true, y_pred)
+    print(cfm)

@@ -2,12 +2,9 @@
 
 # Define the arrays for volumes, bricks, and velocities
 VOLS=(75)
-BRICKS=("4x1")
-# "2x2" "2x4" "4x1" "4x2"
-VELS=(0.01)
-# 0.02 
+BRICKS=("2x2" "2x4" "4x1" "4x2")
+VELS=(0.01 0.02)
 TRAIN_VS_TEST=("vel_" "test_vel_")
-# "vel_" 
 ROBOT_NAME="yk_creator"
 TYPE="lego"
 NUM_RESAMPLES=15
