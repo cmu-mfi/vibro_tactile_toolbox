@@ -14,6 +14,7 @@ from skill.util_skills import GoHomeSkill
 from outcome.outcome import *
 from std_msgs.msg import Int16, String
 from data_recorder.rosbag_data_recorder import RosbagDataRecorder
+from sklearn.metrics import confusion_matrix
 
 import yaml
 
@@ -150,6 +151,9 @@ def run():
     open_gripper_skill = OpenGripper(robot_commander, gripper_controller, namespace, params)
     data_recorder = RosbagDataRecorder()
 
+    predicted_outcomes = []
+    actual_outcomes = []
+
     topics = []
 
     for topic in config['rosbag_data_recorder']['topics']:
@@ -256,19 +260,30 @@ def run():
                 terminals = push_down_skill.execute_skill(execution_params, push_down_params)
 
         else:    
-            outcomes = send_start_fts_outcome_request(config['fts_detector'])
+            force_outcomes = send_start_fts_outcome_request(config['fts_detector'])
 
             terminals = pull_up_skill.execute_skill(execution_params, pull_up_params)
 
-            outcomes = send_end_fts_outcome_request(config['fts_detector'])
+            force_outcomes = send_end_fts_outcome_request(config['fts_detector'])
 
-            if outcomes['success'] != audio_outcomes['success']:
+            if force_outcomes['success']:
+                actual_outcomes.append(0)
+            else:
+                actual_outcomes.append(1)
+
+            if audio_outcomes['success']:
+                predicted_outcomes.append(1)
+            else:
+                predicted_outcomes.append(0)
+
+
+            if force_outcomes['success'] != audio_outcomes['success']:
                 num_correct_predictions += 1
             num_trials_completed += 1
             logger_string = str(num_correct_predictions) + '/' + str(num_trials_completed)
             logger_pub.publish(logger_string)
 
-            if outcomes['success'] == True:
+            if force_outcomes['success'] == True:
             
                 terminals = move_to_above_connector_pose_skill.execute_skill(execution_params, move_to_above_perturb_connector_params)
 
@@ -280,20 +295,30 @@ def run():
 
                 print(audio_outcomes['success'])
 
-                outcomes = send_start_fts_outcome_request(config['fts_detector'])
+                force_outcomes = send_start_fts_outcome_request(config['fts_detector'])
 
                 terminals = pull_up_skill.execute_skill(execution_params, pull_up_params)
 
-                outcomes = send_end_fts_outcome_request(config['fts_detector'])
+                force_outcomes = send_end_fts_outcome_request(config['fts_detector'])
 
-                if outcomes['success'] != audio_outcomes['success']:
+                if force_outcomes['success']:
+                    actual_outcomes.append(0)
+                else:
+                    actual_outcomes.append(1)
+
+                if audio_outcomes['success']:
+                    predicted_outcomes.append(1)
+                else:
+                    predicted_outcomes.append(0)
+
+                if force_outcomes['success'] != audio_outcomes['success']:
                     num_correct_predictions += 1
                 num_trials_completed += 1
                 logger_string = str(num_correct_predictions) + '/' + str(num_trials_completed)
                 logger_pub.publish(logger_string)
 
-            if outcomes['success'] == False:
-                terminals = push_down_skill.execute_skill(execution_params, push_down_params)
+            # if force_outcomes['success'] == False:
+            #     terminals = push_down_skill.execute_skill(execution_params, push_down_params)
 
         terminals = move_to_above_connector_pose_skill.execute_skill(execution_params, move_to_above_connector_params)
 
@@ -303,7 +328,7 @@ def run():
         rospy.sleep(1)
 
         if not demo:
-            if outcomes['success'] == False:
+            if force_outcomes['success'] == False:
                 labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_success.bag"
                 os.rename(rosbag_path, labeled_rosbag_path)
             else:
@@ -319,6 +344,9 @@ def run():
             place_connector_skill.execute_skill(execution_params)
             
     terminals = home_skill.execute_skill(None)
+
+    cfm = confusion_matrix(actual_outcomes, predicted_outcomes)
+    print(cfm)
 
 if __name__ == "__main__":
     run()

@@ -1,9 +1,9 @@
 <launch>
     <arg name="namespace" default="yk_builder"/>
-    <arg name="num_trials" default="50"/>
-    <arg name="start_num" default="1"/>
+    <arg name="num_trials" default="15"/>
+    <arg name="start_num" default="36"/>
     <arg name="verbose" default="true"/>
-    <arg name="connector_type" default="ethernet"/>
+    <arg name="connector_type" default="usb"/>
     <arg name="velocity_scale" default="0.01"/>
     <arg name="volume" default="75"/>
     <arg name="reset" default="false"/>

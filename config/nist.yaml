@@ -18,14 +18,14 @@ reset_y_offset: 0.01
 lift_height: 0.01
 pull_up_velocity_scaling: 0.01
 push_down_height_offset: 0.01
-velocity_scaling_large_movements: 0.5
+velocity_scaling_large_movements: 1.0
 audio_detector:
   namespace: namespace
   topic_name: '/namespace/audio'
 fts_detector:
   namespace: namespace
   topic_name: '/namespace/fts'
-  force_threshold: 10.0
+  force_threshold: 12.0
 rosbag_data_recorder:
   topics:
     - /namespace/side_camera/color/image_cropped/compressed

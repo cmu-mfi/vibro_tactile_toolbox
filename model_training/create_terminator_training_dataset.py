@@ -44,15 +44,16 @@ def is_valid_dataset(dataset_dir):
     Determine if a directory is a valid 'parsed dataset' (matches expected output of scripts/parse_rosbag.py)
     """
     if not os.path.isdir(dataset_dir):
-        return False
+        return (False, [])
     print(f"Checking {dataset_dir}")
     expected_files = [AUDIO_NAME, FTS_NAME, SIDE_CAM_NAME, WRIST_CAM_NAME, TERMINATIONS_NAME, VISION_OUTCOMES_NAME, FTS_OUTCOMES_NAME]
     existing_files = os.listdir(dataset_dir)
+    missing_files = []
     for f in expected_files:
         if f not in existing_files:
-            print(f"Skipping {dataset_dir}. Missing file: {f}")
-            return False
-    return True
+            print(f"Missing file: {f}")
+            missing_files.append(f)
+    return (True, missing_files)
 
 def segment_audio(audio_data, sample_rate, t_start, t_end, audio_segment_length=0.2, resample_num=20, time_offset=0.2, sample_time_range=0.2):
     """
@@ -153,7 +154,7 @@ def segment_fts(fts_data, t_start, t_end):
     fts_segment = fts_data[start_idx:end_idx, :]
     return fts_segment
 
-def segment_trial(dataset_dir, desired_skill_names, audio_segment_length=0.2, num_resample=20, time_offset=0.2, sample_time_range=0.2):
+def segment_trial(dataset_dir, missing_files, desired_skill_names, audio_segment_length=0.2, num_resample=20, time_offset=0.2, sample_time_range=0.2):
     """
     Segment a trial into audio and fts data segments established by termination signals
 
@@ -269,11 +270,12 @@ def main(args):
         dataset_dir = os.path.join(args.trial_src, dataset_name)
         # Check if dataset_dir is a valid 'parsed dataset' by seeing if the contents match
         # an expected file tree template
-        if not is_valid_dataset(dataset_dir):
+        dataset_info = is_valid_dataset(dataset_dir)
+        if not dataset_info[0]:
             continue
 
         # Split trial into segments near terminal events
-        segments = segment_trial(dataset_dir, desired_skill_names=RECORDED_SKILLS, audio_segment_length=args.audio_segment_length, num_resample=args.num_resample, time_offset=args.time_offset, sample_time_range=args.sample_time_range)
+        segments = segment_trial(dataset_dir, dataset_info[1], desired_skill_names=RECORDED_SKILLS, audio_segment_length=args.audio_segment_length, num_resample=args.num_resample, time_offset=args.time_offset, sample_time_range=args.sample_time_range)
 
         # Save trial segments to dataset
         with open(trials_pth, 'a') as f:

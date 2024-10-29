@@ -48,6 +48,7 @@ class VibrotactileDataset(Dataset):
     current_trial = 0
     for path in paths:
       current_num = int(path[path.rfind('_')+1:-4])
+      
       if current_num % 4 == 0:
           label = path[path.find('MoveDown')+len('MoveDown')+1:path.find('audio')-1]
           if label == 'fail':
@@ -61,14 +62,9 @@ class VibrotactileDataset(Dataset):
 
           channel_num = 0
           for channel in channels:
-            #Load image by OpenCV
-            #print(current_num+channel)
-            #cv_image = cv2.imread(path[:path.rfind('_')+1]+str(current_num+channel)+'.npy')
+            #Load mel spectrogram
             spec = np.load(path[:path.rfind('_')+1]+str(current_num+channel)+'.npy')
 
-            #Convert img to RGB
-            #rgb_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
-            #pil_image = Image.fromarray(rgb_image)
             spec_tensor = torch.from_numpy(spec)
             self.X[current_trial,channel_num,:,:] = spec_tensor
             channel_num += 1
@@ -81,22 +77,10 @@ class VibrotactileDataset(Dataset):
     return self.total_length
 
   def __getitem__(self, i):
-    img_input = self.X[i]
-    #print(img_input)
-    # total_elem = 256*87
-    # num_noise = int(1/20 * total_elem)
-    
-    # for j in range(self.num_channels*3):
-    #     aug_noise = np.zeros(256*87)
-    #     idx = np.random.choice(len(aug_noise), num_noise, replace=False).astype(int)
-    #     aug_noise[idx] = (np.random.random(num_noise) * 0.04) - 0.02
-
-    #     img_input[j] += aug_noise.reshape(256,87)
-
-    return img_input, self.y[i]
+    return self.X[i], self.y[i]
 
 
-class CNNet_old(nn.Module):
+class CNNet(nn.Module):
     def __init__(self):
         super().__init__()
         self.conv1 = nn.Conv2d(num_channels, 32, kernel_size=5)
@@ -122,54 +106,6 @@ class CNNet_old(nn.Module):
         x = self.fc3(x)
         return x
 
-class CNNet_try2(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv1 = nn.Conv2d(num_channels, 32, kernel_size=3)
-        self.bn1 = nn.BatchNorm2d(32)
-        self.conv2 = nn.Conv2d(32, 32, kernel_size=3)
-        self.conv2_drop = nn.Dropout2d()
-        self.bn2 = nn.BatchNorm2d(32)
-        self.conv3 = nn.Conv2d(32, 16, kernel_size=3)
-        self.bn3 = nn.BatchNorm2d(16)
-        self.conv4 = nn.Conv2d(16, 8, kernel_size=3)
-        self.bn4 = nn.BatchNorm2d(8)
-        #self.aap2d = nn.AdaptiveAvgPool2d(1)
-        self.flatten = nn.Flatten()
-        self.fc1 = nn.Linear(38688, 1024)
-        self.fc2 = nn.Linear(1024, 256)
-        self.fc3 = nn.Linear(256, 2)
-
-
-    def forward(self, x):
-        x = F.relu(self.bn1(self.conv1(x)))
-        x = F.relu(self.bn2(self.conv2_drop(self.conv2(x))))
-        x = F.relu(self.bn3(self.conv3(x)))
-        x = F.max_pool2d(F.relu(self.bn4(self.conv4(x))),2)
-        #x = x.view(x.size(0), -1)
-        x = self.flatten(x)
-        x = self.fc1(x)
-        x = F.dropout(x, training=self.training)
-        x = self.fc2(x)
-        x = F.dropout(x, training=self.training)
-        x = self.fc3(x)
-        return x
-
-class CNNet(nn.Module):
-    def __init__(self):
-        super().__init__()
-        model = models.resnet18()
-        model.conv1 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
-        # new_module_list = list(model.modules())[:-1]
-        model.fc = nn.Linear(in_features=512, out_features=2, bias=True)
-        self.model = model #nn.Sequential(*new_module_list)
-        # self.fc = nn.Linear(512, 2)
-
-    def forward(self, x):
-        # import pdb;pdb.set_trace()
-        x = self.model(x)
-        # x = self.fc(x)
-        return x
 
 # Create the training function
 def train(dataloader, model, loss, optimizer):
@@ -189,9 +125,9 @@ def train(dataloader, model, loss, optimizer):
             print(f'loss: {loss:>7f}  [{current:>5d}/{size:>5d}]')
 
 # Create the validation/test function
-max_test_correct = 0.85
+max_test_correct = 0.75
 min_test_loss = 0.05
-def test(dataloader, model, type):
+def test(dataloader, model, type, save_suffix):
     global max_test_correct, min_test_loss
     size = len(dataloader.dataset)
     model.eval()
@@ -211,7 +147,10 @@ def test(dataloader, model, type):
         max_test_correct = correct
         min_test_loss = test_loss
         model_scripted = torch.jit.script(model) # Export to TorchScript
-        model_scripted.save('models/audio_outcome_'+type+'.pt') # Save
+        if save_suffix == '': 
+            model_scripted.save('models/audio_outcome_'+type+'.pt') # Save
+        else: 
+            model_scripted.save('models/channels/audio_outcome_'+type+save_suffix+'.pt') # Save
         #torch.save(model, 'models/audio_outcome_'+type+'.pt')
         print("====================== SAVED MODEL ==========================")
 
@@ -221,9 +160,17 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--type', '-t', type=str, default='lego')
     parser.add_argument('--train_ratio', '-r', type=float, default=0.8)
+    parser.add_argument('--channels', '-c', type=str, default='')
     args = parser.parse_args()
+    
+    if args.channels != '':
+        channels_string_list = args.channels.split(',')
+        channels = [ int(x) for x in channels_string_list]
+        save_suffix = '_' + '_'.join(channels_string_list)
+    else:
+        channels = [0,1,2,3]
+        save_suffix = ''
 
-    channels = [0,1,2,3]
     num_channels = len(channels)
 
     if args.type == 'lego':
@@ -266,7 +213,7 @@ if __name__ == '__main__':
         shuffle=True
     )
 
-    model = CNNet_old().to(device)
+    model = CNNet().to(device)
 
     # cost function used to determine best parameters
     cost = torch.nn.CrossEntropyLoss()
@@ -280,7 +227,7 @@ if __name__ == '__main__':
     for t in range(epochs):
         print(f'Epoch {t+1}\n-------------------------------')
         train(train_dataloader, model, cost, optimizer)
-        test(test_dataloader, model, args.type)
+        test(test_dataloader, model, args.type, save_suffix)
     print('Done!')
 
     summary(model, input_size=(15, num_channels, 256, 87))

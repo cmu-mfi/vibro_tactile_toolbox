@@ -46,15 +46,16 @@ def is_valid_dataset(dataset_dir):
     Determine if a directory is a valid 'parsed dataset' (matches expected output of scripts/parse_rosbag.py)
     """
     if not os.path.isdir(dataset_dir):
-        return False
+        return (False, [])
     print(f"Checking {dataset_dir}")
     expected_files = [AUDIO_NAME, FTS_NAME, SIDE_CAM_NAME, WRIST_CAM_NAME, TERMINATIONS_NAME, VISION_OUTCOMES_NAME, FTS_OUTCOMES_NAME]
     existing_files = os.listdir(dataset_dir)
+    missing_files = []
     for f in expected_files:
         if f not in existing_files:
-            print(f"Skipping {dataset_dir}. Missing file: {f}")
-            return False
-    return True
+            print(f"Missing file: {f}")
+            missing_files.append(f)
+    return (True, missing_files)
 
 def segment_audio(audio_data, sample_rate, t_start, t_end, resample_num=0, time_offset=0.2):
     """
@@ -185,7 +186,7 @@ def segment_fts(fts_data, t_start, t_end):
     fts_segment = fts_data[start_idx:end_idx, :]
     return fts_segment
 
-def segment_trial(dataset_dir, lagging_buffer=0.5, leading_buffer=0.5, num_resample=20, time_offset=0.2):
+def segment_trial(dataset_dir, missing_files, lagging_buffer=0.5, leading_buffer=0.5, num_resample=20, time_offset=0.2):
     """
     Segment a trial into audio, fts, and vision data segments established by termination signals with outcome labels
 
@@ -205,7 +206,8 @@ def segment_trial(dataset_dir, lagging_buffer=0.5, leading_buffer=0.5, num_resam
     
     # Load vision
     side_cam = cv2.VideoCapture(os.path.join(dataset_dir, SIDE_CAM_NAME))
-    wrist_cam = cv2.VideoCapture(os.path.join(dataset_dir, WRIST_CAM_NAME))
+    if WRIST_CAM_NAME not in missing_files:
+        wrist_cam = cv2.VideoCapture(os.path.join(dataset_dir, WRIST_CAM_NAME))
 
     # Load termination_signals.txt
     terminals = []
@@ -275,7 +277,8 @@ def segment_trial(dataset_dir, lagging_buffer=0.5, leading_buffer=0.5, num_resam
         audio_seg, spec = segment_audio(audio_data, sample_rate, t_start, t_end, num_resample, time_offset)
         fts_seg = segment_fts(fts_data, t_start, t_end)
         side_cam_seg = segment_video(side_cam, t_terminal)
-        wrist_cam_seg = segment_video(wrist_cam, t_terminal)
+        if WRIST_CAM_NAME not in missing_files:
+            wrist_cam_seg = segment_video(wrist_cam, t_terminal)
 
         if outcome[2]:
             outcome_ann = Image.open(os.path.join(dataset_dir, outcome[2]), 'r')
@@ -287,8 +290,9 @@ def segment_trial(dataset_dir, lagging_buffer=0.5, leading_buffer=0.5, num_resam
                     'audio_spec': spec,
                     'fts': fts_seg,
                     'side_cam': side_cam_seg,
-                    'wrist_cam': wrist_cam_seg,
                     'outcome_ann': outcome_ann}
+        if WRIST_CAM_NAME not in missing_files:
+            seg_data['wrist_cam'] = wrist_cam_seg
         
         # Get the label for the data from the outcome detector
         label = outcome[1]
@@ -361,11 +365,12 @@ def main(args):
         dataset_dir = os.path.join(args.trial_src, dataset_name)
         # Check if dataset_dir is a valid 'parsed dataset' by seeing if the contents match
         # an expected file tree template
-        if not is_valid_dataset(dataset_dir):
+        dataset_info = is_valid_dataset(dataset_dir)
+        if not dataset_info[0]:
             continue
 
         # Split trial into segments near terminal events
-        segments = segment_trial(dataset_dir, lagging_buffer=args.lagging_buffer, leading_buffer=args.leading_buffer, num_resample=args.num_resample)
+        segments = segment_trial(dataset_dir, dataset_info[1], lagging_buffer=args.lagging_buffer, leading_buffer=args.leading_buffer, num_resample=args.num_resample)
 
         # Save trial segments to dataset
         with open(trials_pth, 'a') as f:
@@ -445,7 +450,7 @@ def main(args):
             if seg_data['side_cam'] is not None:
                 cv2.imwrite(os.path.join(args.save_dir, subdir, side_cam_pth), seg_data['side_cam'])
             # save wrist_cam img
-            if seg_data['wrist_cam'] is not None:
+            if 'wrist_cam' in seg_data.keys() and seg_data['wrist_cam'] is not None:
                 cv2.imwrite(os.path.join(args.save_dir, subdir, wrist_cam_pth), seg_data['wrist_cam'])
             # save outcome_ann img
             if seg_data['outcome_ann'] is not None:

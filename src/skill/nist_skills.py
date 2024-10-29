@@ -504,7 +504,7 @@ class PlaceConnector(BaseSkill):
 
         self.skill_steps = [
             {'step_name': 'go_to_approach_pose',
-             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.approach_pose_msg, wait=False),
+             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.approach_pose_msg, wait=False, velocity_scaling=1.0),
              'termination_cfg': lambda param: add_termination_pose(rapid_termination_config, self.approach_pose_msg)},
             {'step_name': 'go_to_connector_pose',
              'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.connector_pose_msg, wait=False),

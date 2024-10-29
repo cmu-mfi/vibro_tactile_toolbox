@@ -2,9 +2,11 @@
 
 # Define the arrays for volumes, connectors, and velocities
 VOLS=(75)
-CONNECTORS=("waterproof" "dsub" "usb" "ethernet")
-VELS=(0.01 0.02)
-TRAIN_VS_TEST=("vel_" "test_vel_")
+CONNECTORS=("dsub")
+# "dsub" "usb" "ethernet" "waterproof"
+VELS=(0.01)
+TRAIN_VS_TEST=("test_vel_")
+# "test_vel_"
 ROBOT_NAME="yk_builder"
 TYPE="nist"
 NUM_RESAMPLES=20
