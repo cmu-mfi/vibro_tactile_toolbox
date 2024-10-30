@@ -2,6 +2,9 @@ version: "3"
 
 services:
   robotiq-mm-ros:
+    build:
+      context: .
+      dockerfile: Dockerfile.robotiq_mm_ros
     image: "robotiq_mm_ros:noetic"
     container_name: "robotiq_mm_ros_noetic"
     environment:
@@ -22,6 +25,9 @@ services:
     command: bash -c "source /ros1_ws/devel/setup.bash && roslaunch robotiq_mm_ros robotiq_server.launch"
   
   realsense-and-sounddevice-ros:
+    build:
+      context: .
+      dockerfile: Dockerfile.realsense_and_sounddevice_ros
     image: "noetic_realsense_and_sounddevice_ros:latest"
     container_name: "noetic_realsense_and_sounddevice_ros_container"
     environment:
@@ -42,6 +48,9 @@ services:
     command: bash -c "source /ros1_ws/devel/setup.bash && roslaunch vibro_tactile_toolbox realsense_and_sounddevice.launch"
 
   orbbec-ros:
+    build:
+      context: .
+      dockerfile: Dockerfile.orbbec_ros
     image: "noetic_orbbec_ros:latest"
     container_name: "noetic_orbbec_ros_container"
     environment:

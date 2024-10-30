@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.2.2-cudnn8-devel-ubuntu20.04
+FROM ros:noetic
 ENV TZ=ET
 SHELL ["/bin/bash", "-c"]
 
@@ -8,6 +8,9 @@ RUN apt-get install -y git vim curl \
     && apt-get install -y python3 \
     && apt-get install -y python3-pip
 
+# Install Pyserial
+RUN pip install pyserial
+
 # Install ROS Noetic
 RUN echo "deb http://packages.ros.org/ros/ubuntu focal main" > /etc/apt/sources.list.d/ros-latest.list
 RUN curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add -
@@ -15,12 +18,8 @@ RUN apt-get update
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get install -y ros-noetic-desktop-full \
     && apt-get install -y python3-rosdep python3-rosinstall python3-rosinstall-generator python3-wstool build-essential
-RUN rosdep init && rosdep update
+RUN rosdep update
 
-# Install Dependencies
-RUN apt install -y libgflags-dev ros-noetic-image-geometry ros-noetic-camera-info-manager \
-ros-noetic-image-transport ros-noetic-image-publisher libgoogle-glog-dev libusb-1.0-0-dev libeigen3-dev \
-ros-noetic-diagnostic-updater ros-noetic-diagnostic-msgs
 
 # Create a Ros1 ws
 RUN cd / && mkdir -p ros1_ws/src
@@ -28,27 +27,15 @@ RUN cd / && mkdir -p ros1_ws/src
 # Install catkin tools
 RUN apt-get -y install python3-catkin-tools
 
-RUN pip install scipy numpy opencv-python
-
-RUN apt-get update && apt-get -y upgrade
-
-# Clone Orbbec repo
+# Clone robotiq_mm_ros repo
 RUN cd /ros1_ws/src \
-    && git clone https://github.com/orbbec/OrbbecSDK_ROS1.git \
-    && git clone https://github.com/cmu-mfi/vibro_tactile_toolbox.git
-
-RUN cd /ros1_ws/src/OrbbecSDK_ROS1 && git checkout df0789dfd9d7c726baafc95279ce0b20b1f2c812
+    && git clone https://github.com/cmu-mfi/robotiq_mm_ros.git
 
 RUN source /opt/ros/noetic/setup.bash \
  && cd /ros1_ws \
- && rosdep install \
-    --from-paths src \
-    --ignore-src \
-    --rosdistro $ROS_DISTRO \
-    -y \
  && catkin build
 
-# Add sourcing to bashrc
+# Add sourcing to bashrc 
 RUN echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
 RUN echo "source /ros1_ws/devel/setup.bash" >> ~/.bashrc
 
