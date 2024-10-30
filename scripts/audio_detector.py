@@ -52,23 +52,10 @@ def segment_audio(channels, audio_data, sample_rate, t_start, t_end):
     rgb_images = []
     for ch_num in channels:
         channel_audio_segment = audio_segment[ch_num,:]
-        # transform = torchaudio.transforms.Spectrogram()
-        # spec_tensor = transform(channel_audio_segment)
-        # spec_np = spec_tensor.log2().numpy()
-        # spec_np = np.flipud(spec_np)
 
-        # # Begin from matplotlib.image.imsave
-        # sm = cm.ScalarMappable(cmap='viridis')
-        # sm.set_clim(None, None)
-        # rgba = sm.to_rgba(spec_np, bytes=True)
-        # pil_shape = (rgba.shape[1], rgba.shape[0])
-        # image_rgb = Image.frombuffer(
-        #         "RGBA", pil_shape, rgba, "raw", "RGBA", 0, 1)
         S = librosa.feature.melspectrogram(y=channel_audio_segment, sr=sample_rate, n_mels=256)
         S_dB = librosa.power_to_db(S, ref=np.max)
         rgb_images.append(S_dB)
-
-        # End from matplotlib.image.imsave
 
     return audio_segment, rgb_images
 
@@ -101,22 +88,6 @@ class AudioBuffer:
         print(current_buffer[closest_timestamp_index][0])
 
         audio_buffer = np.hstack(tuple([buffer for (stamp,buffer) in current_buffer[closest_timestamp_index:]]))
-
-        # audio_file_path = os.path.join('/home/mfi/Documents/debug_audio_detector', f'{id}.wav')
-
-        # try:
-        #     os.remove(audio_file_path)
-        # except OSError:
-        #     pass
-        # sound_file = sf.SoundFile(audio_file_path, mode='x', 
-        #                           samplerate=self.sample_rate,
-        #                           channels=self.num_channels)
-
-        # for (stamp,buffer) in current_buffer[closest_timestamp_index:]:
-        #     sound_file.write(buffer)
-        # sound_file.close()
-
-        # audio_data, sample_rate = torchaudio.load(audio_file_path)
         
         # Process the audio data as needed
         audio_segment, rgb_images = segment_audio(channels, audio_buffer, self.sample_rate, 0.0, lagging_buffer+leading_buffer)
@@ -159,26 +130,10 @@ class AudioDetector:
 
         audio_segment, rgb_images = self.audio_buffer.get_audio_segment(req.id, req.channels, req.stamp, 0.7, 0.3)
 
-        # X = torch.zeros([1,3*num_channels,201,221])
-
-        # combined_image = np.zeros((num_channels*201,221,3), dtype=np.uint8)
-        # for channel in req.channels:
-        #     opencv_image = cv2.cvtColor(np.array(rgb_images[channel]), cv2.COLOR_RGBA2RGB)
-        #     pil_image = Image.fromarray(opencv_image)
-        #     pil_image.save(f'/home/mfi/Documents/debug_audio_detector/{req.id}_{channel}.png')
-        #     X[:,channel*3:(channel+1)*3,:,:] = transforms.ToTensor()(pil_image)
-        #     cv_image = cv2.cvtColor(np.array(rgb_images[channel]), cv2.COLOR_RGBA2BGR)
-        #     combined_image[channel*201:(channel+1)*201,:,:] = cv_image
         X = torch.zeros([1,num_channels,256,87])
 
-        #combined_image = np.zeros((num_channels*201,221,3), dtype=np.uint8)
         for channel in req.channels:
-            #opencv_image = cv2.cvtColor(np.array(rgb_images[channel]), cv2.COLOR_RGBA2RGB)
-            #pil_image = Image.fromarray(opencv_image)
-            #pil_image.save(f'/home/mfi/Documents/debug_audio_detector/{req.id}_{channel}.png')
             X[:,channel,:,:] = torch.from_numpy(rgb_images[channel])
-            #cv_image = cv2.cvtColor(np.array(rgb_images[channel]), cv2.COLOR_RGBA2BGR)
-            #combined_image[channel*201:(channel+1)*201,:,:] = cv_image
 
         X = X.to(device)
         pred = self.model(X)
@@ -194,12 +149,9 @@ class AudioDetector:
                                       'success': success})
         elif model_type == 'recovery':
             print(cpu_pred.reshape(-1,))
-            label = cpu_pred.reshape(-1,)
-            print(label)
-
-            success = True
-            resp.result = json.dumps({'result' : f"Audio Model predicted: {label}",
-                                      'success': success})
+            action = cpu_pred.reshape(-1,).tolist()
+            print(action)
+            resp.result = json.dumps({'action' : action})
     
         #combined_img_msg = self.bridge.cv2_to_imgmsg(combined_image, "bgr8")
         #self.image_pub.publish(combined_img_msg)

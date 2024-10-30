@@ -84,6 +84,7 @@ class VibrotactileDataset(Dataset):
           self.y[current_trial,0] = x_perturb
           self.y[current_trial,1] = y_perturb
           self.y[current_trial,2] = theta_perturb
+          print(x_perturb, y_perturb, theta_perturb)
 
           channel_num = 0
           for channel in channels:
@@ -126,7 +127,7 @@ class VibrotactileDataset(Dataset):
     return img_input, self.y[i]
 
 
-class CNNet_old(nn.Module):
+class CNNet(nn.Module):
     def __init__(self):
         super().__init__()
         self.conv1 = nn.Conv2d(num_channels, 32, kernel_size=5)
@@ -152,55 +153,6 @@ class CNNet_old(nn.Module):
         x = self.fc3(x)
         return x
 
-class CNNet_try2(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv1 = nn.Conv2d(num_channels*3, 32, kernel_size=3)
-        self.bn1 = nn.BatchNorm2d(32)
-        self.conv2 = nn.Conv2d(32, 32, kernel_size=3)
-        self.conv2_drop = nn.Dropout2d()
-        self.bn2 = nn.BatchNorm2d(32)
-        self.conv3 = nn.Conv2d(32, 16, kernel_size=3)
-        self.bn3 = nn.BatchNorm2d(16)
-        self.conv4 = nn.Conv2d(16, 8, kernel_size=3)
-        self.bn4 = nn.BatchNorm2d(8)
-        #self.aap2d = nn.AdaptiveAvgPool2d(1)
-        self.flatten = nn.Flatten()
-        self.fc1 = nn.Linear(81408, 1024)
-        self.fc2 = nn.Linear(1024, 256)
-        self.fc3 = nn.Linear(256, 2)
-
-
-    def forward(self, x):
-        x = F.relu(self.bn1(self.conv1(x)))
-        x = F.relu(self.bn2(self.conv2_drop(self.conv2(x))))
-        x = F.relu(self.bn3(self.conv3(x)))
-        x = F.max_pool2d(F.relu(self.bn4(self.conv4(x))),2)
-        #x = x.view(x.size(0), -1)
-        x = self.flatten(x)
-        x = self.fc1(x)
-        x = F.dropout(x, training=self.training)
-        x = self.fc2(x)
-        x = F.dropout(x, training=self.training)
-        x = self.fc3(x)
-        return x
-
-class CNNet(nn.Module):
-    def __init__(self):
-        super().__init__()
-        model = models.resnet18()
-        model.conv1 = nn.Conv2d(12, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
-        # new_module_list = list(model.modules())[:-1]
-        model.fc = nn.Linear(in_features=512, out_features=3, bias=True)
-        self.model = model #nn.Sequential(*new_module_list)
-        # self.fc = nn.Linear(512, 2)
-
-    def forward(self, x):
-        # import pdb;pdb.set_trace()
-        x = self.model(x)
-        # x = self.fc(x)
-        return x
-
 # Create the training function
 def train(dataloader, model, loss, optimizer):
     model.train()
@@ -219,7 +171,7 @@ def train(dataloader, model, loss, optimizer):
             print(f'loss: {loss:>7f}  [{current:>5d}/{size:>5d}]')
 
 # Create the validation/test function
-min_test_loss = 2.0
+min_test_loss = 1.0
 def test(dataloader, model, type):
     global min_test_loss
     size = len(dataloader.dataset)
@@ -290,7 +242,7 @@ if __name__ == '__main__':
         shuffle=True
     )
 
-    model = CNNet_old().to(device)
+    model = CNNet().to(device)
 
     # cost function used to determine best parameters
     cost = torch.nn.MSELoss()

@@ -165,7 +165,6 @@ def run():
         x_perturb = np.random.uniform(config['x_range'][0], config['x_range'][1])
         y_perturb = np.random.uniform(config['y_range'][0], config['y_range'][1])
         theta_perturb = np.random.uniform(config['theta_range'][0], config['theta_range'][1])
-        print(f"Ground truth perturb values: {x_perturb}, {y_perturb}, {theta_perturb}")
 
         if move_down_velocity_scaling == -0.1:
             move_down_velocity_scaling = np.random.uniform(0.01, 0.1)
@@ -260,9 +259,16 @@ def run():
 
             expected_result_pub.publish(1)
 
-            # audio_recovery = send_audio_outcome_request(recovery_config, terminals[0].stamp)
+            audio_recovery = send_audio_outcome_request(recovery_config, terminals[0].stamp)
 
-            # print(audio_recovery['result'])
+            recovery_action_normalized = audio_recovery['action']
+            recovery_action = np.zeros(3)
+            recovery_action[0] = (recovery_action_normalized[0] * (config['x_range'][1] - config['x_range'][0])) + config['x_range'][0]
+            recovery_action[1] = (recovery_action_normalized[1] * (config['y_range'][1] - config['y_range'][0])) + config['y_range'][0]
+            recovery_action[2] = (recovery_action_normalized[2] * (config['theta_range'][1] - config['theta_range'][0])) + config['theta_range'][0] 
+
+            print(f"Ground truth perturb values: {x_perturb}, {y_perturb}, {theta_perturb}")
+            print(f"Predicted perturb values: {recovery_action[0]}, {recovery_action[1]}, {recovery_action[2]}")
 
             start_fts_outcome = send_start_fts_outcome_request(config['fts_detector'])
             outcomes = send_start_vision_outcome_request(config['lego_detector'])

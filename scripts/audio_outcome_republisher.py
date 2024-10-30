@@ -16,10 +16,12 @@ class AudioOutcomeRepublisher:
 
     def republish(self, msg):
         self.last_time = time.time()
-        if json.loads(msg.result)['success'] == 0:
-            self.outcome_repub.publish(0)
-        else:
-            self.outcome_repub.publish(1)
+        result = json.loads(msg.result)
+        if 'success' in result.keys():
+            if result['success'] == 0:
+                self.outcome_repub.publish(0)
+            else:
+                self.outcome_repub.publish(1)
 
     def publish_no_data(self):
         current_time = time.time()
