@@ -12,6 +12,7 @@ from autolab_core import RigidTransform
 from skill.lego_skills import PullUp, MoveToAboveLegoPose, MoveToAbovePerturbLegoPose, PickLego, PlaceLego, MoveDown
 from skill.util_skills import GoHomeSkill
 from outcome.outcome import *
+from test.check_ros_topics import check_ros_topics
 
 from data_recorder.rosbag_data_recorder import RosbagDataRecorder
 
@@ -153,6 +154,8 @@ def run():
 
         if move_down_velocity_scaling == -0.1:
             move_down_velocity_scaling = np.random.uniform(0.01, 0.1)
+
+        check_ros_topics(topics)
 
         # 1. Begin rosbag recording
         rosbag_name = f"trial_{trial_num}-p_{x_perturb:0.4f}_{y_perturb:0.4f}_{theta_perturb:0.4f}_{move_down_velocity_scaling:0.2f}.bag"

@@ -132,5 +132,5 @@ if __name__ == '__main__':
             pred = model(X)
             y_true.extend(list(Y.detach().numpy()))
             y_pred.extend(list(pred.to('cpu').detach().numpy()))
-    RMSE = np.mean(np.sqrt(np.mean(np.square(np.subtract(y_true,y_pred)),axis=1)))
+    RMSE = np.mean(np.sum(np.sqrt(np.square(np.subtract(y_true,y_pred))),axis=1))
     print(RMSE)
