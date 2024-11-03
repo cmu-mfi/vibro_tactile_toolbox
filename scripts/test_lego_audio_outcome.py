@@ -14,6 +14,7 @@ from skill.util_skills import GoHomeSkill
 from outcome.outcome import *
 from std_msgs.msg import Int16, String
 from data_recorder.rosbag_data_recorder import RosbagDataRecorder
+from test.check_ros_topics import check_ros_topics
 
 import yaml
 
@@ -65,6 +66,7 @@ def run():
     velocity_scale = rospy.get_param("test_lego_audio_outcome/velocity_scale")
     demo = rospy.get_param("test_lego_audio_outcome/demo")
     use_audio_terminator = rospy.get_param("test_lego_audio_outcome/use_audio_terminator")
+    randomize_placement = rospy.get_param("test_lego_audio_outcome/randomize_placement")
     verbose = rospy.get_param("test_lego_audio_outcome/verbose")
 
     with open(root_pwd+'/config/'+yaml_file) as stream:
@@ -129,10 +131,11 @@ def run():
         y_loc = tf.split('_')[3][:-3]
         T_lego_world[x_loc+','+y_loc] = RigidTransform.load(root_pwd+config['transforms_dir']+config['lego_world_tf']+tf)
 
-    block_x_loc = np.random.randint(config['block_x_range'][0], config['block_x_range'][1])
-    block_y_loc = np.random.randint(config['block_y_range'][0], config['block_y_range'][1])
+    if randomize_placement:
+        block_x_loc = np.random.randint(config['block_x_range'][0], config['block_x_range'][1])
+        block_y_loc = np.random.randint(config['block_y_range'][0], config['block_y_range'][1])
 
-    tmp_T_lego_world = determine_next_pose(T_lego_world, block_x_loc, block_y_loc)
+        tmp_T_lego_world = determine_next_pose(T_lego_world, block_x_loc, block_y_loc)
 
     ### Skill Routine ###
     params = {'T_lego_ee': T_lego_ee, 
@@ -170,6 +173,8 @@ def run():
             move_down_velocity_scaling = np.random.uniform(0.01, 0.1)
 
         expected_result_pub.publish(0)
+
+        check_ros_topics(topics)
 
         # 1. Begin rosbag recording
         rosbag_name = f"trial_{trial_num}-p_{x_perturb:0.4f}_{y_perturb:0.4f}_{theta_perturb:0.4f}_{move_down_velocity_scaling:0.2f}.bag"
@@ -222,9 +227,9 @@ def run():
         start_fts_outcome = send_start_fts_outcome_request(config['fts_detector'])
         outcomes = send_start_vision_outcome_request(config['lego_detector'])
 
-        if outcomes['starting_top'] == 1 and outcomes['starting_bottom'] == 0:
+        if outcomes['starting_top'] == 1:
             skill_type = "place"
-        elif outcomes['starting_top'] == 0 and outcomes['starting_bottom'] == 1:
+        elif outcomes['starting_top'] == 0:
             skill_type = "pick"
         else:
             print("Error in skill type. Skipping trial")
@@ -273,9 +278,9 @@ def run():
             start_fts_outcome = send_start_fts_outcome_request(config['fts_detector'])
             outcomes = send_start_vision_outcome_request(config['lego_detector'])
 
-            if outcomes['starting_top'] == 1 and outcomes['starting_bottom'] == 0:
+            if outcomes['starting_top'] == 1:
                 skill_type = "place"
-            elif outcomes['starting_top'] == 0 and outcomes['starting_bottom'] == 1:
+            elif outcomes['starting_top'] == 0:
                 skill_type = "pick"
             else:
                 print("Error in skill type. Skipping trial")
@@ -314,7 +319,7 @@ def run():
             labeled_rosbag_path = rosbag_path.split(".bag")[0] + f"_connection_failure.bag"
             os.rename(rosbag_path, labeled_rosbag_path)
 
-            if skill_type == 'place':
+            if skill_type == 'place' and randomize_placement:
                 block_x_loc = np.random.randint(config['block_x_range'][0], config['block_x_range'][1])
                 block_y_loc = np.random.randint(config['block_y_range'][0], config['block_y_range'][1])
 
@@ -341,17 +346,17 @@ def run():
 
         rospy.sleep(1)
 
-        if outcomes['starting_top'] + outcomes['starting_bottom'] == outcomes['ending_top'] + outcomes['ending_bottom']:
-            if outcomes['success']:
-                labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_" + skill_type + "_success.bag"
-                os.rename(rosbag_path, labeled_rosbag_path)
-            else:
-                labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_" + skill_type + "_failure.bag"
-                os.rename(rosbag_path, labeled_rosbag_path)
-        else:
-            labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_" + skill_type + "_error.bag"
+        #if outcomes['starting_top'] + outcomes['starting_bottom'] == outcomes['ending_top'] + outcomes['ending_bottom']:
+        if outcomes['success']:
+            labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_" + skill_type + "_success.bag"
             os.rename(rosbag_path, labeled_rosbag_path)
-            break
+        else:
+            labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_" + skill_type + "_failure.bag"
+            os.rename(rosbag_path, labeled_rosbag_path)
+        # else:
+        #     labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_" + skill_type + "_error.bag"
+        #     os.rename(rosbag_path, labeled_rosbag_path)
+        #     break
 
         if outcomes['ending_top'] == 1:
             pass
@@ -360,7 +365,7 @@ def run():
         
         terminals = home_skill.execute_skill(None)
 
-        if skill_type == "pick" and outcomes['success']:
+        if skill_type == "pick" and outcomes['success'] and randomize_placement:
             block_x_loc = np.random.randint(config['block_x_range'][0], config['block_x_range'][1])
             block_y_loc = np.random.randint(config['block_y_range'][0], config['block_y_range'][1])
 

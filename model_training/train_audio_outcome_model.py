@@ -28,13 +28,20 @@ class VibrotactileDataset(Dataset):
   Prepare the Vibrotactile dataset for Prediction
   '''
 
-  def __init__(self, channels, glob_path):
+  def __init__(self, channels, glob_path, block_type):
 
     self.total_length = 0
     num_channels = len(channels)
 
     paths = glob.glob(glob_path + 'success/audio/*.npy')
     paths += glob.glob(glob_path + 'fail/audio/*.npy')
+
+    filtered_paths = []
+    if block_type != '':
+        for path in paths:
+            if block_type not in path:
+                filtered_paths.append(path)
+        paths = filtered_paths.copy()            
 
     print(len(paths))
     self.total_length = int(len(paths) / 4) + 1
@@ -57,7 +64,7 @@ class VibrotactileDataset(Dataset):
             self.y[current_trial,1] = 1
           else:
             continue
-
+          print(path)
           print(current_trial)
 
           channel_num = 0
@@ -127,7 +134,7 @@ def train(dataloader, model, loss, optimizer):
 # Create the validation/test function
 max_test_correct = 0.75
 min_test_loss = 0.05
-def test(dataloader, model, type, save_suffix):
+def test(dataloader, model, type, save_suffix, block_type):
     global max_test_correct, min_test_loss
     size = len(dataloader.dataset)
     model.eval()
@@ -148,7 +155,10 @@ def test(dataloader, model, type, save_suffix):
         min_test_loss = test_loss
         model_scripted = torch.jit.script(model) # Export to TorchScript
         if save_suffix == '': 
-            model_scripted.save('models/audio_outcome_'+type+'.pt') # Save
+            if block_type == '':
+                model_scripted.save('models/audio_outcome_'+type+'.pt') # Save
+            else:
+                model_scripted.save('models/audio_outcome_'+type+'_'+block_type+'.pt') # Save
         else: 
             model_scripted.save('models/channels/audio_outcome_'+type+save_suffix+'.pt') # Save
         #torch.save(model, 'models/audio_outcome_'+type+'.pt')
@@ -161,6 +171,8 @@ if __name__ == '__main__':
     parser.add_argument('--type', '-t', type=str, default='lego')
     parser.add_argument('--train_ratio', '-r', type=float, default=0.8)
     parser.add_argument('--channels', '-c', type=str, default='')
+    parser.add_argument('--block_type', '-b', type=str, default='')
+    parser.add_argument('--data_dir', '-d', type=str, default='/home/mfi/Documents/vibrotactile_data')
     args = parser.parse_args()
     
     if args.channels != '':
@@ -174,21 +186,21 @@ if __name__ == '__main__':
     num_channels = len(channels)
 
     if args.type == 'lego':
-        paths = glob.glob(f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/*/test*/MoveDown/success/audio/*.npy')
+        paths = glob.glob(f'{args.data_dir}/lego_dataset/*/*/test*/MoveDown/success/audio/*.npy')
     else:
-        paths = glob.glob(f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/test*/MoveDown/success/audio/*.npy')
+        paths = glob.glob(f'{args.data_dir}/nist_dataset/*/{args.type}/test*/MoveDown/success/audio/*.npy')
     if paths is not None and len(paths) > 0:
         if args.type == 'lego':
-            audio_train_dataset = VibrotactileDataset(channels,f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/*/vel*/MoveDown/')
-            audio_test_dataset = VibrotactileDataset(channels, f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/*/test*/MoveDown/')
+            audio_train_dataset = VibrotactileDataset(channels,f'{args.data_dir}/lego_dataset/*/*/vel*/MoveDown/', args.block_type)
+            audio_test_dataset = VibrotactileDataset(channels, f'{args.data_dir}/lego_dataset/*/*/test*/MoveDown/', args.block_type)
         else:
-            audio_train_dataset = VibrotactileDataset(channels,f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/vel*/MoveDown/')
-            audio_test_dataset = VibrotactileDataset(channels, f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/test*/MoveDown/')
+            audio_train_dataset = VibrotactileDataset(channels,f'{args.data_dir}/nist_dataset/*/{args.type}/vel*/MoveDown/', args.block_type)
+            audio_test_dataset = VibrotactileDataset(channels, f'{args.data_dir}/nist_dataset/*/{args.type}/test*/MoveDown/', args.block_type)
     else:
         if args.type == 'lego':
-            audio_dataset = VibrotactileDataset(channels, f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/*/vel*/MoveDown/')
+            audio_dataset = VibrotactileDataset(channels, f'{args.data_dir}/lego_dataset/*/*/vel*/MoveDown/', args.block_type)
         else:
-            audio_dataset = VibrotactileDataset(channels, f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/vel*/MoveDown/')
+            audio_dataset = VibrotactileDataset(channels, f'{args.data_dir}/nist_dataset/*/{args.type}/vel*/MoveDown/', args.block_type)
         print(len(audio_dataset))
         #split data to test and train
         #use 80% to train
@@ -227,7 +239,7 @@ if __name__ == '__main__':
     for t in range(epochs):
         print(f'Epoch {t+1}\n-------------------------------')
         train(train_dataloader, model, cost, optimizer)
-        test(test_dataloader, model, args.type, save_suffix)
+        test(test_dataloader, model, args.type, save_suffix, args.block_type)
     print('Done!')
 
     summary(model, input_size=(15, num_channels, 256, 87))

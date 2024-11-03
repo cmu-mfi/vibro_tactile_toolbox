@@ -61,15 +61,6 @@ class VibrotactileDataset(Dataset):
 
           channel_num = 0
           for channel in channels:
-            #Load image by OpenCV
-            #print(current_num+channel)
-            # cv_image = cv2.imread(path[:path.rfind('_')+1]+str(current_num+channel)+'.npy')
-
-            # #Convert img to RGB
-            # rgb_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
-            # pil_image = Image.fromarray(rgb_image)
-            # image_tensor = transforms.ToTensor()(pil_image)
-            # self.X[current_trial,channel_num*3:(channel_num+1)*3,:,:] = image_tensor
 
             spec = np.load(path[:path.rfind('_')+1]+str(current_num+channel)+'.npy')
             spec_tensor = torch.from_numpy(spec)
@@ -85,19 +76,8 @@ class VibrotactileDataset(Dataset):
     return self.total_length
 
   def __getitem__(self, i):
-    img_input = self.X[i]
-    #print(img_input)
-    # total_elem = 256*44
-    # num_noise = int(1/20 * total_elem)
-    
-    # for j in range(self.num_channels*3):
-    #     aug_noise = np.zeros(256*44)
-    #     idx = np.random.choice(len(aug_noise), num_noise, replace=False).astype(int)
-    #     aug_noise[idx] = (np.random.random(num_noise) * 0.04) - 0.02
 
-    #     img_input[j] += aug_noise.reshape(256,44)
-
-    return img_input, self.y[i]
+    return self.X[i], self.y[i]
 
 class CNNet(nn.Module):
     def __init__(self):

@@ -15,6 +15,7 @@ from outcome.outcome import *
 from std_msgs.msg import Int16, String
 from data_recorder.rosbag_data_recorder import RosbagDataRecorder
 from sklearn.metrics import confusion_matrix
+from test.check_ros_topics import check_ros_topics
 
 import yaml
 
@@ -229,6 +230,8 @@ def run():
         terminals = move_to_above_perturb_connector_skill.execute_skill(execution_params, move_to_above_perturb_connector_params)
 
         expected_result_pub.publish(0)
+
+        check_ros_topics(topics)
 
         # 1. Begin rosbag recording
         rosbag_name = f"trial_{trial_num}-p_{x_perturb:0.4f}_{y_perturb:0.4f}_{theta_perturb:0.4f}_{move_down_velocity_scaling:0.2f}.bag"

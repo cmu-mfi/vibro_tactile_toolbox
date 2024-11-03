@@ -72,25 +72,16 @@ class AudioBuffer:
         audio_samples = (msg.header.stamp.to_sec(), np.asarray(msg.data).reshape((-1,self.num_channels)).transpose())
         self.buffer.append(audio_samples)
 
-    def get_audio_segment(self, channels, t_target, lagging_buffer=0.5, leading_buffer=0.5):
+    def get_last_audio_segment(self, channels, segment_length=0.5):
         # Convert buffer to a numpy array for processing
         # find t_target
         # find t_target - lagging_buffer
         # find t_target + leading_buffer
-        start_time = t_target - rospy.Duration(lagging_buffer)
 
-        current_buffer = list(self.buffer)
-
-        timestamps = [stamp for (stamp, _) in current_buffer]
-
-        closest_timestamp_index = np.argmin(np.abs(np.array(timestamps) - start_time.to_sec()))
-        print(start_time.to_sec())
-        print(current_buffer[closest_timestamp_index][0])
-
-        audio_buffer = np.hstack(tuple([buffer for (stamp,buffer) in current_buffer[closest_timestamp_index:]]))
+        audio_buffer = np.hstack(tuple([buffer for (stamp,buffer) in list(self.buffer)[-105:]]))
         
         # Process the audio data as needed
-        audio_segment, rgb_images = segment_audio(channels, audio_buffer, self.sample_rate, 0.0, lagging_buffer+leading_buffer)
+        audio_segment, rgb_images = segment_audio(channels, audio_buffer, self.sample_rate, 0.0, segment_length)
         return audio_segment, rgb_images
 
 
@@ -99,7 +90,7 @@ class AudioTerminationHandler(BaseTerminationHandler):
         super().__init__()
         # Input data buffer
         sample_rate = 44100
-        buffer_duration_s = 10.0
+        buffer_duration_s = 20.0
 
         self.audio_buffer = AudioBuffer(sample_rate, buffer_duration_s)
 
@@ -107,6 +98,7 @@ class AudioTerminationHandler(BaseTerminationHandler):
         self.check_rate_ns = 10E6 # 10 ms default
         self.model = None
         self.channels = [0,1,2,3]
+        self.num_channels = len(self.channels)
 
     def update_config(self, cfg: TerminationConfig):
         """
@@ -129,6 +121,7 @@ class AudioTerminationHandler(BaseTerminationHandler):
                 self.model.to(device)
             if 'channels' in audio_cfg:
                 self.channels = audio_cfg['channels']
+                self.num_channels = len(self.channels)
         else:
             self.live = False
     
@@ -145,36 +138,27 @@ class AudioTerminationHandler(BaseTerminationHandler):
         terminate = False
         cause = ''
 
-        audio_segment, rgb_images = self.audio_buffer.get_audio_segment(self.channels, rospy.Time.now(), 0.52, 0.5)
+        audio_segment, rgb_images = self.audio_buffer.get_last_audio_segment(self.channels, 0.5)
 
-        X = torch.zeros([1,num_channels,256,44])
+        X = torch.zeros([1,self.num_channels,256,44])
+        try:
+            for channel in self.channels:
+                X[:,channel,:,:] = torch.from_numpy(rgb_images[channel])
 
-        for channel in req.channels:
-            X[:,channel,:,:] = torch.from_numpy(rgb_images[channel])
+            X = X.to(device)
+            pred = self.model(X)
+            cpu_pred = pred.to('cpu').detach().numpy()
+            label = int(np.argmax(cpu_pred.reshape(-1,)))
 
-        # X = torch.zeros([1,3*num_channels,201,111])
+            terminate = (label == 1)
 
-        # combined_image = np.zeros((num_channels*201,111,3), dtype=np.uint8)
-        # for channel in range(num_channels):
-        #     opencv_image = cv2.cvtColor(np.array(rgb_images[channel]), cv2.COLOR_RGBA2RGB)
-        #     pil_image = Image.fromarray(opencv_image)
-        #     #pil_image.save(f'/mnt/hdd1/test_{channel}.png')
-        #     X[:,channel*3:(channel+1)*3,:,:] = transforms.ToTensor()(pil_image)
-        #     cv_image = cv2.cvtColor(np.array(rgb_images[channel]), cv2.COLOR_RGBA2BGR)
-        #     combined_image[channel*201:(channel+1)*201,:,:] = cv_image
-
-        X = X.to(device)
-        pred = self.model(X)
-        cpu_pred = pred.to('cpu').detach().numpy()
-        label = int(np.argmax(cpu_pred.reshape(-1,)))
-
-        terminate = (label == 1)
-
-        if terminate:
-            cause = 'Audio termination handler caused by: predicted terminate.'
-        
-        termination_signal = TerminationSignal()
-        termination_signal.id = self.id
-        termination_signal.terminate = terminate
-        termination_signal.cause = cause
-        return termination_signal
+            if terminate:
+                cause = 'Audio termination handler caused by: predicted terminate.'
+            
+            termination_signal = TerminationSignal()
+            termination_signal.id = self.id
+            termination_signal.terminate = terminate
+            termination_signal.cause = cause
+            return termination_signal
+        except:
+            pass

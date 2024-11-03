@@ -269,10 +269,13 @@ def save_outcomes(bag, save_dir, filenames=[], outcome_topics=[], outcome_latenc
                     t_trial = t.to_sec() - bag.get_start_time()
                     print(f"audio_detector outcome message at time {t_trial}")
                     outcome = json.loads(msg.result)
-                    result = outcome['result'].strip()
-                    success = outcome['success']
-
-                    f.write(f"{t_trial}, {result}, {success}\n")
+                    if 'success' in outcome.keys():
+                        result = outcome['result'].strip()
+                        success = outcome['success']
+                        f.write(f"{t_trial}, {result}, {success}\n")
+                    else:
+                        recovery_action = outcome['action']
+                        f.write(f"{t_trial}, {recovery_action} \n")
         elif "fts" in outcome_topic:
             text_file = os.path.join(save_dir, "fts_outcomes.txt")
             with open(text_file, 'w') as f:

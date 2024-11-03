@@ -48,10 +48,10 @@ class VibrotactileDataset(Dataset):
 
     current_trial = 0
     for path in paths:
-      #print(path)
       current_num = int(path[path.rfind('_')+1:-4])
       if current_num % 4 == 0:
           print(current_trial)
+          print(path)
           channel_num = 0
           # if 'fail' in path:
           #   self.y[current_trial] = 0
@@ -82,6 +82,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--type', '-t', type=str, default='lego')
     parser.add_argument('--channels', '-c', type=str, default='')
+    parser.add_argument('--block_type', '-b', type=str, default='')
+    parser.add_argument('--data_dir', '-d', type=str, default='/home/mfi/Documents/vibrotactile_data')
     args = parser.parse_args()
 
     if args.channels != '':
@@ -93,10 +95,12 @@ if __name__ == '__main__':
         save_suffix = ''
 
     if args.type == 'lego':
-        audio_dataset = VibrotactileDataset(channels, f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/*/test*/MoveDown/')
+      if args.block_type == '':
+        audio_dataset = VibrotactileDataset(channels, f'{args.data_dir}/lego_dataset/*/*/test*/MoveDown/')
+      else:
+        audio_dataset = VibrotactileDataset(channels, f'{args.data_dir}/lego_dataset/*/{args.block_type}/*/MoveDown/')
     else:
-        audio_dataset = VibrotactileDataset(channels, f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/test*/MoveDown/')
-        #audio_dataset = VibrotactileDataset(channels, f'/home/mfi/Documents/debug_audio_detector/*/')
+        audio_dataset = VibrotactileDataset(channels, f'{args.data_dir}/nist_dataset/*/{args.type}/test*/MoveDown/')
     print(len(audio_dataset))
 
     test_dataloader = torch.utils.data.DataLoader(
@@ -106,6 +110,9 @@ if __name__ == '__main__':
     )
 
     if save_suffix == '': 
+      if args.block_type != '':
+        model = torch.jit.load('models/blocks/audio_outcome_'+args.type+'_'+args.block_type+'.pt') # load
+      else:
         model = torch.jit.load('models/audio_outcome_'+args.type+'.pt') # load
     else: 
         model = torch.jit.load('models/channels/audio_outcome_'+args.type+save_suffix+'.pt') # load

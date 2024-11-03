@@ -54,6 +54,8 @@ rosbag_data_recorder:
     - /namespace/audio
     - /namespace/audio_info
     - /namespace/terminator/skill_termination_signal
+    - /namespace/terminator/audio_termination_signal
+    - /namespace/terminator/fts_termination_signal
     - /namespace/outcome/audio_detector
     - /namespace/outcome/audio_detector/spectrogram
     - /namespace/outcome/lego_detector

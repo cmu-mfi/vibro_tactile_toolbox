@@ -1,13 +1,14 @@
 <launch>
     <arg name="namespace" default="yk_creator"/>
-    <arg name="num_trials" default="100"/>
-    <arg name="start_num" default="1"/>
+    <arg name="num_trials" default="9"/>
+    <arg name="start_num" default="114"/>
     <arg name="verbose" default="true"/>
-    <arg name="block_type" default="2x1"/>
+    <arg name="block_type" default="4x2"/>
     <arg name="velocity_scale" default="0.01"/>
     <arg name="volume" default="75"/>
     <arg name="demo" default="false"/>
     <arg name="use_audio_terminator" default="false"/>
+    <arg name="randomize_placement" default="false"/>
     <arg name="config" default="lego.yaml"/>
     <group ns="$(arg namespace)">
         <node pkg="vibro_tactile_toolbox" name="test_lego_audio_outcome" type="test_lego_audio_outcome.py" output="screen">
@@ -20,6 +21,7 @@
             <param name="volume" value="$(arg volume)"/>
             <param name="demo" value="$(arg demo)"/>
             <param name="use_audio_terminator" value="$(arg use_audio_terminator)"/>
+            <param name="randomize_placement" value="$(arg randomize_placement)"/>
             <param name="verbose" value="$(arg verbose)"/>
             <param name="config" value="$(arg config)"/>
         </node>

@@ -7,6 +7,8 @@ def check_ros_topics(rostopic_list):
 	for rostopic in rostopic_list:
 		if 'detector' in rostopic:
 			pass
+		elif 'terminator' in rostopic:
+			pass
 		elif 'compressed' in rostopic:
 			rospy.wait_for_message(rostopic, CompressedImage, timeout=5)
 		elif 'audio_info' in rostopic:
