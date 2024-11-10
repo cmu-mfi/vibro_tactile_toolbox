@@ -325,6 +325,8 @@ def parse(args, bagfile, save_dir):
     JOINT_STATE_TOPIC = f'/{namespace}/joint_states'
     SKILL_PARAM_TOPIC = f'/{namespace}/skill/param'
     SKILL_TERMINATION_TOPIC = f'/{namespace}/terminator/skill_termination_signal'
+    AUDIO_TERMINATION_TOPIC = f'/{namespace}/terminator/audio_termination_signal'
+    FORCE_TERMINATION_TOPIC = f'/{namespace}/terminator/force_termination_signal'
     AUDIO_OUTCOME_TOPIC = f'/{namespace}/outcome/audio_detector'
     LEGO_OUTCOME_TOPIC = f'/{namespace}/outcome/lego_detector'
     FTS_OUTCOME_TOPIC = f'/{namespace}/outcome/fts_detector'
@@ -366,6 +368,14 @@ def parse(args, bagfile, save_dir):
     if args.save_termination:
         termination_topics = [SKILL_TERMINATION_TOPIC]
         save_termination_signals(bag, save_folder, 'termination_signals', termination_topics)
+
+    if args.save_audio_termination:
+        termination_topics = [AUDIO_TERMINATION_TOPIC]
+        save_termination_signals(bag, save_folder, 'audio_termination_signals', termination_topics)
+
+    if args.save_force_termination:
+        termination_topics = [FORCE_TERMINATION_TOPIC]
+        save_termination_signals(bag, save_folder, 'force_termination_signals', termination_topics)
 
     if args.save_outcome:
         outcome_topics = [AUDIO_OUTCOME_TOPIC,
@@ -411,6 +421,10 @@ if __name__ == '__main__':
                         help='True if save skill params, else False. Default True.')
     parser.add_argument('--save_termination', '-t', type=bool, default=True,
                         help='True if save termination signals, else False. Default True.')
+    parser.add_argument('--save_audio_termination', '-at', type=bool, default=False,
+                        help='True if save audio termination signals, else False. Default True.')
+    parser.add_argument('--save_force_termination', '-ft', type=bool, default=True,
+                        help='True if save force termination signals, else False. Default True.')
     parser.add_argument('--save_outcome', '-o', type=bool, default=True,
                         help='True if save outcome responses, else False. Default True.')
     parser.add_argument('--video_latency', type=float, default=0.0,
