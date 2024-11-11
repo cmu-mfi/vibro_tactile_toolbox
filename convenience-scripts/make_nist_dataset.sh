@@ -2,11 +2,9 @@
 
 # Define the arrays for volumes, connectors, and velocities
 VOLS=(75)
-CONNECTORS=("dsub")
-# "dsub" "usb" "ethernet" "waterproof"
-VELS=(0.01)
-TRAIN_VS_TEST=("test_vel_")
-# "test_vel_"
+CONNECTORS=("dsub" "usb" "waterproof")
+VELS=(0.01 0.02)
+TRAIN_VS_TEST=("vel_" "test_vel_")
 ROBOT_NAME="yk_builder"
 TYPE="nist"
 NUM_RESAMPLES=20
@@ -27,8 +25,8 @@ for VOL in "${VOLS[@]}"; do
         
         # Call the python script with the constructed paths
         python scripts/parse_rosbag.py -w "$TARGET_DIR" -d "$TARGET_DIR" -n ${ROBOT_NAME}
-        #python model_training/create_outcome_training_dataset.py -s "$TARGET_DIR" -d "$TARGET_DST" -t ${TYPE} -n ${NUM_RESAMPLES}
-        #python model_training/create_terminator_training_dataset.py -s "$TARGET_DIR" -d "$TARGET_DST" -t ${TYPE} -n ${NUM_RESAMPLES_TERMINATOR}
+        python model_training/create_outcome_training_dataset.py -s "$TARGET_DIR" -d "$TARGET_DST" -t ${TYPE} -n ${NUM_RESAMPLES}
+        python model_training/create_terminator_training_dataset.py -s "$TARGET_DIR" -d "$TARGET_DST" -t ${TYPE} -n ${NUM_RESAMPLES_TERMINATOR}
       done
     done
   done
