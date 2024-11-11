@@ -53,10 +53,7 @@ class VibrotactileDataset(Dataset):
           print(current_trial)
           print(path)
           channel_num = 0
-          # if 'fail' in path:
-          #   self.y[current_trial] = 0
-          # elif 'success' in path:
-          #   self.y[current_trial] = 1
+
           label = path[path.find('MoveDown')+len('MoveDown')+1:path.find('audio')-1]
           if label == 'fail':
             self.y[current_trial] = 0
@@ -131,7 +128,6 @@ if __name__ == '__main__':
             pred = model(X)
             y_true.extend(list(Y.detach().numpy()))
             y_pred.extend(list(pred.argmax(1).to('cpu').detach().numpy()))
-            #print(list(pred.to('cpu').detach().numpy()))
 
     #f, ax = plt.subplots()
     #ax.set_title('Vibrotactile Audio Confusion Matrix for '+args.type)

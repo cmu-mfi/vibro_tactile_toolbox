@@ -88,15 +88,6 @@ class VibrotactileDataset(Dataset):
 
           channel_num = 0
           for channel in channels:
-            #Load image by OpenCV
-            #print(current_num+channel)
-            # cv_image = cv2.imread(path[:path.rfind('_')+1]+str(current_num+channel)+'.npy')
-
-            # #Convert img to RGB
-            # rgb_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
-            # pil_image = Image.fromarray(rgb_image)
-            # image_tensor = transforms.ToTensor()(pil_image)
-            # self.X[current_trial,channel_num*3:(channel_num+1)*3,:,:] = image_tensor
             spec = np.load(path[:path.rfind('_')+1]+str(current_num+channel)+'.npy')
 
             spec_tensor = torch.from_numpy(spec)
@@ -112,19 +103,7 @@ class VibrotactileDataset(Dataset):
     return self.total_length
 
   def __getitem__(self, i):
-    img_input = self.X[i]
-    #print(img_input)
-    # total_elem = 256*87
-    # num_noise = int(1/20 * total_elem)
-    
-    # for j in range(self.num_channels*3):
-    #     aug_noise = np.zeros(256*87)
-    #     idx = np.random.choice(len(aug_noise), num_noise, replace=False).astype(int)
-    #     aug_noise[idx] = (np.random.random(num_noise) * 0.04) - 0.02
-
-    #     img_input[j] += aug_noise.reshape(256,87)
-
-    return img_input, self.y[i]
+    return self.X[i], self.y[i]
 
 
 class CNNet(nn.Module):
@@ -197,27 +176,28 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--type', '-t', type=str, default='lego')
     parser.add_argument('--train_ratio', '-r', type=float, default=0.8)
+    parser.add_argument('--data_dir', '-d', type=str, default='/home/mfi/Documents/vibrotactile_data')
     args = parser.parse_args()
 
     channels = [0,1,2,3]
     num_channels = len(channels)
 
     if args.type == 'lego':
-        paths = glob.glob(f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/*/test*/MoveDown/fail/audio/*.npy')
+        paths = glob.glob(f'{args.data_dir}/lego_dataset/*/*/test*/MoveDown/fail/audio/*.npy')
     else:
-        paths = glob.glob(f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/test*/MoveDown/fail/audio/*.npy')
+        paths = glob.glob(f'{args.data_dir}/nist_dataset/*/{args.type}/test*/MoveDown/fail/audio/*.npy')
     if paths is not None:
         if args.type == 'lego':
-            audio_train_dataset = VibrotactileDataset(args.type,channels,f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/*/vel*/MoveDown/')
-            audio_test_dataset = VibrotactileDataset(args.type,channels, f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/*/test*/MoveDown/')
+            audio_train_dataset = VibrotactileDataset(args.type,channels,f'{args.data_dir}/lego_dataset/*/*/vel*/MoveDown/')
+            audio_test_dataset = VibrotactileDataset(args.type,channels, f'{args.data_dir}/lego_dataset/*/*/test*/MoveDown/')
         else:
-            audio_train_dataset = VibrotactileDataset(args.type,channels,f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/vel*/MoveDown/')
-            audio_test_dataset = VibrotactileDataset(args.type,channels, f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/test*/MoveDown/')
+            audio_train_dataset = VibrotactileDataset(args.type,channels,f'{args.data_dir}/nist_dataset/*/{args.type}/vel*/MoveDown/')
+            audio_test_dataset = VibrotactileDataset(args.type,channels, f'{args.data_dir}/nist_dataset/*/{args.type}/test*/MoveDown/')
     else:
         if args.type == 'lego':
-            audio_dataset = VibrotactileDataset(args.type,channels, f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/{args.type}/vel*/MoveDown/')
+            audio_dataset = VibrotactileDataset(args.type,channels, f'{args.data_dir}/lego_dataset/*/{args.type}/vel*/MoveDown/')
         else:
-            audio_dataset = VibrotactileDataset(args.type,channels, f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/vel*/MoveDown/')
+            audio_dataset = VibrotactileDataset(args.type,channels, f'{args.data_dir}/nist_dataset/*/{args.type}/vel*/MoveDown/')
 
         print(len(audio_dataset))
         #split data to test and train

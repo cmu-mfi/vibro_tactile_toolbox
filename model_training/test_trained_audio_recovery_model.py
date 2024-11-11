@@ -78,14 +78,6 @@ class VibrotactileDataset(Dataset):
           channel_num = 0
 
           for channel in channels:
-            #Load image by OpenCV
-            # cv_image = cv2.imread(path[:path.rfind('_')+1]+str(current_num+channel)+'.npy')
-
-            # #Convert img to RGB
-            # rgb_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
-            # pil_image = Image.fromarray(rgb_image)
-            # image_tensor = transforms.ToTensor()(pil_image)
-            # self.X[current_trial,channel_num*3:(channel_num+1)*3,:,:] = image_tensor
             spec = np.load(path[:path.rfind('_')+1]+str(current_num+channel)+'.npy')
 
             spec_tensor = torch.from_numpy(spec)

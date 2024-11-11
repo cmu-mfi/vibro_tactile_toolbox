@@ -58,14 +58,6 @@ class VibrotactileDataset(Dataset):
             self.y[current_trial] = 1
 
           for channel in channels:
-            #Load image by OpenCV
-            # cv_image = cv2.imread(path[:path.rfind('_')+1]+str(current_num+channel)+'.npy')
-
-            # #Convert img to RGB
-            # rgb_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
-            # pil_image = Image.fromarray(rgb_image)
-            # image_tensor = transforms.ToTensor()(pil_image)
-            # self.X[current_trial,channel_num*3:(channel_num+1)*3,:,:] = image_tensor
             spec = np.load(path[:path.rfind('_')+1]+str(current_num+channel)+'.npy')
             spec_tensor = torch.from_numpy(spec)
             self.X[current_trial,channel_num,:,:] = spec_tensor
@@ -115,7 +107,6 @@ if __name__ == '__main__':
             pred = model(X)
             y_true.extend(list(Y.detach().numpy()))
             y_pred.extend(list(pred.argmax(1).to('cpu').detach().numpy()))
-            #print(list(pred.to('cpu').detach().numpy()))
 
     # f, ax = plt.subplots()
     # ax.set_title('Vibrotactile Audio Confusion Matrix for '+args.type)

@@ -72,49 +72,12 @@ def segment_audio(audio_data, sample_rate, t_start, t_end, resample_num=0, time_
     rgb_images = []
     for ch_num in range(num_channels):
         channel_audio_segment = audio_segment[ch_num,:]
-
-        #fig=plt.figure()
-
-        #ax = fig.gca()
-        #D = librosa.amplitude_to_db(np.abs(librosa.stft(channel_audio_segment)), ref=np.max)
         S = librosa.feature.melspectrogram(y=channel_audio_segment, sr=sample_rate, n_mels=256)
         S_dB = librosa.power_to_db(S, ref=np.max)
         rgb_images.append(S_dB)
 
-        # D = librosa.amplitude_to_db(np.abs(librosa.stft(channel_audio_segment)),ref=np.max)
-        # print(D.shape)
-        # rgb_images.append(D)
-        # img = librosa.display.specshow(S_dB, sr=sample_rate, ax=ax)
-
-        # fig.canvas.draw()  # Draw the canvas, cache the renderer
-
-        # image_flat = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')  # (H * W * 3,)
-        # # NOTE: reversed converts (W, H) from get_width_height to (H, W)
-        # image = image_flat.reshape(*reversed(fig.canvas.get_width_height()), 3)  # (H, W, 3)
-        # cropped_image = image[58:(58+370),80:(80+497),:]
-
-        
-
-        # fig.clear()
-        # plt.close(fig)
-
     audio_segment = torch.from_numpy(audio_segment)
 
-        # transform = torchaudio.transforms.Spectrogram()
-        # spec_tensor = transform(channel_audio_segment)
-        # spec_np = spec_tensor.log2().numpy()
-        # spec_np = np.flipud(spec_np)
-
-        # # Begin from matplotlib.image.imsave
-        # sm = cm.ScalarMappable(cmap='viridis')
-        # sm.set_clim(None, None)
-        # rgba = sm.to_rgba(spec_np, bytes=True)
-        # pil_shape = (rgba.shape[1], rgba.shape[0])
-        # image_rgb = Image.frombuffer(
-        #         "RGBA", pil_shape, rgba, "raw", "RGBA", 0, 1)
-        # rgb_images.append(image_rgb)
-
-        # End from matplotlib.image.imsave
     if resample_num > 0:
         for i in range(resample_num):
             random_offset = np.random.random()*(time_offset*2) - time_offset
@@ -126,46 +89,9 @@ def segment_audio(audio_data, sample_rate, t_start, t_end, resample_num=0, time_
             for ch_num in range(num_channels):
                 channel_audio_segment = current_audio_segment[ch_num,:]
 
-                #fig=plt.figure()
-
-                #ax = fig.gca()
-                #D = librosa.amplitude_to_db(np.abs(librosa.stft(channel_audio_segment)), ref=np.max)
                 S = librosa.feature.melspectrogram(y=channel_audio_segment, sr=sample_rate, n_mels=256)
                 S_dB = librosa.power_to_db(S, ref=np.max)
                 rgb_images.append(S_dB)
-
-                # D = librosa.amplitude_to_db(np.abs(librosa.stft(channel_audio_segment)),ref=np.max)
-                # rgb_images.append(D)
-                # print(S_dB.shape)
-                # img = librosa.display.specshow(S_dB, sr=sample_rate, ax=ax)
-
-                # fig.canvas.draw()  # Draw the canvas, cache the renderer
-
-                # image_flat = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')  # (H * W * 3,)
-                # # NOTE: reversed converts (W, H) from get_width_height to (H, W)
-                # image = image_flat.reshape(*reversed(fig.canvas.get_width_height()), 3)  # (H, W, 3)
-                # cropped_image = image[58:(58+370),80:(80+497),:]
-
-                
-
-                # fig.clear()
-                # plt.close(fig)
-
-                # transform = torchaudio.transforms.Spectrogram()
-                # spec_tensor = transform(channel_audio_segment)
-                # spec_np = spec_tensor.log2().numpy()
-                # spec_np = np.flipud(spec_np)
-
-                # # Begin from matplotlib.image.imsave
-                # sm = cm.ScalarMappable(cmap='viridis')
-                # sm.set_clim(None, None)
-                # rgba = sm.to_rgba(spec_np, bytes=True)
-                # pil_shape = (rgba.shape[1], rgba.shape[0])
-                # image_rgb = Image.frombuffer(
-                #         "RGBA", pil_shape, rgba, "raw", "RGBA", 0, 1)
-                # rgb_images.append(image_rgb)
-
-                # End from matplotlib.image.imsave
 
     return audio_segment, rgb_images
 
@@ -435,12 +361,6 @@ def main(args):
             if seg_data['audio_spec'] is not None:
                 for (i,audio_spec) in enumerate(seg_data['audio_spec']):
                     np.save(os.path.join(args.save_dir, subdir, audio_spec_pth + '_' + str(i) + '.npy'), audio_spec)
-                    #opencv_image = cv2.cvtColor(np.array(audio_spec), cv2.COLOR_RGBA2BGR)
-                    #opencv_image = cv2.cvtColor(np.array(audio_spec), cv2.COLOR_RGBA2RGB)
-                    #pil_image = Image.fromarray(opencv_image)
-                    #pil_image.save(os.path.join(args.save_dir, subdir, audio_spec_pth + '_' + str(i) + '.png'))
-                    #cv2.imwrite(os.path.join(args.save_dir, subdir, audio_spec_pth + '_' + str(i) + '.png'), opencv_image)
-                    #audio_spec.save()
             
             # save fts segment
             if seg_data['fts'] is not None:
