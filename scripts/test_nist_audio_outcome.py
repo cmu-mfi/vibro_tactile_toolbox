@@ -10,7 +10,7 @@ from gripper_controller.robotiq_hande_controller import RobotiqHandEController
 from autolab_core import RigidTransform
 
 from skill.nist_skills import *
-from skill.util_skills import GoHomeSkill
+from skill.common_skills import GoHomeSkill, MoveDownToContact
 from outcome.outcome import *
 from std_msgs.msg import Int16, String
 from data_recorder.rosbag_data_recorder import RosbagDataRecorder
@@ -143,7 +143,7 @@ def run():
     move_to_above_perturb_connector_skill = MoveToAbovePerturbConnectorPose(robot_commander, gripper_controller, namespace, params)
     pull_up_skill = PullUp(robot_commander, gripper_controller, namespace, params)
     move_up_skill = MoveUp(robot_commander, gripper_controller, namespace, params)
-    move_down_skill = MoveDown(robot_commander, gripper_controller, namespace, params)
+    move_down_to_contact_skill = MoveDownToContact(robot_commander, gripper_controller, namespace, params)
     push_down_skill = PushDown(robot_commander, gripper_controller, namespace, params)
     pick_connector_skill = PickConnector(robot_commander, gripper_controller, namespace, pick_connector_params)
     place_connector_skill = PlaceConnector(robot_commander, gripper_controller, namespace, place_connector_params)
@@ -241,7 +241,7 @@ def run():
 
         rospy.sleep(1)
 
-        terminals = move_down_skill.execute_skill(execution_params, move_down_params)
+        terminals = move_down_to_contact_skill.execute_skill(execution_params, move_down_params)
 
         audio_outcomes = send_audio_outcome_request(outcome_config, terminals[0].stamp)
 
@@ -262,7 +262,7 @@ def run():
 
                 expected_result_pub.publish(1)
 
-                terminals = move_down_skill.execute_skill(execution_params, move_down_params)
+                terminals = move_down_to_contact_skill.execute_skill(execution_params, move_down_params)
 
                 audio_outcomes = send_audio_outcome_request(outcome_config, terminals[0].stamp)
 
@@ -309,7 +309,7 @@ def run():
 
                 expected_result_pub.publish(1)
 
-                terminals = move_down_skill.execute_skill(execution_params, move_down_params)
+                terminals = move_down_to_contact_skill.execute_skill(execution_params, move_down_params)
 
                 audio_outcomes = send_audio_outcome_request(outcome_config, terminals[0].stamp)
 

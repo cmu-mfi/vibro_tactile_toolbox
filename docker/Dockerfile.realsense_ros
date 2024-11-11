@@ -1,23 +1,8 @@
-FROM ros:noetic
+FROM ros_desktop_full:noetic
 ENV TZ=ET
 SHELL ["/bin/bash", "-c"]
 
-# Basic apt-get
-RUN apt-get update
-RUN apt-get install -y git vim tmux curl \
-    && apt-get install -y python3 \
-    && apt-get install -y python3-pip
-
-# Install ROS Noetic Desktop Full
-ENV DEBIAN_FRONTEND noninteractive
-RUN apt-get install -y ros-noetic-desktop-full \
-    && apt-get install -y python3-rosdep python3-rosinstall python3-rosinstall-generator python3-wstool build-essential
-
-# Create a Ros1 ws
-RUN cd / && mkdir -p ros1_ws/src
-
-# Install catkin tools
-RUN apt-get -y install python3-catkin-tools python-is-python3
+RUN apt-get update && apt-get -y upgrade
 
 # Realsense ROS
 RUN mkdir -p /etc/apt/keyrings

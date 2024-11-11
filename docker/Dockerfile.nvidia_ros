@@ -1,0 +1,34 @@
+FROM nvidia/cuda:12.3.2-cudnn9-devel-ubuntu20.04
+ENV TZ=ET
+SHELL ["/bin/bash", "-c"]
+
+# Basic apt-get
+RUN apt-get update && apt-get -y upgrade
+RUN apt-get install -y git vim curl \
+    && apt-get install -y python3 \
+    && apt-get install -y python3-pip
+
+# Install Pytorch
+RUN pip install torch torchvision torchaudio
+
+# Install other pip packages
+RUN pip install scipy numpy opencv-python
+
+# Install ROS Noetic
+RUN echo "deb http://packages.ros.org/ros/ubuntu focal main" > /etc/apt/sources.list.d/ros-latest.list
+RUN curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add -
+RUN apt-get update
+ENV DEBIAN_FRONTEND noninteractive
+RUN apt-get install -y ros-noetic-desktop-full \
+    && apt-get install -y python3-rosdep python3-rosinstall python3-rosinstall-generator python3-wstool build-essential
+RUN rosdep init && rosdep update
+
+# Create a Ros1 ws
+RUN cd / && mkdir -p ros1_ws/src
+
+# Install catkin tools
+RUN apt-get -y install python3-catkin-tools
+
+# Install Other Dependencies in Documents folder
+RUN mkdir Documents
+

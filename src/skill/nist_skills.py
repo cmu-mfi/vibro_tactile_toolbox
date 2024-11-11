@@ -128,15 +128,6 @@ def add_termination_pose(termination_config, pose : Pose):
     t_cfg['pose']['pose'] = t_utils.pose_to_dict(pose)
     return t_cfg
 
-def add_termination_pose_and_audio_model(termination_config, pose : Pose, model_path: str):
-    t_cfg = copy.deepcopy(termination_config)
-    t_cfg['pose']['pose'] = t_utils.pose_to_dict(pose)
-    if model_path is not None:
-        t_cfg['audio'] = {'check_rate_ns': 1E7,
-                          'model_path': model_path,
-                          'channels': [0,1,2,3]}
-    return t_cfg
-
 
 class MoveToAbovePerturbConnectorPose(BaseSkill):
 
@@ -228,44 +219,6 @@ class MoveToAboveConnectorPose(BaseSkill):
 
         return super().execute_skill(execution_params)
 
-class PullUp(BaseSkill):
-
-    def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
-
-        super().__init__(robot_commander, gripper_controller, namespace, params)
-
-        self.skill_steps = [
-            {'step_name': 'pull_up',
-             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.pull_up_pose_msg, wait=False, velocity_scaling=self.velocity_scaling),
-             'termination_cfg': lambda param: add_termination_pose(servo_termination_config, self.pull_up_pose_msg)},
-        ]
-
-    def execute_skill(self, execution_params, skill_params) -> Tuple[List[TerminationSignal], List[int]]:
-        # QOL 
-        if 'lift_height_offset' not in skill_params:
-            print(f"PullUp expects an lift height offset (meters): skill_params['lift_height_offset'] = float(0.001 m)")
-        if 'velocity_scaling' not in skill_params:
-            self.velocity_scaling = 0.001
-            print(f"No initial velocity scaling specified, using: {self.velocity_scaling}")
-        else:
-            self.velocity_scaling = skill_params['velocity_scaling']
-
-        current_pose_msg = self.robot_commander.get_current_pose()
-        current_pose = RigidTransform.from_pose_msg(current_pose_msg, from_frame='ee')
-
-
-        self.lift_height_offset = skill_params['lift_height_offset']
-
-        self.T_pull_up = RigidTransform(
-            translation=np.array([0.0, 0.0, -abs(self.lift_height_offset)]),
-            from_frame='ee', to_frame='ee'
-        )
-
-        self.pull_up_pose = current_pose * self.T_pull_up
-        self.pull_up_pose_msg = self.pull_up_pose.pose_msg
-
-        return super().execute_skill(execution_params)
-
 class MoveUp(BaseSkill):
 
     def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
@@ -301,47 +254,6 @@ class MoveUp(BaseSkill):
 
         self.move_up_pose = current_pose * self.T_move_up
         self.move_up_pose_msg = self.move_up_pose.pose_msg
-
-        return super().execute_skill(execution_params)
-
-class MoveDown(BaseSkill):
-
-    def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
-
-        super().__init__(robot_commander, gripper_controller, namespace, params)
-
-        self.model_path = None
-
-        self.skill_steps = [
-            {'step_name': 'move_down',
-             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.move_down_pose_msg, wait=False, velocity_scaling=self.velocity_scaling),
-             'termination_cfg': lambda param: add_termination_pose_and_audio_model(z_engage_termination_config, self.move_down_pose_msg, self.model_path)},
-        ]
-
-    def execute_skill(self, execution_params, skill_params) -> Tuple[List[TerminationSignal], List[int]]:
-        # QOL 
-        if 'height_offset' not in skill_params:
-            print(f"MoveDown expects a height offset (meters): skill_params['height_offset'] = float(0.001 m)")
-        if 'model_path' in skill_params:
-            self.model_path = skill_params['model_path']
-        if 'velocity_scaling' not in skill_params:
-            self.velocity_scaling = 0.01
-            print(f"No initial velocity scaling specified, using: {self.velocity_scaling}")
-        else:
-            self.velocity_scaling = skill_params['velocity_scaling']
-
-        current_pose_msg = self.robot_commander.get_current_pose()
-        current_pose = RigidTransform.from_pose_msg(current_pose_msg, from_frame='ee')
-
-        self.height_offset = skill_params['height_offset']
-
-        self.T_move_down = RigidTransform(
-            translation=np.array([0.0, 0.0, abs(self.height_offset)]),
-            from_frame='ee', to_frame='ee'
-        )
-
-        self.move_down_pose = current_pose * self.T_move_down
-        self.move_down_pose_msg = self.move_down_pose.pose_msg
 
         return super().execute_skill(execution_params)
 

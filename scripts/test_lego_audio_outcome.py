@@ -10,7 +10,7 @@ from gripper_controller.lego_gripper_controller import LegoGripperController
 from autolab_core import RigidTransform
 
 from skill.lego_skills import *
-from skill.util_skills import GoHomeSkill
+from skill.common_skills import GoHomeSkill, MoveDownToContact
 from outcome.outcome import *
 from std_msgs.msg import Int16, String
 from data_recorder.rosbag_data_recorder import RosbagDataRecorder
@@ -144,7 +144,7 @@ def run():
     move_to_above_lego_pose_skill = MoveToAboveLegoPose(robot_commander, gripper_controller, namespace, params)
     move_to_above_perturb_lego_skill = MoveToAbovePerturbLegoPose(robot_commander, gripper_controller, namespace, params)
     pull_up_skill = PullUp(robot_commander, gripper_controller, namespace, params)
-    move_down_skill = MoveDown(robot_commander, gripper_controller, namespace, params)
+    move_down_to_contact_skill = MoveDownToContact(robot_commander, gripper_controller, namespace, params)
     place_lego_skill = PlaceLego(robot_commander, gripper_controller, namespace, params)
     pick_lego_skill = PickLego(robot_commander, gripper_controller, namespace, params)
     home_skill = GoHomeSkill(robot_commander, gripper_controller, namespace, params)
@@ -243,7 +243,7 @@ def run():
             terminals = home_skill.execute_skill(None)
             break
 
-        terminals = move_down_skill.execute_skill(execution_params, move_down_params)
+        terminals = move_down_to_contact_skill.execute_skill(execution_params, move_down_params)
 
         audio_outcomes = send_audio_outcome_request(outcome_config, terminals[0].stamp)
 
@@ -294,7 +294,7 @@ def run():
                 terminals = home_skill.execute_skill(None)
                 break
 
-            terminals = move_down_skill.execute_skill(execution_params, move_down_params)
+            terminals = move_down_to_contact_skill.execute_skill(execution_params, move_down_params)
 
             audio_outcomes = send_audio_outcome_request(outcome_config, terminals[0].stamp)
 
@@ -330,7 +330,7 @@ def run():
             terminals = home_skill.execute_skill(None)
             continue
         #else:
-            #terminals = move_down_skill.execute_skill(execution_params, move_down_to_reconnect_params)
+            #terminals = move_down_to_contact_skill.execute_skill(execution_params, move_down_to_reconnect_params)
 
         if skill_type == "place":
             terminals = place_lego_skill.execute_skill(execution_params, place_lego_params)
