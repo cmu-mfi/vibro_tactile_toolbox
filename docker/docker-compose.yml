@@ -97,6 +97,13 @@ services:
     pid: host
     restart: "unless-stopped"
     command: bash -c "source /opt/ros/noetic/setup.bash && source /ros1_ws/devel/setup.bash && roslaunch vibro_tactile_toolbox orbbec.launch namespace:=${NAMESPACE}"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
 
   vibro-tactile-toolbox:
     build:
@@ -124,3 +131,10 @@ services:
     pid: host
     restart: "unless-stopped"
     command: bash -c "source /opt/ros/noetic/setup.bash && source /ros1_ws/devel/setup.bash && roslaunch vibro_tactile_toolbox vibro_tactile_toolbox.launch namespace:=${NAMESPACE} type:=${TYPE}"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
