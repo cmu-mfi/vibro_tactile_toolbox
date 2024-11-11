@@ -14,6 +14,7 @@ services:
       - "LIBGL_ALWAYS_INDIRECT="
       - "ROS_IP=${ROS_IP}"
       - "ROS_MASTER_URI=${ROS_MASTER_URI}"
+      - "NAMESPACE=${NAMESPACE}"
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - /etc/group:/etc/group:ro
@@ -22,7 +23,7 @@ services:
     network_mode: "host"
     ipc: "host"
     restart: "unless-stopped"
-    command: bash -c "source /ros1_ws/devel/setup.bash && roslaunch robotiq_mm_ros robotiq_server.launch"
+    command: bash -c "source /ros1_ws/devel/setup.bash && roslaunch robotiq_mm_ros robotiq_server.launch namespace:=${NAMESPACE}"
   
   sounddevice-ros:
     build:
@@ -37,6 +38,7 @@ services:
       - "LIBGL_ALWAYS_INDIRECT="
       - "ROS_IP=${ROS_IP}"
       - "ROS_MASTER_URI=${ROS_MASTER_URI}"
+      - "NAMESPACE=${NAMESPACE}"
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - /etc/group:/etc/group:ro
@@ -45,7 +47,7 @@ services:
     network_mode: "host"
     ipc: "host"
     restart: "unless-stopped"
-    command: bash -c "source /ros1_ws/devel/setup.bash && roslaunch vibro_tactile_toolbox sounddevice.launch"
+    command: bash -c "source /ros1_ws/devel/setup.bash && roslaunch vibro_tactile_toolbox sounddevice.launch namespace:=${NAMESPACE}"
 
   realsense-ros:
     build:
@@ -60,6 +62,7 @@ services:
       - "LIBGL_ALWAYS_INDIRECT="
       - "ROS_IP=${ROS_IP}"
       - "ROS_MASTER_URI=${ROS_MASTER_URI}"
+      - "NAMESPACE=${NAMESPACE}"
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - /etc/group:/etc/group:ro
@@ -68,7 +71,7 @@ services:
     network_mode: "host"
     ipc: "host"
     restart: "unless-stopped"
-    command: bash -c "source /ros1_ws/devel/setup.bash && roslaunch vibro_tactile_toolbox realsense.launch"
+    command: bash -c "source /ros1_ws/devel/setup.bash && roslaunch vibro_tactile_toolbox realsense.launch namespace:=${NAMESPACE}"
 
   orbbec-ros:
     build:
@@ -83,6 +86,7 @@ services:
       - "LIBGL_ALWAYS_INDIRECT="
       - "ROS_IP=${ROS_IP}"
       - "ROS_MASTER_URI=${ROS_MASTER_URI}"
+      - "NAMESPACE=${NAMESPACE}"
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
       - /etc/group:/etc/group:ro
@@ -92,7 +96,7 @@ services:
     ipc: host
     pid: host
     restart: "unless-stopped"
-    command: bash -c "source /opt/ros/noetic/setup.bash && source /ros1_ws/devel/setup.bash && roslaunch vibro_tactile_toolbox orbbec.launch"
+    command: bash -c "source /opt/ros/noetic/setup.bash && source /ros1_ws/devel/setup.bash && roslaunch vibro_tactile_toolbox orbbec.launch namespace:=${NAMESPACE}"
 
   vibro-tactile-toolbox:
     build:
@@ -107,6 +111,8 @@ services:
       - "LIBGL_ALWAYS_INDIRECT="
       - "ROS_IP=${ROS_IP}"
       - "ROS_MASTER_URI=${ROS_MASTER_URI}"
+      - "NAMESPACE=${NAMESPACE}"
+      - "TYPE=${TYPE}"
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
       - /etc/group:/etc/group:ro
@@ -116,4 +122,4 @@ services:
     ipc: host
     pid: host
     restart: "unless-stopped"
-    command: bash -c "source /opt/ros/noetic/setup.bash && source /ros1_ws/devel/setup.bash && roslaunch vibro_tactile_toolbox vibro_tactile_toolbox.launch"
+    command: bash -c "source /opt/ros/noetic/setup.bash && source /ros1_ws/devel/setup.bash && roslaunch vibro_tactile_toolbox vibro_tactile_toolbox.launch namespace:=${NAMESPACE} type:=${TYPE}"
