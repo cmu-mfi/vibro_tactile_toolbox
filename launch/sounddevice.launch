@@ -1,0 +1,8 @@
+<launch>
+	<arg name="namespace" default="" />
+
+	<group ns="$(arg namespace)">
+		<node name="sounddevice_ros_node" pkg="sounddevice_ros" type="sounddevice_ros_publisher_node.py" output="screen" args="-d UMC404HD 192k: USB Audio -c 4">
+		</node>
+	</group>
+</launch>

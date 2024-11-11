@@ -1,5 +1,5 @@
 <launch>
-    <arg name="namespace" default="yk_creator"/>
+    <arg name="namespace" default=""/>
     <group ns="$(arg namespace)">
 
         <node pkg="vibro_tactile_toolbox" name="audio_termination_handler_node" type="termination_handler_node.py" output="screen">

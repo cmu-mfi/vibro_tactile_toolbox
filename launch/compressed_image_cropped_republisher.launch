@@ -1,5 +1,5 @@
 <launch>
-	<arg name="namespace" default="yk_creator" />
+	<arg name="namespace" default="" />
 
 	<group ns="$(arg namespace)">
 		<!-- Start compressed_image_republisher node -->

@@ -2,7 +2,7 @@
   <arg name="namespace"           default="/"/>
   <arg name="serial_number"       default=""/>
   <arg name="json_file_path"      default=""/>
-  <arg name="camera_name"         default="camera"/>
+  <arg name="camera_name"         default="wrist_camera"/>
   <arg name="tf_prefix"           default="$(arg camera_name)"/>
 
   <arg name="fisheye_width"       default="1280"/>

@@ -1,8 +1,0 @@
-<launch>
-	<arg name="namespace" default="yk_builder" />
-	<group ns="$(arg namespace)">
-		<!-- Start fts_serial node -->
-		<node name="multi_fts_serial_node" pkg="fts_serial" type="multi_fts_serial_node" output="screen">
-		</node>
-	</group>
-</launch>
