@@ -117,6 +117,7 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix
       - /etc/group:/etc/group:ro
       - /dev:/dev
+      - ${HOME}/:/home
     privileged: true
     network_mode: host
     ipc: host

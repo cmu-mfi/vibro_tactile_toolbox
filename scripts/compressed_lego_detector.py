@@ -26,9 +26,10 @@ class LegoDetector:
     def __init__(self, namespace):
 
         self.cfg = get_cfg()
+        self.root_pwd = rospy.get_param('compressed_lego_detector_node/root_pwd')
         self.model_path = rospy.get_param('compressed_lego_detector_node/model_path')
         self.cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
-        self.cfg.MODEL.WEIGHTS = os.path.join(self.model_path)
+        self.cfg.MODEL.WEIGHTS = os.path.join(self.root_pwd, self.model_path)
         self.cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1
         self.predictor = DefaultPredictor(self.cfg)
         self.bridge = CvBridge()

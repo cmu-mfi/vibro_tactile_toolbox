@@ -9,6 +9,7 @@
         </node>
         <group if="$(eval type == 'lego')">
             <node pkg="vibro_tactile_toolbox" name="compressed_lego_detector_node" type="compressed_lego_detector.py" output="screen">
+                <param name="root_pwd" value="$(find vibro_tactile_toolbox)"/>
                 <param name="model_path" value="models/lego_model.pth" />
             </node>
         </group>
