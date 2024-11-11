@@ -108,7 +108,7 @@ services:
   vibro-tactile-toolbox:
     build:
       context: .
-      dockerfile: Dockerfile.vibro-tactile_toolbox
+      dockerfile: Dockerfile.vibro_tactile_toolbox
     image: "vibro_tactile_toolbox:noetic"
     container_name: "vibro_tactile_toolbox_noetic"
     environment:

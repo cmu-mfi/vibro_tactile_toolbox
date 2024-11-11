@@ -29,11 +29,22 @@ RUN cd /ros1_ws/src \
 
 # Audio (https://github.com/firephinx/sounddevice_ros)
 RUN cd /ros1_ws/src \ 
-    && git clone https://github.com/firephinx/sounddevice_ros.git
+    && git clone https://github.com/firephinx/sounddevice_ros.git \
+    && apt-get install libportaudio2 libasound-dev \
+    && pip install librosa sounddevice pysoundfile
+
+RUN cd /ros1_ws/src \
+    && git clone https://github.com/cmu-mfi/motoman_ros1.git \
+    && cd motoman_ros1 \
+    && rm -rf testbed_utils \
+    && rm -rf lego_moveit \
+    && rm -rf motoman_gp4_moveit_config \
+    && rm -rf depend-packages \
+    && rm -rf yk_tasks
 
 RUN source /opt/ros/noetic/setup.bash \
  && cd /ros1_ws \
- && catkin build
+ && catkin build -c
 
 # Add sourcing to bashrc
 RUN echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc

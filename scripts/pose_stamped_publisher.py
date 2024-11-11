@@ -2,7 +2,7 @@ import sys
 import argparse
 import rospy
 from geometry_msgs.msg import PoseStamped
-from yk_tasks.srv import GetPoseStamped
+from yk_msgs.srv import GetPoseStamped
 
 def main(args):
   namespace = rospy.get_namespace()
