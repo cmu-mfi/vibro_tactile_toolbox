@@ -148,7 +148,7 @@ class MoveToAbovePerturbPose(BaseSkill):
 
         self.skill_steps = [
             {'step_name': 'go_to_above_perturb_pose',
-             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.approach_pose_msg, wait=False),
+             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.approach_pose_msg, wait=False, velocity_scaling=self.velocity_scaling),
              'termination_cfg': lambda param: add_termination_pose(rapid_termination_config, self.approach_pose_msg)},
         ]
 
@@ -158,6 +158,11 @@ class MoveToAbovePerturbPose(BaseSkill):
             print(f"MoveToAbovePerturbPose expects target brick pose transform: skill_params['T_tcp_world'] = RigidTransform()")
         if 'approach_height_offset' not in skill_params:
             print(f"MoveToAbovePerturbPose expects an approach height offset (meters): skill_params['approach_height_offset'] = float(0.010 m)")
+        if 'velocity_scaling' not in skill_params:
+            self.velocity_scaling = 0.1
+            print(f"No initial velocity scaling specified, using: {self.velocity_scaling}")
+        else:
+            self.velocity_scaling = skill_params['velocity_scaling']
         if 'place_perturbation' not in skill_params:
             self.place_perturbation = np.random.uniform(-0.001, 0.001, size=(3,))
             print(f"No initial place perturbation specified, using random perturbation: {tuple(self.place_perturbation)} [m]")

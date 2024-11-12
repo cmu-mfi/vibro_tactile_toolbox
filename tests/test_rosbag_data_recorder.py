@@ -2,20 +2,18 @@
 
 import argparse
 import rospy
-import time
 
 from data_recorder.rosbag_data_recorder import RosbagDataRecorder
 
 def main(args):
     rospy.init_node('test_rosbag_data_recorder', anonymous=True)
     data_recorder = RosbagDataRecorder()
-    topics = ["/side_camera/color/image_cropped", 
-              "/camera/color/image_raw", 
+    topics = [f"/{args.namespace}/side_camera/color/image_cropped/compressed", 
+              f"/{args.namespace}/wrist_camera/color/image_raw/compressed", 
               f"/{args.namespace}/joint_states", 
-              f"/{args.namespace}/pose", 
-              "/fts", 
-              "/audio", 
-              "/audio_info"]
+              f"/{args.namespace}/fts", 
+              f"/{args.namespace}/audio", 
+              f"/{args.namespace}/audio_info"]
     params = {'topics' : topics}
     data_recorder.start_recording('test.bag', params)
     rospy.sleep(5)

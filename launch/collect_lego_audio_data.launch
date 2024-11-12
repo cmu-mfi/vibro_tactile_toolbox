@@ -1,26 +1,21 @@
 <launch>
-    <arg name="namespace" default="yk_builder"/>
-    <arg name="num_trials" default="15"/>
-    <arg name="start_num" default="36"/>
+    <arg name="namespace" default="yk_creator"/>
+    <arg name="num_trials" default="2"/>
+    <arg name="start_num" default="1"/>
     <arg name="verbose" default="true"/>
-    <arg name="connector_type" default="usb"/>
+    <arg name="block_type" default="4x2"/>
     <arg name="velocity_scale" default="0.01"/>
     <arg name="volume" default="75"/>
-    <arg name="reset" default="false"/>
-    <arg name="lift" default="false"/>
-    <arg name="config" default="nist.yaml"/>
-    
+    <arg name="config" default="lego.yaml"/>
     <group ns="$(arg namespace)">
-        <node pkg="vibro_tactile_toolbox" name="collect_nist_tactile_data" type="collect_nist_tactile_data.py" output="screen">
+        <node pkg="vibro_tactile_toolbox" name="collect_lego_audio_data" type="collect_lego_audio_data.py" output="screen">
             <param name="namespace" value="$(arg namespace)"/>
             <param name="root_pwd" value="$(find vibro_tactile_toolbox)"/>
             <param name="num_trials" value="$(arg num_trials)"/>
             <param name="start_num" value="$(arg start_num)"/>
-            <param name="connector_type" value="$(arg connector_type)"/>
+            <param name="block_type" value="$(arg block_type)"/>
             <param name="velocity_scale" value="$(arg velocity_scale)"/>
             <param name="volume" value="$(arg volume)"/>
-            <param name="reset" value="$(arg reset)"/>
-            <param name="lift" value="$(arg lift)"/>
             <param name="verbose" value="$(arg verbose)"/>
             <param name="config" value="$(arg config)"/>
         </node>

@@ -11,7 +11,7 @@ from autolab_core import RigidTransform
 
 from skill.lego_skills import PickLego, PlaceLego
 from skill.common_skills import ResetJoints, MoveDownToContact, PullUp, MoveToAboveCorrectPose, MoveToAbovePerturbPose
-from outcome.outcome import *
+from outcome.outcome import send_start_fts_outcome_request, send_end_fts_outcome_request, send_start_vision_outcome_request, send_end_vision_outcome_request
 from test.check_ros_topics import check_ros_topics
 
 from data_recorder.rosbag_data_recorder import RosbagDataRecorder
@@ -55,18 +55,18 @@ def determine_next_pose(T_lego_world, block_x_loc, block_y_loc):
 
 def run():
     # Start Node
-    rospy.init_node("collect_lego_tactile_data")
+    rospy.init_node("collect_lego_audio_data")
 
     # Messaging Namespace
-    namespace = rospy.get_param("collect_lego_tactile_data/namespace")
-    root_pwd = rospy.get_param("collect_lego_tactile_data/root_pwd")
-    yaml_file = rospy.get_param("collect_lego_tactile_data/config")
-    num_trials = rospy.get_param("collect_lego_tactile_data/num_trials")
-    start_num = rospy.get_param("collect_lego_tactile_data/start_num")
-    block_type = rospy.get_param("collect_lego_tactile_data/block_type")
-    volume = rospy.get_param("collect_lego_tactile_data/volume")
-    velocity_scale = rospy.get_param("collect_lego_tactile_data/velocity_scale")
-    verbose = rospy.get_param("collect_lego_tactile_data/verbose")
+    namespace = rospy.get_param("collect_lego_audio_data/namespace")
+    root_pwd = rospy.get_param("collect_lego_audio_data/root_pwd")
+    yaml_file = rospy.get_param("collect_lego_audio_data/config")
+    num_trials = rospy.get_param("collect_lego_audio_data/num_trials")
+    start_num = rospy.get_param("collect_lego_audio_data/start_num")
+    block_type = rospy.get_param("collect_lego_audio_data/block_type")
+    volume = rospy.get_param("collect_lego_audio_data/volume")
+    velocity_scale = rospy.get_param("collect_lego_audio_data/velocity_scale")
+    verbose = rospy.get_param("collect_lego_audio_data/verbose")
 
     with open(root_pwd+'/config/'+yaml_file) as stream:
         try:
@@ -172,38 +172,22 @@ def run():
         # 2. Determine Skill Parameters
         move_to_above_perturb_pose_params = {
             'T_tcp_world': tmp_T_lego_world,
-            'approach_height_offset': config['approach_height'],
             'place_perturbation': [x_perturb, y_perturb, theta_perturb]
         }
+        move_to_above_perturb_pose_params.update(config['skill_params']['move_to_above_perturb_pose'])
 
         move_to_above_correct_pose_params = {
             'T_tcp_world': tmp_T_lego_world,
-            'approach_height_offset': config['approach_height'],
         }
-
-        pull_up_params = {
-            'lift_height_offset': config['lift_height'],
-            'velocity_scaling': config['pull_up_velocity_scaling'],
-            'force_threshold': config['pull_up_force_threshold']
-        }
+        move_to_above_correct_pose_params.update(config['skill_params']['move_to_above_correct_pose'])
 
         move_down_params = {
-            'height_offset': config['approach_height'],
             'velocity_scaling': move_down_velocity_scaling
         }
+        move_down_params.update(config['skill_params']['move_down'])
 
         execution_params = {
             'skill_step_delay': 2.0
-        }
-
-        place_lego_params = {
-            'place_rotation': config['place_rotation'],
-            'lift_height_offset': config['approach_height'],
-        }
-
-        pick_lego_params = {
-            'pick_rotation': config['pick_rotation'],
-            'lift_height_offset': config['approach_height'],
         }
 
         terminals = move_to_above_perturb_pose_skill.execute_skill(execution_params, move_to_above_perturb_pose_params)
@@ -229,7 +213,7 @@ def run():
 
         terminals = move_down_to_contact_skill.execute_skill(execution_params, move_down_params)
 
-        terminals = pull_up_skill.execute_skill(execution_params, pull_up_params)
+        terminals = pull_up_skill.execute_skill(execution_params, config['skill_params']['pull_up'])
 
         outcomes = send_end_fts_outcome_request(config['fts_detector'])
 
@@ -257,7 +241,7 @@ def run():
 
             terminals = move_down_to_contact_skill.execute_skill(execution_params, move_down_params)
 
-            terminals = pull_up_skill.execute_skill(execution_params, pull_up_params)
+            terminals = pull_up_skill.execute_skill(execution_params, config['skill_params']['pull_up'])
 
             outcomes = send_end_fts_outcome_request(config['fts_detector'])
 
@@ -284,9 +268,9 @@ def run():
             #terminals = move_down_to_contact_skill.execute_skill(execution_params, move_down_to_reconnect_params)
 
         if skill_type == "place":
-            terminals = place_lego_skill.execute_skill(execution_params, place_lego_params)
+            terminals = place_lego_skill.execute_skill(execution_params, config['skill_params']['place_lego'])
         elif skill_type == "pick":
-            terminals = pick_lego_skill.execute_skill(execution_params, pick_lego_params)
+            terminals = pick_lego_skill.execute_skill(execution_params, config['skill_params']['pick_lego'])
 
         outcomes = send_end_vision_outcome_request(config['lego_detector'])
 

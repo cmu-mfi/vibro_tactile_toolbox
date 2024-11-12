@@ -19,12 +19,23 @@ block_x_range:
 block_y_range:
   - 4
   - 13
-approach_height: 0.04
-lift_height: 0.01
-pull_up_velocity_scaling: 0.001
-pull_up_force_threshold: 2.0
-place_rotation: 15
-pick_rotation: 15
+skill_params:
+  pull_up:
+    lift_height_offset: 0.01
+    velocity_scaling: 0.001
+    force_threshold: 2.0
+  place_lego:
+    place_rotation: 15
+    lift_height_offset: 0.04
+  pick_lego:
+    pick_rotation: 15
+    lift_height_offset: 0.04
+  move_to_above_perturb_pose:
+    approach_height_offset: 0.04
+  move_to_above_correct_pose:
+    approach_height_offset: 0.04
+  move_down:
+    height_offset: 0.04
 audio_detector:
   namespace: namespace
   topic_name: '/namespace/audio'

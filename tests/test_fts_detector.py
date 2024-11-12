@@ -2,14 +2,14 @@
 
 import argparse
 import rospy
-from vibro_tactile_toolbox.srv import *
+from vibro_tactile_toolbox.srv import FTSOutcome, FTSOutcomeRequest
 from geometry_msgs.msg import Wrench
 import json
 
-def test_fts_detector(topic_name):
-    rospy.wait_for_service('/fts_detector')
+def test_fts_detector(namespace, topic_name):
+    rospy.wait_for_service(f'/{namespace}/fts_detector')
     try:
-        detect_fts = rospy.ServiceProxy('/fts_detector', FTSOutcome)
+        detect_fts = rospy.ServiceProxy(f'/{namespace}/fts_detector', FTSOutcome)
         req = FTSOutcomeRequest()
         req.id = 0
         req.topic_name = topic_name
@@ -33,10 +33,12 @@ def test_fts_detector(topic_name):
 
 def main(args):
     rospy.init_node('test_fts_detector', anonymous=True)
-    test_fts_detector(args.topic_name)
+    test_fts_detector(args.namespace, args.topic_name)
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser()
+    args.add_argument('-n', '--namespace', type=str,
+      help='Namespace to use')
     args.add_argument('-t', '--topic_name', type=str,
       help='Topic name to use')
     args = args.parse_args()

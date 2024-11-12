@@ -10,8 +10,8 @@ from gripper_controller.robotiq_hande_controller import RobotiqHandEController
 from autolab_core import RigidTransform
 
 from skill.nist_skills import PickConnector, PlaceConnector, PlaceConnectorReset, ResetConnector
-from skill.common_skills import ResetJoints, MoveDownToContact, PullUp, OpenGripper, MoveUp, PushDown
-from outcome.outcome import *
+from skill.common_skills import ResetJoints, MoveDownToContact, PullUp, OpenGripper, MoveUp, PushDown, MoveToAboveCorrectPose, MoveToAbovePerturbPose
+from outcome.outcome import send_audio_outcome_request, send_start_fts_outcome_request, send_end_fts_outcome_request
 from std_msgs.msg import Int16, String
 from data_recorder.rosbag_data_recorder import RosbagDataRecorder
 from sklearn.metrics import confusion_matrix
@@ -100,19 +100,23 @@ def run():
     ### Skill Routine ###
     params = {'T_hande_ee': T_hande_ee, 
               'verbose': verbose}
+    
+    common_params = {'T_tcp_ee': T_hande_ee, 
+                     'verbose': verbose}
+
 
     pick_connector_params = {
         'T_hande_ee': T_hande_ee, 
         'verbose': verbose,
-        'T_connector_world': T_connector_world_pick,
-        'approach_height_offset': config['pick_approach_height'],
+        'T_connector_world': T_connector_world_pick
     }
+    pick_connector_params.update(config['skill_params']['pick_connector'])
     place_connector_params = {
         'T_hande_ee': T_hande_ee, 
         'verbose': verbose,
-        'T_connector_world': T_connector_world_pick,
-        'approach_height_offset': config['place_approach_height'],
+        'T_connector_world': T_connector_world_pick
     }
+    place_connector_params.update(config['skill_params']['place_connector'])
     
     if reset:
         T_connector_world_place_reset = RigidTransform.load(root_pwd+config['transforms_dir']+connector_type+'/world_place_reset.tf')
@@ -122,25 +126,22 @@ def run():
         place_connector_reset_params = {
             'T_hande_ee': T_hande_ee, 
             'verbose': verbose,
-            'T_connector_world': T_connector_world_place_reset,
-            'approach_height_offset': config['place_approach_height'],
-            'reset_x_offset': config['reset_x_offset'],
+            'T_connector_world': T_connector_world_place_reset
         }
+        place_connector_reset_params.update(config['skill_params']['place_connector_reset'])
         reset_connector_params = {
             'T_hande_ee': T_hande_ee, 
             'verbose': verbose,
             'T_connector_world_reset_x': T_connector_world_reset_x,
-            'T_connector_world_reset_y': T_connector_world_reset_y,
-            'reset_x_offset': config['reset_x_offset'],
-            'reset_y_offset': config['reset_y_offset'],
-            'height_offset': config['pick_approach_height'],
+            'T_connector_world_reset_y': T_connector_world_reset_y
         }
+        reset_connector_params.update(config['skill_params']['reset_connector'])
 
         place_connector_reset_skill = PlaceConnectorReset(robot_commander, gripper_controller, namespace, place_connector_reset_params)
         reset_connector_skill = ResetConnector(robot_commander, gripper_controller, namespace, reset_connector_params)
 
-    move_to_above_connector_pose_skill = MoveToAboveConnectorPose(robot_commander, gripper_controller, namespace, params)
-    move_to_above_perturb_connector_skill = MoveToAbovePerturbConnectorPose(robot_commander, gripper_controller, namespace, params)
+    move_to_above_correct_pose_skill = MoveToAboveCorrectPose(robot_commander, gripper_controller, namespace, common_params)
+    move_to_above_perturb_pose_skill = MoveToAbovePerturbPose(robot_commander, gripper_controller, namespace, common_params)
     pull_up_skill = PullUp(robot_commander, gripper_controller, namespace, params)
     move_up_skill = MoveUp(robot_commander, gripper_controller, namespace, params)
     move_down_to_contact_skill = MoveDownToContact(robot_commander, gripper_controller, namespace, params)
@@ -170,17 +171,9 @@ def run():
         'skill_step_delay': 1.0
     }
 
-    move_up_params = {
-        'lift_height_offset': config['pick_approach_height'],
-    }
-
-    push_down_params = {
-        'height_offset': config['push_down_height_offset'],
-    }
-
     terminals = open_gripper_skill.execute_skill(None)
     if lift:
-        terminals = move_up_skill.execute_skill(execution_params, move_up_params)
+        terminals = move_up_skill.execute_skill(execution_params, config['skill_params']['move_up'])
     terminals = reset_joints_skill.execute_skill(None)
 
     if reset:
@@ -202,33 +195,26 @@ def run():
             move_down_velocity_scaling = np.random.uniform(0.01, 0.1)
 
         # 2. Determine Skill Parameters
-        move_to_above_perturb_connector_params = {
-            'T_connector_world': T_connector_world_place,
-            'approach_height_offset': config['place_approach_height'],
-            'place_perturbation': [x_perturb, y_perturb, theta_perturb],
-            'velocity_scaling': config['velocity_scaling_large_movements']
+        move_to_above_perturb_pose_params = {
+            'T_tcp_world': T_connector_world_place,
+            'place_perturbation': [x_perturb, y_perturb, theta_perturb]
         }
+        move_to_above_perturb_pose_params.update(config['skill_params']['move_to_above_perturb_pose'])
 
-        move_to_above_connector_params = {
-            'T_connector_world': T_connector_world_place,
-            'approach_height_offset': config['place_approach_height']
+        move_to_above_correct_pose_params = {
+            'T_tcp_world': T_connector_world_place,
         }
-
-        pull_up_params = {
-            'lift_height_offset': config['lift_height'],
-            'velocity_scaling': config['pull_up_velocity_scaling'],
-            'force_threshold': config['pull_up_force_threshold']
-        }
+        move_to_above_correct_pose_params.update(config['skill_params']['move_to_above_correct_pose'])
 
         move_down_params = {
-            'height_offset': config['place_approach_height'],
             'velocity_scaling': move_down_velocity_scaling
         }
+        move_down_params.update(config['skill_params']['move_down'])
 
         if use_audio_terminator:
             move_down_params['model_path'] = root_pwd+config['model_dir']+'audio_terminator_'+connector_type+'.pt'
 
-        terminals = move_to_above_perturb_connector_skill.execute_skill(execution_params, move_to_above_perturb_connector_params)
+        terminals = move_to_above_perturb_pose_skill.execute_skill(execution_params, move_to_above_perturb_pose_params)
 
         expected_result_pub.publish(0)
 
@@ -259,7 +245,7 @@ def run():
                 print(f"Ground truth perturb values: {x_perturb}, {y_perturb}, {theta_perturb}")
                 print(f"Predicted perturb values: {recovery_action[0]}, {recovery_action[1]}, {recovery_action[2]}")
         
-                terminals = move_to_above_connector_pose_skill.execute_skill(execution_params, move_to_above_perturb_connector_params)
+                terminals = move_to_above_correct_pose_skill.execute_skill(execution_params, move_to_above_correct_pose_params)
 
                 expected_result_pub.publish(1)
 
@@ -268,12 +254,12 @@ def run():
                 audio_outcomes = send_audio_outcome_request(outcome_config, terminals[0].stamp)
 
             if audio_outcomes['success'] == True:
-                terminals = push_down_skill.execute_skill(execution_params, push_down_params)
+                terminals = push_down_skill.execute_skill(execution_params, config['skill_params']['push_down'])
 
         else:    
             force_outcomes = send_start_fts_outcome_request(config['fts_detector'])
 
-            terminals = pull_up_skill.execute_skill(execution_params, pull_up_params)
+            terminals = pull_up_skill.execute_skill(execution_params, config['skill_params']['pull_up'])
 
             force_outcomes = send_end_fts_outcome_request(config['fts_detector'])
 
@@ -306,7 +292,7 @@ def run():
                 print(f"Ground truth perturb values: {x_perturb}, {y_perturb}, {theta_perturb}")
                 print(f"Predicted perturb values: {recovery_action[0]}, {recovery_action[1]}, {recovery_action[2]}")
             
-                terminals = move_to_above_connector_pose_skill.execute_skill(execution_params, move_to_above_perturb_connector_params)
+                terminals = move_to_above_correct_pose_skill.execute_skill(execution_params, move_to_above_correct_pose_params)
 
                 expected_result_pub.publish(1)
 
@@ -318,7 +304,7 @@ def run():
 
                 force_outcomes = send_start_fts_outcome_request(config['fts_detector'])
 
-                terminals = pull_up_skill.execute_skill(execution_params, pull_up_params)
+                terminals = pull_up_skill.execute_skill(execution_params, config['skill_params']['pull_up'])
 
                 force_outcomes = send_end_fts_outcome_request(config['fts_detector'])
 
@@ -339,9 +325,9 @@ def run():
                 logger_pub.publish(logger_string)
 
             if force_outcomes['success'] == False:
-                terminals = push_down_skill.execute_skill(execution_params, push_down_params)
+                terminals = push_down_skill.execute_skill(execution_params, config['skill_params']['push_down'])
 
-        terminals = move_to_above_connector_pose_skill.execute_skill(execution_params, move_to_above_connector_params)
+        terminals = move_to_above_correct_pose_skill.execute_skill(execution_params, move_to_above_correct_pose_params)
 
         # 3. End rosbag recording
         data_recorder.stop_recording()

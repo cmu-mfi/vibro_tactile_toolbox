@@ -4,7 +4,7 @@ import sys
 import rospy
 import numpy as np
 import json
-import time
+import argparse
 
 from vibro_tactile_toolbox.msg import TerminationConfig, TerminationSignal
 from geometry_msgs.msg import Wrench
@@ -14,10 +14,10 @@ import terminator.utils as t_utils
 
 class TerminatorTest:
 
-  def __init__(self):
-    self.termination_cfg_pub = rospy.Publisher("/terminator/termination_config", TerminationConfig, queue_size=1)
+  def __init__(self, namespace):
+    self.termination_cfg_pub = rospy.Publisher(f"/{namespace}/terminator/termination_config", TerminationConfig, queue_size=1)
 
-    self.termination_signal_sub = rospy.Subscriber("/terminator/skill_termination_signal", TerminationSignal, self.terminate_skill_cb)
+    self.termination_signal_sub = rospy.Subscriber(f"/{namespace}/terminator/skill_termination_signal", TerminationSignal, self.terminate_skill_cb)
 
     self.FTS_lims = {'force': 30, 'torque': 1.5}
 
@@ -53,11 +53,15 @@ class TerminatorTest:
 
 def main(args):
   rospy.init_node('test_terminator', anonymous=True)
-  node = TerminatorTest()
+  node = TerminatorTest(args.namespace)
   try:
     rospy.spin()
   except KeyboardInterrupt:
     print("Shutting down")
 
 if __name__ == '__main__':
-    main(sys.argv)
+    args = argparse.ArgumentParser()
+    args.add_argument('-n', '--namespace', type=str,
+      help='Namespace to use')
+    args = args.parse_args()
+    main(args)

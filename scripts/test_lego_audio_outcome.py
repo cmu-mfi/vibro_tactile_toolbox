@@ -10,8 +10,8 @@ from gripper_controller.lego_gripper_controller import LegoGripperController
 from autolab_core import RigidTransform
 
 from skill.lego_skills import PlaceLego, PickLego
-from skill.common_skills import ResetJoints, MoveDownToContact, PullUp
-from outcome.outcome import *
+from skill.common_skills import ResetJoints, MoveDownToContact, PullUp, MoveToAboveCorrectPose, MoveToAbovePerturbPose
+from outcome.outcome import send_start_fts_outcome_request, send_end_fts_outcome_request, send_start_vision_outcome_request, send_end_vision_outcome_request, send_audio_outcome_request
 from std_msgs.msg import Int16, String
 from data_recorder.rosbag_data_recorder import RosbagDataRecorder
 from test.check_ros_topics import check_ros_topics
@@ -140,9 +140,12 @@ def run():
     ### Skill Routine ###
     params = {'T_lego_ee': T_lego_ee, 
               'verbose': verbose}
+    
+    common_params = {'T_tcp_ee': T_lego_ee, 
+                     'verbose': verbose}
 
-    move_to_above_lego_pose_skill = MoveToAboveLegoPose(robot_commander, gripper_controller, namespace, params)
-    move_to_above_perturb_lego_skill = MoveToAbovePerturbLegoPose(robot_commander, gripper_controller, namespace, params)
+    move_to_above_correct_pose_skill = MoveToAboveCorrectPose(robot_commander, gripper_controller, namespace, common_params)
+    move_to_above_perturb_pose_skill = MoveToAbovePerturbPose(robot_commander, gripper_controller, namespace, common_params)
     pull_up_skill = PullUp(robot_commander, gripper_controller, namespace, params)
     move_down_to_contact_skill = MoveDownToContact(robot_commander, gripper_controller, namespace, params)
     place_lego_skill = PlaceLego(robot_commander, gripper_controller, namespace, params)
@@ -185,45 +188,27 @@ def run():
         rospy.sleep(1)
 
         # 2. Determine Skill Parameters
-        move_to_above_perturb_lego_params = {
-            'T_lego_world': tmp_T_lego_world,
-            'approach_height_offset': config['approach_height'],
+        move_to_above_perturb_pose_params = {
+            'T_tcp_world': tmp_T_lego_world,
             'place_perturbation': [x_perturb, y_perturb, theta_perturb]
         }
+        move_to_above_perturb_pose_params.update(config['skill_params']['move_to_above_perturb_pose'])
 
-        move_to_above_lego_params = {
-            'T_lego_world': tmp_T_lego_world,
-            'approach_height_offset': config['approach_height'],
+        move_to_above_correct_pose_params = {
+            'T_tcp_world': tmp_T_lego_world,
         }
-
-        pull_up_params = {
-            'lift_height_offset': config['lift_height'],
-            'velocity_scaling': config['pull_up_velocity_scaling'],
-            'force_threshold': config['pull_up_force_threshold']
-        }
+        move_to_above_correct_pose_params.update(config['skill_params']['move_to_above_correct_pose'])
 
         move_down_params = {
-            'height_offset': config['approach_height'],
             'velocity_scaling': move_down_velocity_scaling
         }
-        if use_audio_terminator:
-            move_down_params['model_path'] = root_pwd+config['model_dir']+'audio_terminator_lego.pt'
+        move_down_params.update(config['skill_params']['move_down'])
 
         execution_params = {
             'skill_step_delay': 2.0
         }
 
-        place_lego_params = {
-            'place_rotation': config['place_rotation'],
-            'lift_height_offset': config['approach_height'],
-        }
-
-        pick_lego_params = {
-            'pick_rotation': config['pick_rotation'],
-            'lift_height_offset': config['approach_height'],
-        }
-
-        terminals = move_to_above_perturb_lego_skill.execute_skill(execution_params, move_to_above_perturb_lego_params)
+        terminals = move_to_above_perturb_pose_skill.execute_skill(execution_params, move_to_above_perturb_pose_params)
 
         start_fts_outcome = send_start_fts_outcome_request(config['fts_detector'])
         outcomes = send_start_vision_outcome_request(config['lego_detector'])
@@ -250,7 +235,7 @@ def run():
 
         print(audio_outcomes['success'])
 
-        terminals = pull_up_skill.execute_skill(execution_params, pull_up_params)
+        terminals = pull_up_skill.execute_skill(execution_params, config['skill_params']['pull_up'])
 
         outcomes = send_end_fts_outcome_request(config['fts_detector'])
 
@@ -261,7 +246,7 @@ def run():
         logger_pub.publish(logger_string)
 
         if (demo and audio_outcomes['success'] == False) or (not demo and outcomes['success'] == False):
-            terminals = move_to_above_lego_pose_skill.execute_skill(execution_params, move_to_above_lego_params)
+            terminals = move_to_above_correct_pose_skill.execute_skill(execution_params, move_to_above_correct_pose_params)
 
             expected_result_pub.publish(1)
 
@@ -301,7 +286,7 @@ def run():
 
             print(audio_outcomes['success'])
 
-            terminals = pull_up_skill.execute_skill(execution_params, pull_up_params)
+            terminals = pull_up_skill.execute_skill(execution_params, config['skill_params']['pull_up'])
 
             outcomes = send_end_fts_outcome_request(config['fts_detector'])
 
@@ -334,9 +319,9 @@ def run():
             #terminals = move_down_to_contact_skill.execute_skill(execution_params, move_down_to_reconnect_params)
 
         if skill_type == "place":
-            terminals = place_lego_skill.execute_skill(execution_params, place_lego_params)
+            terminals = place_lego_skill.execute_skill(execution_params, config['skill_params']['place_lego'])
         elif skill_type == "pick":
-            terminals = pick_lego_skill.execute_skill(execution_params, pick_lego_params)
+            terminals = pick_lego_skill.execute_skill(execution_params, config['skill_params']['pick_lego'])
 
         outcomes = send_end_vision_outcome_request(config['lego_detector'])
 
@@ -347,22 +332,17 @@ def run():
 
         rospy.sleep(1)
 
-        #if outcomes['starting_top'] + outcomes['starting_bottom'] == outcomes['ending_top'] + outcomes['ending_bottom']:
-        if outcomes['success']:
-            labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_" + skill_type + "_success.bag"
-            os.rename(rosbag_path, labeled_rosbag_path)
+        if outcomes['starting_top'] + outcomes['starting_bottom'] == outcomes['ending_top'] + outcomes['ending_bottom']:
+            if outcomes['success']:
+                labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_" + skill_type + "_success.bag"
+                os.rename(rosbag_path, labeled_rosbag_path)
+            else:
+                labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_" + skill_type + "_failure.bag"
+                os.rename(rosbag_path, labeled_rosbag_path)
         else:
-            labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_" + skill_type + "_failure.bag"
+            labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_" + skill_type + "_error.bag"
             os.rename(rosbag_path, labeled_rosbag_path)
-        # else:
-        #     labeled_rosbag_path = rosbag_path.split(".bag")[0] + "_" + skill_type + "_error.bag"
-        #     os.rename(rosbag_path, labeled_rosbag_path)
-        #     break
-
-        if outcomes['ending_top'] == 1:
-            pass
-        elif outcomes['ending_bottom'] == 1:
-            pass
+            break
         
         terminals = reset_joints_skill.execute_skill(None)
 

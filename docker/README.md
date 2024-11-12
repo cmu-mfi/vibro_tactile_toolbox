@@ -10,14 +10,14 @@ Before using the Docker components, ensure you have Docker installed on your sys
 
 - Dockerfile: Defines the specifications for building the Docker image.
 - build_docker.sh: Bash script to build the Docker image.
-- run_docker.sh: Bash script to run the Docker container using the ROS_entrypoint.sh included in the image.
+- run: Bash script to run the Docker container using the ROS_entrypoint.sh included in the image.
 - new_terminal.sh: Bash script to open a new terminal using the already running image.
 
 ## Usage
 
 ### Building the Docker Image
 
-To build the Docker image, run the following command:
+To build the Docker images, run the following command:
 
 ```bash
 ./docker/build_docker.sh
@@ -28,7 +28,7 @@ To build the Docker image, run the following command:
 To run the Docker container, run the following command:
 
 ```bash
-./docker/run_docker.sh
+./docker/run -i vibro_tactile_toolbox:noetic -c vibro_tactile_toolbox_container -g
 ```
 
 Typically this first window should be used to run roscore
@@ -44,15 +44,14 @@ To open a new terminal inside of the already-running docker container, run the f
 To navigate to the ros/catkin workspace for the project use:
 
 ```bash
-cd /vibro_tactile_toolbox/ros1_ws
+cd /ros1_ws
 ```
 
 It may be necessary to source the environment created by catkin to find the necessary packages:
 
 ```bash
-cd /vibro_tactile_toolbox/ros1_ws
-source build/setup.bash
-source install/setup.bash
+cd /ros1_ws
+source devel/setup.bash
 ```
 
 ## Additional Docker Helper Functions

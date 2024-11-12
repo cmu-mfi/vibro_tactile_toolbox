@@ -11,15 +11,32 @@ y_range:
 theta_range: 
   - -10.0
   - 10.0
-pick_approach_height: 0.08
-place_approach_height: 0.03
-reset_x_offset: 0.008
-reset_y_offset: 0.01
-lift_height: 0.01
-pull_up_velocity_scaling: 0.01
-pull_up_force_threshold: 8.0
-push_down_height_offset: 0.01
-velocity_scaling_large_movements: 1.0
+skill_params:
+  place_connector_reset:
+    reset_x_offset: 0.008
+    approach_height_offset: 0.03
+  reset_connector:
+    reset_x_offset: 0.008
+    reset_y_offset: 0.01
+  pick_connector:
+    approach_height_offset: 0.08
+  place_connector:
+    approach_height_offset: 0.03
+  pull_up:
+    lift_height_offset: 0.01
+    velocity_scaling: 0.01
+    force_threshold: 8.0
+  push_down:
+    height_offset: 0.01
+  move_up:
+    lift_height_offset: 0.08
+  move_down:
+    height_offset: 0.03
+  move_to_above_perturb_pose:
+    'approach_height_offset': 0.03
+    'velocity_scaling': 1.0
+  move_to_above_correct_pose:
+    'approach_height_offset': 0.03
 audio_detector:
   namespace: namespace
   topic_name: '/namespace/audio'

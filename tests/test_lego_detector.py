@@ -2,14 +2,14 @@
 
 import argparse
 import rospy
-from vibro_tactile_toolbox.srv import *
+from vibro_tactile_toolbox.srv import LegoOutcome, LegoOutcomeRequest
 from vibro_tactile_toolbox.msg import BoundingBox
 import json
 
-def test_lego_detector(topic_name):
-    rospy.wait_for_service('/lego_detector')
+def test_lego_detector(namespace, topic_name):
+    rospy.wait_for_service(f'/{namespace}/lego_detector')
     try:
-        detect_lego = rospy.ServiceProxy('/lego_detector', LegoOutcome)
+        detect_lego = rospy.ServiceProxy(f'/{namespace}/lego_detector', LegoOutcome)
         req = LegoOutcomeRequest()
         req.id = 0
         req.topic_name = topic_name
@@ -32,10 +32,12 @@ def test_lego_detector(topic_name):
 
 def main(args):
     rospy.init_node('test_lego_detector', anonymous=True)
-    test_lego_detector(args.topic_name)
+    test_lego_detector(args.namespace, args.topic_name)
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser()
+    args.add_argument('-n', '--namespace', type=str,
+      help='Namespace to use')
     args.add_argument('-t', '--topic_name', type=str,
       help='Topic name to use')
     args = args.parse_args()

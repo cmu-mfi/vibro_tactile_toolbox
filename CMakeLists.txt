@@ -88,8 +88,8 @@ include_directories(
 catkin_install_python(PROGRAMS
 scripts/audio_detector.py
   scripts/audio_outcome_republisher.py
-  scripts/collect_lego_tactile_data.py
-  scripts/collect_nist_tactile_data.py
+  scripts/collect_lego_audio_data.py
+  scripts/collect_nist_audio_data.py
   scripts/compressed_image_cropped_republisher.py
   scripts/compressed_lego_detector.py
   scripts/fts_detector.py
