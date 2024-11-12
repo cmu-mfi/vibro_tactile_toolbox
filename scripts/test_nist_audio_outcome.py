@@ -9,8 +9,8 @@ from gripper_controller.robotiq_hande_controller import RobotiqHandEController
 
 from autolab_core import RigidTransform
 
-from skill.nist_skills import *
-from skill.common_skills import GoHomeSkill, MoveDownToContact
+from skill.nist_skills import PickConnector, PlaceConnector, PlaceConnectorReset, ResetConnector
+from skill.common_skills import GoHome, MoveDownToContact, PullUp, OpenGripper
 from outcome.outcome import *
 from std_msgs.msg import Int16, String
 from data_recorder.rosbag_data_recorder import RosbagDataRecorder
@@ -148,7 +148,7 @@ def run():
     pick_connector_skill = PickConnector(robot_commander, gripper_controller, namespace, pick_connector_params)
     place_connector_skill = PlaceConnector(robot_commander, gripper_controller, namespace, place_connector_params)
 
-    home_skill = GoHomeSkill(robot_commander, gripper_controller, namespace, params)
+    home_skill = GoHome(robot_commander, gripper_controller, namespace, params)
     open_gripper_skill = OpenGripper(robot_commander, gripper_controller, namespace, params)
     data_recorder = RosbagDataRecorder()
 

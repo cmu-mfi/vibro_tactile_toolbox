@@ -13,7 +13,7 @@ from robot_controller.yk_controller import YaskawaRobotController
 
 from autolab_core import RigidTransform
 
-from skill.util_skills import GoHomeSkill
+from skill.util_skills import GoHome
 
 STUD_WIDTH = 0.008 # mm
 LEGO_BLOCK_HEIGHT=0.0096 #z
@@ -60,7 +60,7 @@ def run():
 
     # 2. Begin Skill
     params = {'verbose': verbose}
-    home_skill = GoHomeSkill(robot_commander, namespace, params)
+    home_skill = GoHome(robot_commander, namespace, params)
     terminals = home_skill.execute_skill(None)
     
     for i, terminal in enumerate(terminals):

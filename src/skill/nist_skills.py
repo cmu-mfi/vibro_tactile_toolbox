@@ -564,8 +564,6 @@ class ResetConnector(BaseSkill):
             from_frame='hande', to_frame='hande'
         )
 
-        
-
         self.reset_yz_approach_pose = self.T_connector_world_reset_y * self.T_connector_approach_yz * self.T_hande_ee.inverse()
         self.reset_yz_approach_pose_msg = self.reset_yz_approach_pose.pose_msg
 
@@ -617,32 +615,3 @@ class ResetConnector(BaseSkill):
              'termination_cfg': lambda param: add_termination_pose(z_engage_termination_config, self.reset_xz_approach_pose_msg)},
         ]
 
-class OpenGripper(BaseSkill):
-
-    def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
-
-        super().__init__(robot_commander, gripper_controller, namespace, params)
-
-        self.skill_steps = [
-            {'step_name': 'open_gripper',
-             'robot_command': lambda param: self.gripper_controller.open(),
-             'termination_cfg': None},
-        ]
-
-class CloseGripper(BaseSkill):
-
-    def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
-
-        super().__init__(robot_commander, gripper_controller, namespace, params)
-        self.force = 160
-
-        self.skill_steps = [
-            {'step_name': 'close_gripper',
-             'robot_command': lambda param: self.gripper_controller.close(force=self.force),
-             'termination_cfg': None},
-        ]
-
-    def execute_skill(self, execution_params, skill_params = None) -> Tuple[List[TerminationSignal], List[int]]:
-        if skill_params is not None:
-            self.force = skill_params['force']
-        return super().execute_skill(execution_params)

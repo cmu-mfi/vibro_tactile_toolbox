@@ -193,7 +193,7 @@ class MoveDownToContact(BaseSkill):
 
         return super().execute_skill(execution_params)
 
-class GoHomeSkill(BaseSkill):
+class GoHome(BaseSkill):
 
     def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
 
@@ -204,3 +204,33 @@ class GoHomeSkill(BaseSkill):
               'robot_command': lambda param: self.robot_commander.go_to_joints([0, 0, 0, 0, -np.pi/2, 0], wait=False),
               'termination_cfg': lambda param: {'joint': {'position': [0, 0, 0, 0, -np.pi/2, 0]}}},
         ]
+
+class OpenGripper(BaseSkill):
+
+    def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
+
+        super().__init__(robot_commander, gripper_controller, namespace, params)
+
+        self.skill_steps = [
+            {'step_name': 'open_gripper',
+             'robot_command': lambda param: self.gripper_controller.open(),
+             'termination_cfg': None},
+        ]
+
+class CloseGripper(BaseSkill):
+
+    def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
+
+        super().__init__(robot_commander, gripper_controller, namespace, params)
+        self.force = 160
+
+        self.skill_steps = [
+            {'step_name': 'close_gripper',
+             'robot_command': lambda param: self.gripper_controller.close(force=self.force),
+             'termination_cfg': None},
+        ]
+
+    def execute_skill(self, execution_params, skill_params = None) -> Tuple[List[TerminationSignal], List[int]]:
+        if skill_params is not None:
+            self.force = skill_params['force']
+        return super().execute_skill(execution_params)

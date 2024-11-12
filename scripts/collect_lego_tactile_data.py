@@ -9,8 +9,8 @@ from gripper_controller.lego_gripper_controller import LegoGripperController
 
 from autolab_core import RigidTransform
 
-from skill.lego_skills import PullUp, MoveToAboveLegoPose, MoveToAbovePerturbLegoPose, PickLego, PlaceLego
-from skill.common_skills import GoHomeSkill, MoveDownToContact
+from skill.lego_skills import MoveToAboveLegoPose, MoveToAbovePerturbLegoPose, PickLego, PlaceLego
+from skill.common_skills import GoHome, MoveDownToContact, PullUp
 from outcome.outcome import *
 from test.check_ros_topics import check_ros_topics
 
@@ -129,7 +129,7 @@ def run():
     move_down_to_contact_skill = MoveDownToContact(robot_commander, gripper_controller, namespace, params)
     place_lego_skill = PlaceLego(robot_commander, gripper_controller, namespace, params)
     pick_lego_skill = PickLego(robot_commander, gripper_controller, namespace, params)
-    home_skill = GoHomeSkill(robot_commander, gripper_controller, namespace, params)
+    home_skill = GoHome(robot_commander, gripper_controller, namespace, params)
     data_recorder = RosbagDataRecorder()
 
     topics = []
