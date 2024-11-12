@@ -72,119 +72,11 @@ release_termination_config = {
                     'z': [-2, 2]}
             }}
 }
-# Pulling up on a brick to check if connected
-# Terminate if z goes positive
-# Terminate if any substantial reaction otherwise
-servo_termination_config = {
-    'time': {'duration': 10.0},
-    'pose': {'pos_tolerance': 0.001,
-                'orient_tolerance': 0.01,
-                'pose': None},
-    'fts': {'check_rate_ns': 1E6,
-            'threshold': {
-                'force': {
-                    'x': [-50, 50],               # any substantial reaction force in x-y
-                    'y': [-50, 50],
-                    'z': [-float('inf'), 2]},   # reaction force pulling away in z
-                'torque': {
-                    'x': [-2, 2],               # any substantial reaction torque
-                    'y': [-2, 2],
-                    'z': [-2, 2]}
-            }}
-}
 
 def add_termination_pose(termination_config, pose : Pose):
     t_cfg = copy.deepcopy(termination_config)
     t_cfg['pose']['pose'] = t_utils.pose_to_dict(pose)
     return t_cfg
-
-
-class MoveToAbovePerturbLegoPose(BaseSkill):
-
-    def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
-
-        super().__init__(robot_commander, gripper_controller, namespace, params)
-
-        if 'T_lego_ee' not in self.params:
-            print(f"MoveToAbovePerturbLegoPose expects end effector transform: params['T_lego_ee'] = RigidTransform()")
-
-        self.T_lego_ee = self.params['T_lego_ee']
-
-        self.skill_steps = [
-            {'step_name': 'go_to_approach_pose',
-             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.approach_pose_msg, wait=False),
-             'termination_cfg': lambda param: add_termination_pose(rapid_termination_config, self.approach_pose_msg)},
-        ]
-
-    def execute_skill(self, execution_params, skill_params) -> Tuple[List[TerminationSignal], List[int]]:
-        # QOL 
-        if 'T_lego_world' not in skill_params:
-            print(f"MoveToAbovePerturbLegoPose expects target brick pose transform: skill_params['T_lego_world'] = RigidTransform()")
-        if 'approach_height_offset' not in skill_params:
-            print(f"MoveToAbovePerturbLegoPose expects an approach height offset (meters): skill_params['approach_height_offset'] = float(0.010 m)")
-        if 'place_perturbation' not in skill_params:
-            self.place_perturbation = np.random.uniform(-0.001, 0.001, size=(3,))
-            print(f"No initial place perturbation specified, using random perturbation: {tuple(self.place_perturbation)} [m]")
-        else:
-            self.place_perturbation = np.array(skill_params['place_perturbation'])
-
-        self.T_lego_world = skill_params['T_lego_world']
-        self.approach_height_offset = skill_params['approach_height_offset']
-
-        self.T_place_target = self.T_lego_world.copy()
-
-        self.T_lego_approach = RigidTransform(
-            translation=np.array([0.0, 0.0, -abs(self.approach_height_offset)]),
-            from_frame='lego', to_frame='lego'
-        )
-
-        self.place_perturb_pose = RigidTransform(translation=[self.place_perturbation[0], self.place_perturbation[1], 0.0],
-                                                 rotation=RigidTransform.z_axis_rotation(np.deg2rad(self.place_perturbation[2])),
-                                                 from_frame='lego', to_frame='lego')
-
-        self.approach_pose = self.T_place_target * self.place_perturb_pose * self.T_lego_approach * self.T_lego_ee.inverse()
-        self.approach_pose_msg = self.approach_pose.pose_msg
-
-        return super().execute_skill(execution_params)
-
-class MoveToAboveLegoPose(BaseSkill):
-
-    def __init__(self, robot_commander: BaseRobotCommander, gripper_controller: BaseGripperController, namespace: str, params=None):
-
-        super().__init__(robot_commander, gripper_controller, namespace, params)
-
-        if 'T_lego_ee' not in self.params:
-            print(f"MoveToAboveLegoPose expects end effector transform: params['T_lego_ee'] = RigidTransform()")
-
-        self.T_lego_ee = self.params['T_lego_ee']
-
-        self.skill_steps = [
-            {'step_name': 'go_to_approach_pose',
-             'robot_command': lambda param: self.robot_commander.go_to_pose_goal(self.approach_pose_msg, wait=False),
-             'termination_cfg': lambda param: add_termination_pose(rapid_termination_config, self.approach_pose_msg)},
-        ]
-
-    def execute_skill(self, execution_params, skill_params) -> Tuple[List[TerminationSignal], List[int]]:
-        # QOL 
-        if 'T_lego_world' not in skill_params:
-            print(f"MoveToAboveLegoPose expects target brick pose transform: skill_params['T_lego_world'] = RigidTransform()")
-        if 'approach_height_offset' not in skill_params:
-            print(f"MoveToAboveLegoPose expects an approach height offset (meters): skill_params['approach_height_offset'] = float(0.010 m)")
-
-        self.T_lego_world = skill_params['T_lego_world']
-        self.approach_height_offset = skill_params['approach_height_offset']
-
-        self.T_place_target = self.T_lego_world.copy()
-
-        self.T_lego_approach = RigidTransform(
-            translation=np.array([0.0, 0.0, -abs(self.approach_height_offset)]),
-            from_frame='lego', to_frame='lego'
-        )
-
-        self.approach_pose = self.T_place_target * self.T_lego_approach * self.T_lego_ee.inverse()
-        self.approach_pose_msg = self.approach_pose.pose_msg
-
-        return super().execute_skill(execution_params)
 
 class PlaceLego(BaseSkill):
 

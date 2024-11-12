@@ -10,7 +10,7 @@ from gripper_controller.robotiq_hande_controller import RobotiqHandEController
 from autolab_core import RigidTransform
 
 from skill.nist_skills import PickConnector, PlaceConnector, PlaceConnectorReset, ResetConnector
-from skill.common_skills import GoHome, MoveDownToContact, PullUp, OpenGripper
+from skill.common_skills import ResetJoints, MoveDownToContact, PullUp, OpenGripper, MoveUp, PushDown
 from outcome.outcome import *
 from std_msgs.msg import Int16, String
 from data_recorder.rosbag_data_recorder import RosbagDataRecorder
@@ -148,7 +148,7 @@ def run():
     pick_connector_skill = PickConnector(robot_commander, gripper_controller, namespace, pick_connector_params)
     place_connector_skill = PlaceConnector(robot_commander, gripper_controller, namespace, place_connector_params)
 
-    home_skill = GoHome(robot_commander, gripper_controller, namespace, params)
+    reset_joints_skill = ResetJoints(robot_commander, gripper_controller, namespace, params)
     open_gripper_skill = OpenGripper(robot_commander, gripper_controller, namespace, params)
     data_recorder = RosbagDataRecorder()
 
@@ -181,7 +181,7 @@ def run():
     terminals = open_gripper_skill.execute_skill(None)
     if lift:
         terminals = move_up_skill.execute_skill(execution_params, move_up_params)
-    terminals = home_skill.execute_skill(None)
+    terminals = reset_joints_skill.execute_skill(None)
 
     if reset:
         reset_connector_skill.execute_skill(execution_params)
@@ -216,7 +216,8 @@ def run():
 
         pull_up_params = {
             'lift_height_offset': config['lift_height'],
-            'velocity_scaling': config['pull_up_velocity_scaling']
+            'velocity_scaling': config['pull_up_velocity_scaling'],
+            'force_threshold': config['pull_up_force_threshold']
         }
 
         move_down_params = {
@@ -337,8 +338,8 @@ def run():
                 logger_string = str(num_correct_predictions) + '/' + str(num_trials_completed)
                 logger_pub.publish(logger_string)
 
-            # if force_outcomes['success'] == False:
-            #     terminals = push_down_skill.execute_skill(execution_params, push_down_params)
+            if force_outcomes['success'] == False:
+                terminals = push_down_skill.execute_skill(execution_params, push_down_params)
 
         terminals = move_to_above_connector_pose_skill.execute_skill(execution_params, move_to_above_connector_params)
 
@@ -363,7 +364,7 @@ def run():
         else:
             place_connector_skill.execute_skill(execution_params)
             
-    terminals = home_skill.execute_skill(None)
+    terminals = reset_joints_skill.execute_skill(None)
 
     cfm = confusion_matrix(actual_outcomes, predicted_outcomes)
     print(cfm)

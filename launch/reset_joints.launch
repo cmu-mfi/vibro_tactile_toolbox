@@ -1,12 +1,9 @@
 <launch>
     <arg name="namespace" default="yk_creator"/>
-    <arg name="start_trial" default="0"/>
     <arg name="verbose" default="true"/>
     <group ns="$(arg namespace)">
-        <node pkg="vibro_tactile_toolbox" name="go_home_task" type="go_home_task.py" output="screen">
+        <node pkg="vibro_tactile_toolbox" name="reset_joints" type="reset_joints.py" output="screen">
             <param name="namespace" value="$(arg namespace)"/>
-            <param name="root_pwd" value="$(find vibro_tactile_toolbox)"/>
-            <param name="start_trial" value="$(arg start_trial)"/>
             <param name="verbose" value="$(arg verbose)"/>
         </node>
     </group>

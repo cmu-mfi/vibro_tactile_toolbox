@@ -10,7 +10,7 @@ from gripper_controller.lego_gripper_controller import LegoGripperController
 from autolab_core import RigidTransform
 
 from skill.lego_skills import PlaceLego, PickLego
-from skill.common_skills import GoHome, MoveDownToContact, PullUp
+from skill.common_skills import ResetJoints, MoveDownToContact, PullUp
 from outcome.outcome import *
 from std_msgs.msg import Int16, String
 from data_recorder.rosbag_data_recorder import RosbagDataRecorder
@@ -147,7 +147,7 @@ def run():
     move_down_to_contact_skill = MoveDownToContact(robot_commander, gripper_controller, namespace, params)
     place_lego_skill = PlaceLego(robot_commander, gripper_controller, namespace, params)
     pick_lego_skill = PickLego(robot_commander, gripper_controller, namespace, params)
-    home_skill = GoHome(robot_commander, gripper_controller, namespace, params)
+    reset_joints_skill = ResetJoints(robot_commander, gripper_controller, namespace, params)
     data_recorder = RosbagDataRecorder()
 
     topics = []
@@ -198,7 +198,8 @@ def run():
 
         pull_up_params = {
             'lift_height_offset': config['lift_height'],
-            'velocity_scaling': config['pull_up_velocity_scaling']
+            'velocity_scaling': config['pull_up_velocity_scaling'],
+            'force_threshold': config['pull_up_force_threshold']
         }
 
         move_down_params = {
@@ -240,7 +241,7 @@ def run():
             labeled_rosbag_path = rosbag_path.split(".bag")[0] + f"_vision_error.bag"
             os.rename(rosbag_path, labeled_rosbag_path)
 
-            terminals = home_skill.execute_skill(None)
+            terminals = reset_joints_skill.execute_skill(None)
             break
 
         terminals = move_down_to_contact_skill.execute_skill(execution_params, move_down_params)
@@ -291,7 +292,7 @@ def run():
                 labeled_rosbag_path = rosbag_path.split(".bag")[0] + f"_vision_error.bag"
                 os.rename(rosbag_path, labeled_rosbag_path)
 
-                terminals = home_skill.execute_skill(None)
+                terminals = reset_joints_skill.execute_skill(None)
                 break
 
             terminals = move_down_to_contact_skill.execute_skill(execution_params, move_down_params)
@@ -327,7 +328,7 @@ def run():
 
                 tmp_T_lego_world.save(root_pwd+config['transforms_dir']+config['tmp_lego_world_tf'])
 
-            terminals = home_skill.execute_skill(None)
+            terminals = reset_joints_skill.execute_skill(None)
             continue
         #else:
             #terminals = move_down_to_contact_skill.execute_skill(execution_params, move_down_to_reconnect_params)
@@ -363,7 +364,7 @@ def run():
         elif outcomes['ending_bottom'] == 1:
             pass
         
-        terminals = home_skill.execute_skill(None)
+        terminals = reset_joints_skill.execute_skill(None)
 
         if skill_type == "pick" and outcomes['success'] and randomize_placement:
             block_x_loc = np.random.randint(config['block_x_range'][0], config['block_x_range'][1])
