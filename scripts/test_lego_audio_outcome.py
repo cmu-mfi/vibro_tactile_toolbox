@@ -83,7 +83,7 @@ def run():
                 config[key]['topic_name'] = config[key]['topic_name'].replace("namespace", namespace)
         if isinstance(config[key], list):
             for i in range(len(config[key])):
-                if 'namespace' in config[key][i]:
+                if isinstance(config[key][i], str) and 'namespace' in config[key][i]:
                     config[key][i] = config[key][i].replace("namespace", namespace)
 
     data_type = ''
