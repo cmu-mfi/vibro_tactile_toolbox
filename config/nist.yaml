@@ -1,6 +1,6 @@
 transforms_dir: "/transforms/"
 hande_ee_tf: "hande_ee.tf"
-data_dir: "/mnt/hdd1/vibrotactile_data/nist/"
+data_dir: "/home/Documents/vibrotactile_data/nist/"
 model_dir: "/models/"
 x_range:
   - -0.005
@@ -44,6 +44,9 @@ fts_detector:
   namespace: namespace
   topic_name: '/namespace/fts'
   force_threshold: 12.0
+ros_services:
+  - /namespace/fts_detector
+  - /namespace/audio_detector
 rosbag_data_recorder:
   topics:
     - /namespace/side_camera/color/image_cropped/compressed

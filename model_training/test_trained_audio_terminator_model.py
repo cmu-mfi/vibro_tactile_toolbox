@@ -74,16 +74,17 @@ class VibrotactileDataset(Dataset):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--type', '-t', type=str, default='lego')
+    parser.add_argument('--type', '-t', type=str, default='nist')
+    parser.add_argument('--data_dir', '-d', type=str, default='/home/Documents/vibrotactile_data')
     args = parser.parse_args()
 
     channels = [0,1,2,3]
     num_channels = len(channels)
 
     if args.type == 'lego':
-        audio_dataset = VibrotactileDataset(channels, f'/home/mfi/Documents/vibrotactile_data/lego_dataset/*/*/test*/MoveDown/')
+        audio_dataset = VibrotactileDataset(channels, f'{args.data_dir}/lego_dataset/*/*/test*/MoveDown/')
     else:
-        audio_dataset = VibrotactileDataset(channels, f'/home/mfi/Documents/vibrotactile_data/nist_dataset/*/{args.type}/test*/MoveDown/')
+        audio_dataset = VibrotactileDataset(channels, f'{args.data_dir}/nist_dataset/*/{args.type}/test*/MoveDown/')
     print(len(audio_dataset))
 
     test_dataloader = torch.utils.data.DataLoader(

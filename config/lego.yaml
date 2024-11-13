@@ -1,7 +1,7 @@
 lego_ee_tf: "lego_ee.tf"
 lego_world_tf: "T_lego_world/"
 tmp_lego_world_tf: "tmp_lego_world.tf"
-data_dir: "/mnt/hdd1/vibrotactile_data/lego/"
+data_dir: "/home/Documents/vibrotactile_data/lego/"
 model_dir: "/models/"
 transforms_dir: "/transforms/"
 x_range:
@@ -57,6 +57,10 @@ lego_detector:
     - 1200
     - 600
   detection_threshold: 0.8
+ros_services:
+  - /namespace/fts_detector
+  - /namespace/audio_detector
+  - /namespace/lego_detector
 rosbag_data_recorder:
   topics:
     - /namespace/side_camera/color/image_cropped/compressed

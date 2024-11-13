@@ -80,7 +80,7 @@ if __name__ == '__main__':
     parser.add_argument('--type', '-t', type=str, default='lego')
     parser.add_argument('--channels', '-c', type=str, default='')
     parser.add_argument('--block_type', '-b', type=str, default='')
-    parser.add_argument('--data_dir', '-d', type=str, default='/home/mfi/Documents/vibrotactile_data')
+    parser.add_argument('--data_dir', '-d', type=str, default='/home/Documents/vibrotactile_data')
     args = parser.parse_args()
 
     if args.channels != '':

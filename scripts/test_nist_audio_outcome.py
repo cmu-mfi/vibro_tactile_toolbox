@@ -15,7 +15,7 @@ from outcome.outcome import send_audio_outcome_request, send_start_fts_outcome_r
 from std_msgs.msg import Int16, String
 from data_recorder.rosbag_data_recorder import RosbagDataRecorder
 from sklearn.metrics import confusion_matrix
-from test.check_ros_topics import check_ros_topics
+from test.check_ros_topics import check_ros_topics, check_ros_services
 
 import yaml
 
@@ -51,6 +51,10 @@ def run():
                 config[key]['namespace'] = namespace
             if 'topic_name' in config[key]:
                 config[key]['topic_name'] = config[key]['topic_name'].replace("namespace", namespace)
+        if isinstance(config[key], list):
+            for i in range(len(config[key])):
+                if 'namespace' in config[key][i]:
+                    config[key][i] = config[key][i].replace("namespace", namespace)
 
     num_correct_predictions = 0
     num_trials_completed = 0
@@ -219,6 +223,7 @@ def run():
         expected_result_pub.publish(0)
 
         check_ros_topics(topics)
+        check_ros_services(config['ros_services'])
 
         # 1. Begin rosbag recording
         rosbag_name = f"trial_{trial_num}-p_{x_perturb:0.4f}_{y_perturb:0.4f}_{theta_perturb:0.4f}_{move_down_velocity_scaling:0.2f}.bag"

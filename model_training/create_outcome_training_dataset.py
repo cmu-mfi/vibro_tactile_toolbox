@@ -10,8 +10,6 @@ from scipy.io import wavfile
 import cv2
 import soundfile as sf
 
-import matplotlib.pyplot as plt
-from matplotlib import cm
 from PIL import Image
 import librosa
 
