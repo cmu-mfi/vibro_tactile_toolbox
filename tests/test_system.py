@@ -39,6 +39,7 @@ def main(args):
 
     check_ros_topics(topics)
     check_ros_services(config['ros_services'])
+    print("All Systems are running.")
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser()

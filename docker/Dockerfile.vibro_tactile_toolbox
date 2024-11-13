@@ -21,18 +21,13 @@ RUN cd /Documents \
     && git clone https://github.com/cmu-mfi/salt.git \
     && cp salt/helpers/* segment-anything/
 
-# Clone vibro_tactile_toolbox repo
-RUN cd /ros1_ws/src \
-    && git clone https://github.com/cmu-mfi/vibro_tactile_toolbox.git \
-    && cd vibro_tactile_toolbox \
-    && pip install -r requirements.txt
-
 # Audio (https://github.com/firephinx/sounddevice_ros)
 RUN cd /ros1_ws/src \ 
     && git clone https://github.com/firephinx/sounddevice_ros.git \
     && apt-get install libportaudio2 libasound-dev \
     && pip install librosa sounddevice pysoundfile
 
+# Clone the yk_msgs repo
 RUN cd /ros1_ws/src \
     && git clone https://github.com/cmu-mfi/motoman_ros1.git \
     && cd motoman_ros1 \
@@ -41,6 +36,16 @@ RUN cd /ros1_ws/src \
     && rm -rf motoman_gp4_moveit_config \
     && rm -rf depend-packages \
     && rm -rf yk_tasks
+
+# Clone the robotiq_mm_ros repo
+RUN cd /ros1_ws/src \
+    && git clone https://github.com/cmu-mfi/robotiq_mm_ros.git
+
+# Clone vibro_tactile_toolbox repo
+RUN cd /ros1_ws/src \
+    && git clone https://github.com/cmu-mfi/vibro_tactile_toolbox.git \
+    && cd vibro_tactile_toolbox \
+    && pip install -r requirements.txt
 
 RUN source /opt/ros/noetic/setup.bash \
  && cd /ros1_ws \
