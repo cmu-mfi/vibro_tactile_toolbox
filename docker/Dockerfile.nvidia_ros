@@ -27,7 +27,7 @@ RUN rosdep init && rosdep update
 RUN cd / && mkdir -p ros1_ws/src
 
 # Install catkin tools
-RUN apt-get -y install python3-catkin-tools
+RUN apt-get -y install python3-catkin-tools python-is-python3
 
 # Install Other Dependencies in Documents folder
 RUN mkdir Documents
