@@ -85,18 +85,14 @@ def run():
                 if isinstance(config[key][i], str) and 'namespace' in config[key][i]:
                     config[key][i] = config[key][i].replace("namespace", namespace)
 
-    data_dir = config['data_dir']+'volume_'+str(volume)+'/'+block_type+'/vel_'+str(velocity_scale)+'/'
+    data_dir = config['data_dir']+'/volume_'+str(volume)+'/'+block_type+'/vel_'+str(velocity_scale)+'/'
 
-    if not os.path.exists(config['data_dir'][:config['data_dir'].rfind('/')]):
-        os.mkdir(config['data_dir'][:config['data_dir'].rfind('/')])
-    if not os.path.exists(config['data_dir']):
-        os.mkdir(config['data_dir'])
-    if not os.path.exists(config['data_dir']+'volume_'+str(volume)):
-        os.mkdir(config['data_dir']+'volume_'+str(volume))
-    if not os.path.exists(config['data_dir']+'volume_'+str(volume)+'/'+block_type):
-        os.mkdir(config['data_dir']+'volume_'+str(volume)+'/'+block_type)
-    if not os.path.exists(config['data_dir']+'volume_'+str(volume)+'/'+block_type+'/vel_'+str(velocity_scale)):
-        os.mkdir(config['data_dir']+'volume_'+str(volume)+'/'+block_type+'/vel_'+str(velocity_scale))    
+    data_dir_path_list = data_dir.split('/')
+    combined_path = ''
+    for data_dir_path_item in data_dir_path_list:
+        combined_path += '/' + data_dir_path_item
+        if not os.path.exists(combined_path):
+            os.mkdir(combined_path)   
 
     if str(velocity_scale) == '0.01':
         move_down_velocity_scaling = 0.01

@@ -66,14 +66,14 @@ def run():
     else:
         data_type = 'test'
 
-    data_dir = config['data_dir']+'volume_'+str(volume)+'/'+connector_type+'/'+data_type+'_vel_'+str(velocity_scale)+'/'
+    data_dir = config['data_dir']+'/volume_'+str(volume)+'/'+connector_type+'/'+data_type+'_vel_'+str(velocity_scale)+'/'
 
-    if not os.path.exists(config['data_dir']+'volume_'+str(volume)):
-        os.mkdir(config['data_dir']+'volume_'+str(volume))
-    if not os.path.exists(config['data_dir']+'volume_'+str(volume)+'/'+connector_type):
-        os.mkdir(config['data_dir']+'volume_'+str(volume)+'/'+connector_type)
-    if not os.path.exists(config['data_dir']+'volume_'+str(volume)+'/'+connector_type+'/'+data_type+'_vel_'+str(velocity_scale)):
-        os.mkdir(config['data_dir']+'volume_'+str(volume)+'/'+connector_type+'/'+data_type+'_vel_'+str(velocity_scale))    
+    data_dir_path_list = data_dir.split('/')
+    combined_path = ''
+    for data_dir_path_item in data_dir_path_list:
+        combined_path += '/' + data_dir_path_item
+        if not os.path.exists(combined_path):
+            os.mkdir(combined_path)    
 
     if str(velocity_scale) == '0.01':
         move_down_velocity_scaling = 0.01
