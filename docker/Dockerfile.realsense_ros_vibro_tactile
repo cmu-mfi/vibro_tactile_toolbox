@@ -18,7 +18,7 @@ RUN source ~/.bashrc \
     -y \
  && catkin build
 
-COPY ./vibro_tactile_toolbox/docker/vibro_tactile_entrypoint.sh /
+COPY ./vibro_tactile_toolbox/docker/vibro_tactile_entrypoint.sh /vibro_tactile_entrypoint.sh
 RUN chmod +x /vibro_tactile_entrypoint.sh
 
 ENTRYPOINT ["/vibro_tactile_entrypoint.sh"]
