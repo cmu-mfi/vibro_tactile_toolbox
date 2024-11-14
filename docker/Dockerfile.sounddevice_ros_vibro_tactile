@@ -11,6 +11,7 @@ RUN cd /ros1_ws/src/vibro_tactile_toolbox \
 
 RUN source ~/.bashrc \
  && cd /ros1_ws \
+ && rosdep update \
  && rosdep install \
     --from-paths src \
     --ignore-src \
