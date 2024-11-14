@@ -87,6 +87,10 @@ def run():
 
     data_dir = config['data_dir']+'volume_'+str(volume)+'/'+block_type+'/vel_'+str(velocity_scale)+'/'
 
+    if not os.path.exists(config['data_dir'][:config['data_dir'].rfind('/')]):
+        os.mkdir(config['data_dir'][:config['data_dir'].rfind('/')])
+    if not os.path.exists(config['data_dir']):
+        os.mkdir(config['data_dir'])
     if not os.path.exists(config['data_dir']+'volume_'+str(volume)):
         os.mkdir(config['data_dir']+'volume_'+str(volume))
     if not os.path.exists(config['data_dir']+'volume_'+str(volume)+'/'+block_type):
