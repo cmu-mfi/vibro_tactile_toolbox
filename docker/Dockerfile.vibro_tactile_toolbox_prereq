@@ -45,8 +45,3 @@ RUN source /opt/ros/noetic/setup.bash \
  && cd /ros1_ws \
  && catkin build -c
 
-# Add sourcing to bashrc
-RUN echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
-RUN echo "source /ros1_ws/devel/setup.bash" >> ~/.bashrc
-
-RUN echo "All Done "
