@@ -27,8 +27,8 @@ services:
   
   sounddevice-ros:
     build:
-      context: .
-      dockerfile: Dockerfile.sounddevice_ros_vibro_tactile
+      context: ../..
+      dockerfile: ./vibro_tactile_toolbox/docker/Dockerfile.sounddevice_ros_vibro_tactile
     image: "sounddevice_ros:vibro_tactile"
     container_name: "sounddevice_ros_noetic"
     environment:
@@ -51,8 +51,8 @@ services:
 
   realsense-ros:
     build:
-      context: .
-      dockerfile: Dockerfile.realsense_ros_vibro_tactile
+      context: ../..
+      dockerfile: ./vibro_tactile_toolbox/docker/Dockerfile.realsense_ros_vibro_tactile
     image: "realsense_ros:vibro_tactile"
     container_name: "realsense_ros_noetic"
     environment:
@@ -75,8 +75,8 @@ services:
 
   orbbec-ros:
     build:
-      context: .
-      dockerfile: Dockerfile.orbbec_ros_vibro_tactile
+      context: ../..
+      dockerfile: ./vibro_tactile_toolbox/docker/Dockerfile.orbbec_ros_vibro_tactile
     image: "orbbec_ros:vibro_tactile"
     container_name: "orbbec_ros_noetic"
     environment:
@@ -107,8 +107,8 @@ services:
 
   vibro-tactile-toolbox:
     build:
-      context: .
-      dockerfile: Dockerfile.vibro_tactile_toolbox
+      context: ../..
+      dockerfile: ./vibro_tactile_toolbox/docker/Dockerfile.vibro_tactile_toolbox
     image: "vibro_tactile_toolbox:noetic"
     container_name: "vibro_tactile_toolbox_noetic"
     environment:
