@@ -9,14 +9,8 @@ COPY ./vibro_tactile_toolbox /ros1_ws/src/vibro_tactile_toolbox
 RUN cd /ros1_ws/src/vibro_tactile_toolbox \
    && pip install -r requirements.txt 
 
-RUN source ~/.bashrc \
+RUN source /opt/ros/noetic/setup.bash \
  && cd /ros1_ws \
- && rosdep update \
- && rosdep install \
-    --from-paths src \
-    --ignore-src \
-    --rosdistro $ROS_DISTRO \
-    -y \
  && catkin build
 
 COPY ./vibro_tactile_toolbox/docker/vibro_tactile_entrypoint.sh /vibro_tactile_entrypoint.sh
