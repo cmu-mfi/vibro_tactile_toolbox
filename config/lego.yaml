@@ -1,7 +1,7 @@
 lego_ee_tf: "lego_ee.tf"
 lego_world_tf: "T_lego_world/"
 tmp_lego_world_tf: "tmp_lego_world.tf"
-data_dir: "/home/Documents/vibrotactile_data/lego"
+data_dir: "/home/Documents/vibro_tactile_data/lego"
 model_dir: "/models/"
 transforms_dir: "/transforms/"
 x_range:

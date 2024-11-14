@@ -11,8 +11,8 @@ NUM_RESAMPLES=20
 NUM_RESAMPLES_TERMINATOR=50
 
 # Define the base paths
-BASE_TARGET_DIR="/home/Documents/vibrotactile_data/nist/volume_"
-BASE_TARGET_DST="/home/Documents/vibrotactile_data/nist_dataset/volume_"
+BASE_TARGET_DIR="/home/Documents/vibro_tactile_data/nist/volume_"
+BASE_TARGET_DST="/home/Documents/vibro_tactile_data/nist_dataset/volume_"
 
 # Iterate through each combination of volume, brick, and velocity
 for VOL in "${VOLS[@]}"; do

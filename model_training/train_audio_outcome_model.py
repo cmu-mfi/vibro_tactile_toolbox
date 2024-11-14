@@ -172,7 +172,7 @@ if __name__ == '__main__':
     parser.add_argument('--train_ratio', '-r', type=float, default=0.8)
     parser.add_argument('--channels', '-c', type=str, default='')
     parser.add_argument('--block_type', '-b', type=str, default='')
-    parser.add_argument('--data_dir', '-d', type=str, default='/home/Documents/vibrotactile_data')
+    parser.add_argument('--data_dir', '-d', type=str, default='/home/Documents/vibro_tactile_data')
     args = parser.parse_args()
     
     if args.channels != '':
