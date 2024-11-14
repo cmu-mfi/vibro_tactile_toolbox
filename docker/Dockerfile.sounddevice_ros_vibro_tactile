@@ -1,4 +1,4 @@
-FROM vibro_tactile_toolbox_prereq:noetic
+FROM sounddevice_ros:noetic
 ENV TZ=ET
 SHELL ["/bin/bash", "-c"]
 

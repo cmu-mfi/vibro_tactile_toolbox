@@ -1,14 +1,12 @@
-FROM vibro_tactile_toolbox_prereq:noetic
+FROM orbbec_ros:noetic
 ENV TZ=ET
 SHELL ["/bin/bash", "-c"]
 
 RUN apt-get update && apt-get -y upgrade
 
 COPY ../../vibro_tactile_toolbox /ros1_ws/src/vibro_tactile_toolbox
-
 RUN cd /ros1_ws/src/vibro_tactile_toolbox \
-   && pip install -r requirements.txt 
-
+   && pip install -r requirements.txt  
 RUN source ~/.bashrc \
  && cd /ros1_ws \
  && rosdep install \

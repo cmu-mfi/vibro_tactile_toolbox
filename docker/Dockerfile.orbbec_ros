@@ -12,9 +12,7 @@ ros-noetic-diagnostic-updater ros-noetic-diagnostic-msgs
 # Clone Orbbec repo
 RUN cd /ros1_ws/src \
     && git clone https://github.com/orbbec/OrbbecSDK_ROS1.git \
-    && git clone https://github.com/cmu-mfi/vibro_tactile_toolbox.git
-
-RUN cd /ros1_ws/src/OrbbecSDK_ROS1 && git checkout df0789dfd9d7c726baafc95279ce0b20b1f2c812
+    && cd OrbbecSDK_ROS1 && git checkout df0789dfd9d7c726baafc95279ce0b20b1f2c812
 
 RUN source /opt/ros/noetic/setup.bash \
  && cd /ros1_ws \

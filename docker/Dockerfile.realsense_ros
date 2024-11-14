@@ -16,9 +16,8 @@ RUN apt-get install librealsense2-dev -y
 RUN apt-get install librealsense2-dbg -y
 
 RUN cd /ros1_ws/src \ 
-    && git clone https://github.com/rjwb1/realsense-ros.git \ 
-    && git clone https://github.com/cmu-mfi/vibro_tactile_toolbox.git
-
+    && git clone https://github.com/rjwb1/realsense-ros.git 
+    
 RUN source /opt/ros/noetic/setup.bash \
  && cd /ros1_ws \
  && rosdep update \

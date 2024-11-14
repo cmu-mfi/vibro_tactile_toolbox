@@ -28,8 +28,8 @@ services:
   sounddevice-ros:
     build:
       context: .
-      dockerfile: Dockerfile.sounddevice_ros
-    image: "sounddevice_ros:noetic"
+      dockerfile: Dockerfile.sounddevice_ros_vibro_tactile
+    image: "sounddevice_ros:vibro_tactile"
     container_name: "sounddevice_ros_noetic"
     environment:
       - "DISPLAY=${DISPLAY}"
@@ -52,8 +52,8 @@ services:
   realsense-ros:
     build:
       context: .
-      dockerfile: Dockerfile.realsense_ros
-    image: "realsense_ros:noetic"
+      dockerfile: Dockerfile.realsense_ros_vibro_tactile
+    image: "realsense_ros:vibro_tactile"
     container_name: "realsense_ros_noetic"
     environment:
       - "DISPLAY=${DISPLAY}"
@@ -76,8 +76,8 @@ services:
   orbbec-ros:
     build:
       context: .
-      dockerfile: Dockerfile.orbbec_ros
-    image: "orbbec_ros:noetic"
+      dockerfile: Dockerfile.orbbec_ros_vibro_tactile
+    image: "orbbec_ros:vibro_tactile"
     container_name: "orbbec_ros_noetic"
     environment:
       - "DISPLAY=unix${DISPLAY}"
