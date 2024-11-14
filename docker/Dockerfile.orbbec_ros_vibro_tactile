@@ -4,9 +4,11 @@ SHELL ["/bin/bash", "-c"]
 
 RUN apt-get update && apt-get -y upgrade
 
-COPY ../../vibro_tactile_toolbox /ros1_ws/src/vibro_tactile_toolbox
+COPY ./vibro_tactile_toolbox /ros1_ws/src/vibro_tactile_toolbox
+
 RUN cd /ros1_ws/src/vibro_tactile_toolbox \
    && pip install -r requirements.txt  
+
 RUN source ~/.bashrc \
  && cd /ros1_ws \
  && rosdep install \
@@ -16,7 +18,7 @@ RUN source ~/.bashrc \
     -y \
  && catkin build
 
-COPY vibro_tactile_entrypoint.sh /
+COPY ./vibro_tactile_toolbox/docker/vibro_tactile_entrypoint.sh /
 RUN chmod +x /vibro_tactile_entrypoint.sh
 
 ENTRYPOINT ["/vibro_tactile_entrypoint.sh"]
