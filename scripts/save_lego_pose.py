@@ -16,6 +16,8 @@ def run():
 
     namespace = rospy.get_param("save_lego_pose/namespace")
     root_pwd = rospy.get_param("save_lego_pose/root_pwd")
+    x = rospy.get_param("save_lego_pose/x")
+    y = rospy.get_param("save_lego_pose/y")
 
     robot_commander = YaskawaRobotController(namespace)
     
@@ -25,7 +27,7 @@ def run():
 
     T_lego_world = T_ee_world * T_lego_ee
 
-    T_lego_world.save(root_pwd+'/transforms/lego_world.tf')
+    T_lego_world.save(f'{root_pwd}/transforms/T_lego_world/lego_world_{x}_{y}.tf')
 
 if __name__ == "__main__":
     run()
