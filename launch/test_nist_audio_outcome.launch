@@ -1,10 +1,10 @@
 <launch>
-    <arg name="namespace" default="yk_builder"/>
-    <arg name="num_trials" default="1"/>
-    <arg name="start_num" default="40"/>
+    <arg name="namespace" default=""/>
+    <arg name="num_trials" default="20"/>
+    <arg name="start_num" default="1"/>
     <arg name="verbose" default="true"/>
-    <arg name="connector_type" default="waterproof"/>
-    <arg name="velocity_scale" default="0.02"/>
+    <arg name="connector_type" default=""/>
+    <arg name="velocity_scale" default="0.01"/>
     <arg name="volume" default="75"/>
     <arg name="reset" default="false"/>
     <arg name="lift" default="false"/>

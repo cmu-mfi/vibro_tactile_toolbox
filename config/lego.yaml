@@ -39,6 +39,11 @@ skill_params:
 audio_detector:
   namespace: namespace
   topic_name: '/namespace/audio'
+  channels: 
+    - 0
+    - 1
+    - 2
+    - 3
 fts_detector:
   namespace: namespace
   topic_name: '/namespace/fts'

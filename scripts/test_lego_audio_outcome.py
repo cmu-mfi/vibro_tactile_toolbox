@@ -113,10 +113,10 @@ def run():
     elif str(velocity_scale) == 'random':
         move_down_velocity_scaling = -1
 
-    outcome_config = config['audio_detector'].copy() 
-    outcome_config['model_path'] = root_pwd+config['model_dir']+'audio_outcome_lego.pt'
-    recovery_config = config['audio_detector'].copy()
-    recovery_config['model_path'] = root_pwd+config['model_dir']+'audio_recovery_lego.pt'
+    audio_outcome_config = config['audio_detector'].copy() 
+    audio_outcome_config['model_path'] = root_pwd+config['model_dir']+'audio_outcome_lego.pt'
+    audio_recovery_config = config['audio_detector'].copy()
+    audio_recovery_config['model_path'] = root_pwd+config['model_dir']+'audio_recovery_lego.pt'
 
     # Instantiate robot controller for Yaskawa API
     robot_commander = YaskawaRobotController(namespace)
@@ -236,7 +236,7 @@ def run():
 
         terminals = move_down_to_contact_skill.execute_skill(execution_params, move_down_params)
 
-        audio_outcomes = send_audio_outcome_request(outcome_config, terminals[0].stamp)
+        audio_outcomes = send_audio_outcome_request(audio_outcome_config, terminals[0].stamp)
 
         print(audio_outcomes['success'])
 
@@ -255,7 +255,7 @@ def run():
 
             expected_result_pub.publish(1)
 
-            audio_recovery = send_audio_outcome_request(recovery_config, terminals[0].stamp)
+            audio_recovery = send_audio_outcome_request(audio_recovery_config, terminals[0].stamp)
 
             recovery_action_normalized = audio_recovery['action']
             recovery_action = np.zeros(3)
@@ -287,7 +287,7 @@ def run():
 
             terminals = move_down_to_contact_skill.execute_skill(execution_params, move_down_params)
 
-            audio_outcomes = send_audio_outcome_request(outcome_config, terminals[0].stamp)
+            audio_outcomes = send_audio_outcome_request(audio_outcome_config, terminals[0].stamp)
 
             print(audio_outcomes['success'])
 

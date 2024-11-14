@@ -96,10 +96,10 @@ def run():
     T_connector_world_pick = RigidTransform.load(root_pwd+config['transforms_dir']+connector_type+'/world_pick.tf')
     T_connector_world_place = RigidTransform.load(root_pwd+config['transforms_dir']+connector_type+'/world_place.tf')
        
-    outcome_config = config['audio_detector'].copy()
-    outcome_config['model_path'] = root_pwd+config['model_dir']+'audio_outcome_'+connector_type+'.pt'
-    recovery_config = config['audio_detector'].copy()
-    recovery_config['model_path'] = root_pwd+config['model_dir']+'audio_recovery_'+connector_type+'.pt'
+    audio_outcome_config = config['audio_detector'].copy()
+    audio_outcome_config['model_path'] = root_pwd+config['model_dir']+'audio_outcome_'+connector_type+'.pt'
+    audio_recovery_config = config['audio_detector'].copy()
+    audio_recovery_config['model_path'] = root_pwd+config['model_dir']+'audio_recovery_'+connector_type+'.pt'
 
     ### Skill Routine ###
     params = {'T_hande_ee': T_hande_ee, 
@@ -235,12 +235,12 @@ def run():
 
         terminals = move_down_to_contact_skill.execute_skill(execution_params, move_down_params)
 
-        audio_outcomes = send_audio_outcome_request(outcome_config, terminals[0].stamp)
+        audio_outcomes = send_audio_outcome_request(audio_outcome_config, terminals[0].stamp)
 
         print(audio_outcomes['success'])
         if demo:
             if audio_outcomes['success'] == False:
-                audio_recovery = send_audio_outcome_request(recovery_config, terminals[0].stamp)
+                audio_recovery = send_audio_outcome_request(audio_recovery_config, terminals[0].stamp)
                 recovery_action_normalized = audio_recovery['action']
                 recovery_action = np.zeros(3)
                 recovery_action[0] = (recovery_action_normalized[0] * (config['x_range'][1] - config['x_range'][0])) + config['x_range'][0]
@@ -256,7 +256,7 @@ def run():
 
                 terminals = move_down_to_contact_skill.execute_skill(execution_params, move_down_params)
 
-                audio_outcomes = send_audio_outcome_request(outcome_config, terminals[0].stamp)
+                audio_outcomes = send_audio_outcome_request(audio_outcome_config, terminals[0].stamp)
 
             if audio_outcomes['success'] == True:
                 terminals = push_down_skill.execute_skill(execution_params, config['skill_params']['push_down'])
@@ -287,7 +287,7 @@ def run():
 
             if force_outcomes['success'] == True:
 
-                audio_recovery = send_audio_outcome_request(recovery_config, terminals[0].stamp)
+                audio_recovery = send_audio_outcome_request(audio_recovery_config, terminals[0].stamp)
                 recovery_action_normalized = audio_recovery['action']
                 recovery_action = np.zeros(3)
                 recovery_action[0] = (recovery_action_normalized[0] * (config['x_range'][1] - config['x_range'][0])) + config['x_range'][0]
@@ -303,7 +303,7 @@ def run():
 
                 terminals = move_down_to_contact_skill.execute_skill(execution_params, move_down_params)
 
-                audio_outcomes = send_audio_outcome_request(outcome_config, terminals[0].stamp)
+                audio_outcomes = send_audio_outcome_request(audio_outcome_config, terminals[0].stamp)
 
                 print(audio_outcomes['success'])
 

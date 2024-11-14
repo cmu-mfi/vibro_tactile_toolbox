@@ -1,9 +1,9 @@
 <launch>
-    <arg name="namespace" default="yk_creator"/>
-    <arg name="num_trials" default="2"/>
+    <arg name="namespace" default=""/>
+    <arg name="num_trials" default="30"/>
     <arg name="start_num" default="1"/>
     <arg name="verbose" default="true"/>
-    <arg name="block_type" default="4x2"/>
+    <arg name="block_type" default=""/>
     <arg name="velocity_scale" default="0.01"/>
     <arg name="volume" default="75"/>
     <arg name="config" default="lego.yaml"/>
