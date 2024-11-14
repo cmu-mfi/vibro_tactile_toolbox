@@ -249,6 +249,14 @@ def make_file_names(dataset_name, skill_id, audio_dir, fts_dir, vision_dir, data
 
 def main(args):
     RECORDED_SKILLS = {'MoveDown'} #, 'PickLego', 'PlaceLego'}
+
+    save_dir_path_list = args.save_dir.split('/')
+    combined_path = ''
+    for save_dir_path_item in save_dir_path_list:
+        combined_path += '/' + save_dir_path_item
+        if not os.path.exists(combined_path):
+            os.mkdir(combined_path)   
+
     # Create output folder 
     if os.path.exists(args.save_dir):
         if 'y' not in input(f'{args.save_dir} already exists, delete? [y/n] ').lower():
