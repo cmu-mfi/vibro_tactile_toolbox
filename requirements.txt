@@ -1,5 +1,6 @@
 # Robot controller
 pyquaternion
+autolab_core
 
 # Audio (https://github.com/firephinx/sounddevice_ros)
 sounddevice
