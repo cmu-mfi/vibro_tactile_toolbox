@@ -145,7 +145,7 @@ def send_audio_outcome_request(params, timestamp):
         audio_req = AudioOutcomeRequest()
         audio_req.id = round(timestamp.to_sec())
         audio_req.topic_name = params['topic_name'] 
-        audio_req.channels = params['audio_channels'] 
+        audio_req.channels = params['channels'] 
         audio_req.stamp = timestamp
         audio_req.model_path = params['model_path'] 
         
