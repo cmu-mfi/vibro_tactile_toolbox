@@ -1,0 +1,1 @@
+docker exec -it vibro_tactile_toolbox_noetic bash -c "source /ros1_ws/devel/setup.bash && cd /home/rtc_repos/vibro_tactile_toolbox/ && python tests/test_system.py -t nist -n yk_arm_rtc
