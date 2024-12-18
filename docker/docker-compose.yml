@@ -20,9 +20,8 @@ services:
       - "QT_X11_NO_MITSHM=1"
       - "LIBGL_ALWAYS_SOFTWARE=1"
       - "LIBGL_ALWAYS_INDIRECT="
-      - "ROS_IP=${ROS_IP}"
-      - "ROS_MASTER_URI=${ROS_MASTER_URI}"
-      - "NAMESPACE=${NAMESPACE}"
+    env_file:
+      - ./vibro_tactile_toolbox/docker/vibrotactile.env
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - /etc/group:/etc/group:ro
@@ -52,9 +51,8 @@ services:
       - "QT_X11_NO_MITSHM=1"
       - "LIBGL_ALWAYS_SOFTWARE=1"
       - "LIBGL_ALWAYS_INDIRECT="
-      - "ROS_IP=${ROS_IP}"
-      - "ROS_MASTER_URI=${ROS_MASTER_URI}"
-      - "NAMESPACE=${NAMESPACE}"
+    env_file:
+      - ./vibro_tactile_toolbox/docker/vibrotactile.env
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - /etc/group:/etc/group:ro
@@ -84,9 +82,8 @@ services:
       - "QT_X11_NO_MITSHM=1"
       - "LIBGL_ALWAYS_SOFTWARE=1"
       - "LIBGL_ALWAYS_INDIRECT="
-      - "ROS_IP=${ROS_IP}"
-      - "ROS_MASTER_URI=${ROS_MASTER_URI}"
-      - "NAMESPACE=${NAMESPACE}"
+    env_file:
+      - ./vibro_tactile_toolbox/docker/vibrotactile.env
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - /etc/group:/etc/group:ro
@@ -116,9 +113,8 @@ services:
       - "QT_X11_NO_MITSHM=1"
       - "LIBGL_ALWAYS_SOFTWARE=1"
       - "LIBGL_ALWAYS_INDIRECT="
-      - "ROS_IP=${ROS_IP}"
-      - "ROS_MASTER_URI=${ROS_MASTER_URI}"
-      - "NAMESPACE=${NAMESPACE}"
+    env_file:
+      - ./vibro_tactile_toolbox/docker/vibrotactile.env
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
       - /etc/group:/etc/group:ro
@@ -152,10 +148,9 @@ services:
     tty: true
     network_mode: "host"
     environment:
-      - "ROS_MASTER_URI=http://192.168.1.1:11311"
-      - "ROS_IP=192.168.1.1"
-      - "NAMESPACE"
       - "DISPLAY"
+    env_file:
+      - ./vibro_tactile_toolbox/docker/vibrotactile.env
     volumes:
       - "/tmp/.X11-unix:/tmp/.X11-unix"
       - "/dev/*:/dev/*"
@@ -178,9 +173,10 @@ services:
     tty: true
     network_mode: "host"
     environment:
-      - ROS_MASTER_URI=http://192.168.1.1:11311
       - ROBOT_IP=${ROBOT_IP}
       - DISPLAY
+    env_file:
+      - ./vibro_tactile_toolbox/docker/vibrotactile.env
     volumes:
       - "/tmp/.X11-unix:/tmp/.X11-unix"
       - "/dev/*:/dev/*"
@@ -199,9 +195,9 @@ services:
     tty: true
     network_mode: "host"
     environment:
-      - "ROS_MASTER_URI=http://192.168.1.1:11311"
-      - "ROS_IP=192.168.1.1"
       - "DISPLAY"
+    env_file:
+      - ./vibro_tactile_toolbox/docker/vibrotactile.env
     volumes:
       - "/tmp/.X11-unix:/tmp/.X11-unix"
       - "/dev/*:/dev/*"
@@ -234,10 +230,8 @@ services:
       - "QT_X11_NO_MITSHM=1"
       - "LIBGL_ALWAYS_SOFTWARE=1"
       - "LIBGL_ALWAYS_INDIRECT="
-      - "ROS_IP=${ROS_IP}"
-      - "ROS_MASTER_URI=${ROS_MASTER_URI}"
-      - "NAMESPACE=${NAMESPACE}"
-      - "TYPE=${TYPE}"
+    env_file:
+      - ./vibro_tactile_toolbox/docker/vibrotactile.env
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
       - /etc/group:/etc/group:ro
