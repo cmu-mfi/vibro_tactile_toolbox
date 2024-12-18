@@ -35,34 +35,17 @@ z_engage_termination_config = {
                 'orient_tolerance': 0.01,
                 'pose': None},
     'fts': {'check_rate_ns': 1E7,
+            'reset_baseline': True,
             'threshold': {
                 'force': {
                     'x': [-10, 10],
                     'y': [-10, 10],
-                    'z': [0, 10]},
+                    'z': [-5, 10]},
                 'torque': {
                     'x': [-1, 1],
                     'y': [-1, 1],
                     'z': [-1, 1]}
             }},
-}
-
-high_z_engage_termination_config = {
-    'time': {'duration': 10.0},
-    'pose': {'pos_tolerance': 0.0001,
-                'orient_tolerance': 0.01,
-                'pose': None},
-    'fts': {'check_rate_ns': 1E7,
-            'threshold': {
-                'force': {
-                    'x': [-10, 10],
-                    'y': [-10, 10],
-                    'z': [-10, 10]},
-                'torque': {
-                    'x': [-1, 1],
-                    'y': [-1, 1],
-                    'z': [-1, 1]}
-            }}
 }
 
 engage_termination_config = {
@@ -80,46 +63,6 @@ engage_termination_config = {
                     'x': [-2, 2],
                     'y': [-2, 2],
                     'z': [-2, 2]}
-            }}
-}
-
-# Releasing a connector through rotation
-# Try not to terminate from fts unless the readings may cause an E-stop
-release_termination_config = {
-    'time': {'duration': 10.0},
-    'pose': {'pos_tolerance': 0.001,
-                'orient_tolerance': 0.01,
-                'pose': None},
-    'fts': {'check_rate_ns': 1E7,
-            'threshold': {
-                'force': {
-                    'x': [-50, 50],
-                    'y': [-50, 50],
-                    'z': [-100, 100]},
-                'torque': {
-                    'x': [-2, 2],
-                    'y': [-2, 1],
-                    'z': [-2, 2]}
-            }}
-}
-# Pulling up on a connector to check if connected
-# Terminate if z goes positive
-# Terminate if any substantial reaction otherwise
-servo_termination_config = {
-    'time': {'duration': 10.0},
-    'pose': {'pos_tolerance': 0.001,
-                'orient_tolerance': 0.01,
-                'pose': None},
-    'fts': {'check_rate_ns': 1E7,
-            'threshold': {
-                'force': {
-                    'x': [-30, 30],               # any substantial reaction force in x-y
-                    'y': [-30, 30],
-                    'z': [-float('inf'), 8]},   # reaction force pulling away in z
-                'torque': {
-                    'x': [-3, 3],               # any substantial reaction torque
-                    'y': [-3, 3],
-                    'z': [-3, 3]}
             }}
 }
 

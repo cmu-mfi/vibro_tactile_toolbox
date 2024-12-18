@@ -31,11 +31,12 @@ z_engage_termination_config = {
                 'orient_tolerance': 0.01,
                 'pose': None},
     'fts': {'check_rate_ns': 1E7,
+            'reset_baseline': True,
             'threshold': {
                 'force': {
                     'x': [-10, 10],
                     'y': [-10, 10],
-                    'z': [0, 10]},
+                    'z': [-5, 10]},
                 'torque': {
                     'x': [-1, 1],
                     'y': [-1, 1],
@@ -49,6 +50,7 @@ high_z_engage_termination_config = {
                 'orient_tolerance': 0.01,
                 'pose': None},
     'fts': {'check_rate_ns': 1E7,
+            'reset_baseline': True,
             'threshold': {
                 'force': {
                     'x': [-10, 10],
@@ -73,7 +75,7 @@ release_termination_config = {
                 'force': {
                     'x': [-50, 50],
                     'y': [-50, 50],
-                    'z': [-100, 100]},
+                    'z': [-50, 50]},
                 'torque': {
                     'x': [-2, 2],
                     'y': [-2, 1],
