@@ -5,8 +5,16 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.robotiq_mm_ros
+    depends_on:
+      roscore:
+        condition: service_healthy      
     image: "robotiq_mm_ros:noetic"
     container_name: "robotiq_mm_ros_noetic"
+    healthcheck:
+      test: ["CMD-SHELL", "rosversion -d"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
     environment:
       - "DISPLAY=${DISPLAY}"
       - "QT_X11_NO_MITSHM=1"
@@ -29,8 +37,16 @@ services:
     build:
       context: ../..
       dockerfile: ./vibro_tactile_toolbox/docker/Dockerfile.sounddevice_ros_vibro_tactile
+    depends_on:
+      roscore:
+        condition: service_healthy      
     image: "sounddevice_ros:vibro_tactile"
     container_name: "sounddevice_ros_noetic"
+    healthcheck:
+      test: ["CMD-SHELL", "rosversion -d"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
     environment:
       - "DISPLAY=${DISPLAY}"
       - "QT_X11_NO_MITSHM=1"
@@ -53,8 +69,16 @@ services:
     build:
       context: ../..
       dockerfile: ./vibro_tactile_toolbox/docker/Dockerfile.realsense_ros_vibro_tactile
+    depends_on:
+      roscore:
+        condition: service_healthy    
     image: "realsense_ros:vibro_tactile"
     container_name: "realsense_ros_noetic"
+    healthcheck:
+      test: ["CMD-SHELL", "rosversion -d"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
     environment:
       - "DISPLAY=${DISPLAY}"
       - "QT_X11_NO_MITSHM=1"
@@ -77,8 +101,16 @@ services:
     build:
       context: ../..
       dockerfile: ./vibro_tactile_toolbox/docker/Dockerfile.orbbec_ros_vibro_tactile
+    depends_on:
+      roscore:
+        condition: service_healthy
     image: "orbbec_ros:vibro_tactile"
     container_name: "orbbec_ros_noetic"
+    healthcheck:
+      test: ["CMD-SHELL", "rosversion -d"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
     environment:
       - "DISPLAY=unix${DISPLAY}"
       - "QT_X11_NO_MITSHM=1"
@@ -95,7 +127,7 @@ services:
     network_mode: host
     ipc: host
     pid: host
-    restart: "unless-stopped"
+      #restart: "unless-stopped"
     command: bash -c "source /opt/ros/noetic/setup.bash && source /ros1_ws/devel/setup.bash && roslaunch vibro_tactile_toolbox orbbec.launch namespace:=${NAMESPACE}"
     deploy:
       resources:
@@ -105,10 +137,96 @@ services:
               count: 1
               capabilities: [gpu]
 
+  fts:
+    depends_on:
+      roscore:
+        condition: service_healthy
+    image: fts:latest
+    container_name: fts-container
+    healthcheck:
+      test: ["CMD-SHELL", "rosversion -d"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+    stdin_open: true
+    tty: true
+    network_mode: "host"
+    environment:
+      - "ROS_MASTER_URI=http://192.168.1.1:11311"
+      - "ROS_IP=192.168.1.1"
+      - "NAMESPACE"
+      - "DISPLAY"
+    volumes:
+      - "/tmp/.X11-unix:/tmp/.X11-unix"
+      - "/dev/*:/dev/*"
+    command: >
+      bash -c "python3 ros_fts.py ${NAMESPACE}"
+
+  # source: https://github.com/cmu-mfi/motoman_ros1.git
+  motoros:
+    depends_on:
+      roscore:
+        condition: service_healthy
+    image: motoros:latest
+    container_name: motoros
+    healthcheck:
+      test: ["CMD-SHELL", "rosversion -d"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+    stdin_open: true
+    tty: true
+    network_mode: "host"
+    environment:
+      - ROS_MASTER_URI=http://192.168.1.1:11311
+      - ROBOT_IP=${ROBOT_IP}
+      - DISPLAY
+    volumes:
+      - "/tmp/.X11-unix:/tmp/.X11-unix"
+      - "/dev/*:/dev/*"
+    command: >
+      bash -c "source ~/ros1_ws/devel/setup.bash && roslaunch yk_launch moveit.launch namespace:=yk_arm_rtc sim:=false"
+
+  roscore:
+    image: ros:noetic-ros-core
+    container_name: roscore
+    healthcheck:
+      test: ["CMD-SHELL", "rosversion -d"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+    stdin_open: true
+    tty: true
+    network_mode: "host"
+    environment:
+      - "ROS_MASTER_URI=http://192.168.1.1:11311"
+      - "ROS_IP=192.168.1.1"
+      - "DISPLAY"
+    volumes:
+      - "/tmp/.X11-unix:/tmp/.X11-unix"
+      - "/dev/*:/dev/*"
+    command: >
+      bash -c "source /opt/ros/noetic/setup.bash && exec roscore"
+
   vibro-tactile-toolbox:
     build:
       context: ../..
       dockerfile: ./vibro_tactile_toolbox/docker/Dockerfile.vibro_tactile_toolbox
+    depends_on:
+      roscore:
+        condition: service_healthy
+      motoros:
+        condition: service_healthy
+      fts:
+        condition: service_healthy
+      orbbec-ros:
+        condition: service_healthy
+      realsense-ros:
+        condition: service_healthy
+      sounddevice-ros:
+        condition: service_healthy
+      robotiq-mm-ros:
+        condition: service_healthy
     image: "vibro_tactile_toolbox:noetic"
     container_name: "vibro_tactile_toolbox_noetic"
     environment:
@@ -124,7 +242,7 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix
       - /etc/group:/etc/group:ro
       - /dev:/dev
-      - ${HOME}/:/home
+      - ${HOME}/:${HOME}/
     privileged: true
     network_mode: host
     ipc: host
@@ -138,3 +256,5 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+
+      
