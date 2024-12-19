@@ -1,1 +1,1 @@
-docker exec -it vibro_tactile_toolbox_container bash
+docker exec -it vibro_tactile_toolbox_noetic bash

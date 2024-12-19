@@ -77,6 +77,9 @@ class FTSTerminationHandler(BaseTerminationHandler):
             if 'reset_baseline' in FTS_cfg:
                 if FTS_cfg['reset_baseline']:
                     self.baseline_wrench = deepcopy(self.fts_wrench)
+            if 'use_baseline' in FTS_cfg:
+                if FTS_cfg['use_baseline'] == 'hi_force_z':
+                    self.wrench_thresh_hi.force.z = self.baseline_wrench.force.z
         else:
             self.live = False
     

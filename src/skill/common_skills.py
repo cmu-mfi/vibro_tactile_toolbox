@@ -237,6 +237,7 @@ class PullUp(BaseSkill):
         super().__init__(robot_commander, gripper_controller, namespace, params)
 
         self.servo_termination_config = servo_termination_config.copy()
+        self.servo_termination_config['fts']['use_baseline'] = 'hi_force_z'
 
         self.skill_steps = [
             {'step_name': 'pull_up',
@@ -253,8 +254,6 @@ class PullUp(BaseSkill):
             print(f"No initial velocity scaling specified, using: {self.velocity_scaling}")
         else:
             self.velocity_scaling = skill_params['velocity_scaling']
-        if 'force_threshold' in skill_params:
-            self.servo_termination_config['fts']['threshold']['force']['z'][1] = skill_params['force_threshold']
 
         current_pose_msg = self.robot_commander.get_current_pose()
         current_pose = RigidTransform.from_pose_msg(current_pose_msg, from_frame='ee')

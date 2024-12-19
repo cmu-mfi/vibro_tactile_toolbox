@@ -25,7 +25,6 @@ skill_params:
   pull_up:
     lift_height_offset: 0.01
     velocity_scaling: 0.01
-    force_threshold: 8.0
   push_down:
     height_offset: 0.01
   move_up:

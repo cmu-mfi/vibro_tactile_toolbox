@@ -90,6 +90,7 @@ class YaskawaRobotController(BaseRobotCommander):
         ]
 
         self.namespace = namespace
+        self.robot_enable_client = rospy.ServiceProxy(f'/{namespace}/robot_enable', Trigger)
         self.get_pose_client = rospy.ServiceProxy(f'/{namespace}/yk_get_pose', GetPose)
         self.get_pose_stamped_client = rospy.ServiceProxy(f'/{namespace}/yk_get_pose_stamped', GetPoseStamped)
         self.go_to_pose_client = actionlib.SimpleActionClient(f'/{namespace}/yk_go_to_pose', GoToPoseAction)
@@ -115,6 +116,11 @@ class YaskawaRobotController(BaseRobotCommander):
 
         self.current_skill = None
 
+
+    def enable_robot(self):
+        # Direct to yk
+        trigger_req = TriggerRequest()
+        self.robot_enable_client(trigger_req)
 
     def stop(self):
         # Direct to yk
@@ -169,6 +175,7 @@ class YaskawaRobotController(BaseRobotCommander):
         acc_scaling: float = 0.05,
         wait: bool = True,
     ) -> bool:
+        self.enable_robot()
         goal = GoToJointsGoal()
         goal.state.name = self.joints
         goal.state.position = joint_goal
@@ -194,7 +201,7 @@ class YaskawaRobotController(BaseRobotCommander):
         acc_scaling: float = 0.1,
         wait: bool = True,
     ) -> bool:
-
+        self.enable_robot()
         goal = GoToPoseGoal()
         goal.pose = pose_goal
         goal.base_frame = eef_frame

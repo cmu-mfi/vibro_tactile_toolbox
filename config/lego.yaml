@@ -23,7 +23,6 @@ skill_params:
   pull_up:
     lift_height_offset: 0.01
     velocity_scaling: 0.001
-    force_threshold: 2.0
   place_lego:
     place_rotation: 15
     lift_height_offset: 0.04

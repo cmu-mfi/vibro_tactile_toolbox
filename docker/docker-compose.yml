@@ -21,7 +21,7 @@ services:
       - "LIBGL_ALWAYS_SOFTWARE=1"
       - "LIBGL_ALWAYS_INDIRECT="
     env_file:
-      - ./vibro_tactile_toolbox/docker/vibrotactile.env
+      - ./vibrotactile.env
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - /etc/group:/etc/group:ro
@@ -52,7 +52,7 @@ services:
       - "LIBGL_ALWAYS_SOFTWARE=1"
       - "LIBGL_ALWAYS_INDIRECT="
     env_file:
-      - ./vibro_tactile_toolbox/docker/vibrotactile.env
+      - ./vibrotactile.env
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - /etc/group:/etc/group:ro
@@ -83,7 +83,7 @@ services:
       - "LIBGL_ALWAYS_SOFTWARE=1"
       - "LIBGL_ALWAYS_INDIRECT="
     env_file:
-      - ./vibro_tactile_toolbox/docker/vibrotactile.env
+      - ./vibrotactile.env
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - /etc/group:/etc/group:ro
@@ -114,7 +114,7 @@ services:
       - "LIBGL_ALWAYS_SOFTWARE=1"
       - "LIBGL_ALWAYS_INDIRECT="
     env_file:
-      - ./vibro_tactile_toolbox/docker/vibrotactile.env
+      - ./vibrotactile.env
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
       - /etc/group:/etc/group:ro
@@ -150,7 +150,7 @@ services:
     environment:
       - "DISPLAY"
     env_file:
-      - ./vibro_tactile_toolbox/docker/vibrotactile.env
+      - ./vibrotactile.env
     volumes:
       - "/tmp/.X11-unix:/tmp/.X11-unix"
       - "/dev/*:/dev/*"
@@ -173,10 +173,9 @@ services:
     tty: true
     network_mode: "host"
     environment:
-      - ROBOT_IP=${ROBOT_IP}
       - DISPLAY
     env_file:
-      - ./vibro_tactile_toolbox/docker/vibrotactile.env
+      - ./vibrotactile.env
     volumes:
       - "/tmp/.X11-unix:/tmp/.X11-unix"
       - "/dev/*:/dev/*"
@@ -197,7 +196,7 @@ services:
     environment:
       - "DISPLAY"
     env_file:
-      - ./vibro_tactile_toolbox/docker/vibrotactile.env
+      - ./vibrotactile.env
     volumes:
       - "/tmp/.X11-unix:/tmp/.X11-unix"
       - "/dev/*:/dev/*"
@@ -231,7 +230,7 @@ services:
       - "LIBGL_ALWAYS_SOFTWARE=1"
       - "LIBGL_ALWAYS_INDIRECT="
     env_file:
-      - ./vibro_tactile_toolbox/docker/vibrotactile.env
+      - ./vibrotactile.env
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
       - /etc/group:/etc/group:ro
