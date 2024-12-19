@@ -6,11 +6,11 @@
 		<node name="compressed_image_cropped_republisher" pkg="vibro_tactile_toolbox" type="compressed_image_cropped_republisher.py" output="screen">
 			<param name="compressed_image_sub_topic_name" value="side_camera/color/image_raw/compressed" />
 			<param name="compressed_image_pub_topic_name" value="side_camera/color/image_cropped/compressed" />
-			<param name="x_offset" value="200" />
-			<param name="y_offset" value="1950" />
+			<param name="x_offset" value="1337" />
+			<param name="y_offset" value="1020" />
 			<param name="x_size" value="1280" />
 			<param name="y_size" value="720" />
-			<param name="rotation_direction" value="clockwise" />
+			<param name="rotation" value="180" />
 		</node>
 
 	</group>

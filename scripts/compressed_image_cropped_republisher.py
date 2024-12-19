@@ -31,7 +31,7 @@ class CompressedImageCroppedRepublisher:
     self.y_offset = rospy.get_param('compressed_image_cropped_republisher/y_offset')
     self.x_size = rospy.get_param('compressed_image_cropped_republisher/x_size')
     self.y_size = rospy.get_param('compressed_image_cropped_republisher/y_size')
-    self.rotation_direction = rospy.get_param('compressed_image_cropped_republisher/rotation_direction')
+    self.rotation = rospy.get_param('compressed_image_cropped_republisher/rotation')
 
     self.compressed_image_pub = rospy.Publisher(self.namespace + self.compressed_image_pub_topic_name,CompressedImage, queue_size=1)
 
@@ -49,12 +49,12 @@ class CompressedImageCroppedRepublisher:
     np_arr = np.frombuffer(ros_data.data, np.uint8)
     image_np = cv2.imdecode(np_arr, cv2.IMREAD_COLOR) # OpenCV >= 3.0:
 
-    if self.rotation_direction == 'clockwise':
+    if self.rotation == '90':
       cropped_cv_image = cv2.rotate(image_np, cv2.ROTATE_90_CLOCKWISE)[self.y_offset:self.y_offset+self.y_size,self.x_offset:self.x_offset+self.x_size]
-    elif self.rotation_direction == 'counter_clockwise':
-      cropped_cv_image = cv2.rotate(image_np, cv2.ROTATE_90_COUNTERCLOCKWISE)[self.y_offset:self.y_offset+self.y_size,self.x_offset:self.x_offset+self.x_size]
-    elif self.rotation_direction == '180':
+    elif self.rotation == '180':
       cropped_cv_image = cv2.rotate(image_np, cv2.ROTATE_180)[self.y_offset:self.y_offset+self.y_size,self.x_offset:self.x_offset+self.x_size]
+    elif self.rotation == '270':
+      cropped_cv_image = cv2.rotate(image_np, cv2.ROTATE_90_COUNTERCLOCKWISE)[self.y_offset:self.y_offset+self.y_size,self.x_offset:self.x_offset+self.x_size]
     else:
       cropped_cv_image = image_np[self.y_offset:self.y_offset+self.y_size,self.x_offset:self.x_offset+self.x_size]
 

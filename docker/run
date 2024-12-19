@@ -24,7 +24,7 @@ def get_command(args):
     ROS_IP = env_var("ROS_IP")
     HOME = env_var("HOME")
 
-    cmd = f"""docker run -it --privileged --env=DISPLAY={DISPLAY} --env=XAUTHORITY={XAUTH} --env=QT_X11_NO_MITSHM=1 --env=LIBGL_ALWAYS_INDIRECT= --env=LIBGL_ALWAYS_SOFTWARE=1 --env=ROS_MASTER_URI={ROS_MASTER_URI} --env=ROS_IP={ROS_IP} --name {CONTAINER_NAME} -v /etc/group:/etc/group:ro -v /etc/passwd:/etc/passwd:ro -v {HOME}/:/home -v /dev/shm:/dev/shm --rm --net host --ipc host --pid host """
+    cmd = f"""docker run -it --privileged --env=DISPLAY={DISPLAY} --env=XAUTHORITY={XAUTH} --env=QT_X11_NO_MITSHM=1 --env=LIBGL_ALWAYS_INDIRECT= --env=LIBGL_ALWAYS_SOFTWARE=1 --env=ROS_MASTER_URI={ROS_MASTER_URI} --env=ROS_IP={ROS_IP} --name {CONTAINER_NAME} -v /etc/group:/etc/group:ro -v /etc/passwd:/etc/passwd:ro -v {HOME}/:{HOME}/ -v /dev/shm:/dev/shm --rm --net host --ipc host --pid host """
 
     if args.gpus:
         cmd += "--gpus all "
