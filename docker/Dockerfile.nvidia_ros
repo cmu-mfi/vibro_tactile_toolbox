@@ -9,10 +9,10 @@ RUN apt-get install -y git vim curl \
     && apt-get install -y python3-pip
 
 # Install Pytorch
-RUN pip install torch torchvision torchaudio
+RUN pip install torch torchvision torchaudio torchinfo
 
 # Install other pip packages
-RUN pip install scipy numpy opencv-python
+RUN pip install scipy numpy opencv-python pandas
 
 # Install ROS Noetic
 RUN echo "deb http://packages.ros.org/ros/ubuntu focal main" > /etc/apt/sources.list.d/ros-latest.list

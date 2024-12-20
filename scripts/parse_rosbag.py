@@ -230,9 +230,8 @@ def save_termination_signals(bag, save_dir, filename, termination_topics=[]):
     Return: None
     '''    
 
-    filepath = os.path.join(save_dir, filename)
-    text_file = os.path.join(save_dir, "termination_signals.txt")
-    with open(text_file, 'w') as f:
+    filepath = os.path.join(save_dir, filename + '.txt')
+    with open(filepath, 'w') as f:
         f.write(f"# terminator outcomes\n")
         f.write(f"# file: '{bag.filename}'\n")
         f.write(f"# timestamp termination_cause\n")
