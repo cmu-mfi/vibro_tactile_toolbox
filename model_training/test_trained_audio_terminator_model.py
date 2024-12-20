@@ -75,7 +75,7 @@ class VibrotactileDataset(Dataset):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--type', '-t', type=str, default='nist')
-    parser.add_argument('--data_dir', '-d', type=str, default='/home/Documents/vibro_tactile_data')
+    parser.add_argument('--data_dir', '-d', type=str, default='')
     args = parser.parse_args()
 
     channels = [0,1,2,3]

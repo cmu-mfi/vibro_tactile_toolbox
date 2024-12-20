@@ -11,8 +11,8 @@ NUM_RESAMPLES=20
 NUM_RESAMPLES_TERMINATOR=50
 
 # Define the base paths
-BASE_TARGET_DIR="/home/Documents/vibro_tactile_data/lego/volume_"
-BASE_TARGET_DST="/home/Documents/vibro_tactile_data/lego_dataset/volume_"
+BASE_TARGET_DIR="${DATA_DIR}/lego/volume_"
+BASE_TARGET_DST="${DATA_DIR}/lego_dataset/volume_"
 
 # Iterate through each combination of volume, brick, and velocity
 for VOL in "${VOLS[@]}"; do
