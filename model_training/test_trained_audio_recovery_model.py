@@ -102,9 +102,9 @@ if __name__ == '__main__':
     channels = [0,1,2,3]
     num_channels = len(channels)
     if args.type == 'lego':
-        audio_dataset = VibrotactileDataset(args.type,channels, f'{args.data_dir}/lego_dataset/*/*/test*/MoveDown/')
+        audio_dataset = VibrotactileDataset(args.type,channels, f'{args.data_dir}/lego_dataset/*/*/test*/MoveDownToContact/')
     else:
-        audio_dataset = VibrotactileDataset(args.type,channels, f'{args.data_dir}/nist_dataset/*/{args.type}/test*/MoveDown/')
+        audio_dataset = VibrotactileDataset(args.type,channels, f'{args.data_dir}/nist_dataset/*/{args.type}/test*/MoveDownToContact/')
     print(len(audio_dataset))
 
     test_dataloader = torch.utils.data.DataLoader(

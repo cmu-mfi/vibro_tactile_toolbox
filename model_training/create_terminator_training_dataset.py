@@ -201,7 +201,7 @@ def make_file_names(dataset_name, skill_id, audio_dir, fts_dir, dataset_segment=
     return audio_pth, audio_spec_pth, fts_pth
 
 def main(args):
-    RECORDED_SKILLS = {'MoveDown'} #, 'PickLego', 'PlaceLego'}
+    RECORDED_SKILLS = {'MoveDownToContact'} #, 'PickLego', 'PlaceLego'}
     # Create output folder 
     if not os.path.exists(args.save_dir):
         os.mkdir(args.save_dir) # if dir exists, delete it and remake

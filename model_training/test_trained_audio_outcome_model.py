@@ -54,7 +54,7 @@ class VibrotactileDataset(Dataset):
           print(path)
           channel_num = 0
 
-          label = path[path.find('MoveDown')+len('MoveDown')+1:path.find('audio')-1]
+          label = path[path.find('MoveDownToContact')+len('MoveDownToContact')+1:path.find('audio')-1]
           if label == 'fail':
             self.y[current_trial] = 0
           elif label == 'success':
@@ -94,11 +94,11 @@ if __name__ == '__main__':
 
     if args.type == 'lego':
       if args.block_type == '':
-        audio_dataset = VibrotactileDataset(channels, f'{args.data_dir}/lego_dataset/*/*/test*/MoveDown/')
+        audio_dataset = VibrotactileDataset(channels, f'{args.data_dir}/lego_dataset/*/*/test*/MoveDownToContact/')
       else:
-        audio_dataset = VibrotactileDataset(channels, f'{args.data_dir}/lego_dataset/*/{args.block_type}/*/MoveDown/')
+        audio_dataset = VibrotactileDataset(channels, f'{args.data_dir}/lego_dataset/*/{args.block_type}/*/MoveDownToContact/')
     else:
-        audio_dataset = VibrotactileDataset(channels, f'{args.data_dir}/nist_dataset/*/{args.type}/test*/MoveDown/')
+        audio_dataset = VibrotactileDataset(channels, f'{args.data_dir}/nist_dataset/*/{args.type}/test*/MoveDownToContact/')
     print(len(audio_dataset))
 
     test_dataloader = torch.utils.data.DataLoader(

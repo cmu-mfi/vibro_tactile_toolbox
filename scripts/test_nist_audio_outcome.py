@@ -99,8 +99,8 @@ def run():
        
     audio_outcome_config = config['audio_detector'].copy()
     audio_outcome_config['model_path'] = root_pwd+config['model_dir']+'audio_outcome_'+connector_type+'.pt'
-    audio_recovery_config = config['audio_detector'].copy()
-    audio_recovery_config['model_path'] = root_pwd+config['model_dir']+'audio_recovery_'+connector_type+'.pt'
+    # audio_recovery_config = config['audio_detector'].copy()
+    # audio_recovery_config['model_path'] = root_pwd+config['model_dir']+'audio_recovery_'+connector_type+'.pt'
 
     ### Skill Routine ###
     params = {'T_hande_ee': T_hande_ee, 
@@ -245,15 +245,15 @@ def run():
         print(audio_outcomes['success'])
         if demo:
             if audio_outcomes['success'] == False:
-                audio_recovery = send_audio_outcome_request(audio_recovery_config, terminals[0].stamp)
-                recovery_action_normalized = audio_recovery['action']
-                recovery_action = np.zeros(3)
-                recovery_action[0] = (recovery_action_normalized[0] * (config['x_range'][1] - config['x_range'][0])) + config['x_range'][0]
-                recovery_action[1] = (recovery_action_normalized[1] * (config['y_range'][1] - config['y_range'][0])) + config['y_range'][0]
-                recovery_action[2] = (recovery_action_normalized[2] * (config['theta_range'][1] - config['theta_range'][0])) + config['theta_range'][0] 
+                # audio_recovery = send_audio_outcome_request(audio_recovery_config, terminals[0].stamp)
+                # recovery_action_normalized = audio_recovery['action']
+                # recovery_action = np.zeros(3)
+                # recovery_action[0] = (recovery_action_normalized[0] * (config['x_range'][1] - config['x_range'][0])) + config['x_range'][0]
+                # recovery_action[1] = (recovery_action_normalized[1] * (config['y_range'][1] - config['y_range'][0])) + config['y_range'][0]
+                # recovery_action[2] = (recovery_action_normalized[2] * (config['theta_range'][1] - config['theta_range'][0])) + config['theta_range'][0] 
 
-                print(f"Ground truth perturb values: {x_perturb}, {y_perturb}, {theta_perturb}")
-                print(f"Predicted perturb values: {recovery_action[0]}, {recovery_action[1]}, {recovery_action[2]}")
+                # print(f"Ground truth perturb values: {x_perturb}, {y_perturb}, {theta_perturb}")
+                # print(f"Predicted perturb values: {recovery_action[0]}, {recovery_action[1]}, {recovery_action[2]}")
         
                 terminals = move_to_above_correct_pose_skill.execute_skill(execution_params, move_to_above_correct_pose_params)
 
@@ -292,15 +292,15 @@ def run():
 
             if force_outcomes['success'] == True:
 
-                audio_recovery = send_audio_outcome_request(audio_recovery_config, terminals[0].stamp)
-                recovery_action_normalized = audio_recovery['action']
-                recovery_action = np.zeros(3)
-                recovery_action[0] = (recovery_action_normalized[0] * (config['x_range'][1] - config['x_range'][0])) + config['x_range'][0]
-                recovery_action[1] = (recovery_action_normalized[1] * (config['y_range'][1] - config['y_range'][0])) + config['y_range'][0]
-                recovery_action[2] = (recovery_action_normalized[2] * (config['theta_range'][1] - config['theta_range'][0])) + config['theta_range'][0] 
+                # audio_recovery = send_audio_outcome_request(audio_recovery_config, terminals[0].stamp)
+                # recovery_action_normalized = audio_recovery['action']
+                # recovery_action = np.zeros(3)
+                # recovery_action[0] = (recovery_action_normalized[0] * (config['x_range'][1] - config['x_range'][0])) + config['x_range'][0]
+                # recovery_action[1] = (recovery_action_normalized[1] * (config['y_range'][1] - config['y_range'][0])) + config['y_range'][0]
+                # recovery_action[2] = (recovery_action_normalized[2] * (config['theta_range'][1] - config['theta_range'][0])) + config['theta_range'][0] 
 
-                print(f"Ground truth perturb values: {x_perturb}, {y_perturb}, {theta_perturb}")
-                print(f"Predicted perturb values: {recovery_action[0]}, {recovery_action[1]}, {recovery_action[2]}")
+                # print(f"Ground truth perturb values: {x_perturb}, {y_perturb}, {theta_perturb}")
+                # print(f"Predicted perturb values: {recovery_action[0]}, {recovery_action[1]}, {recovery_action[2]}")
             
                 terminals = move_to_above_correct_pose_skill.execute_skill(execution_params, move_to_above_correct_pose_params)
 

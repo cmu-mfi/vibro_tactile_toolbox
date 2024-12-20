@@ -116,8 +116,8 @@ def run():
 
     audio_outcome_config = config['audio_detector'].copy() 
     audio_outcome_config['model_path'] = root_pwd+config['model_dir']+'audio_outcome_lego.pt'
-    audio_recovery_config = config['audio_detector'].copy()
-    audio_recovery_config['model_path'] = root_pwd+config['model_dir']+'audio_recovery_lego.pt'
+    # audio_recovery_config = config['audio_detector'].copy()
+    # audio_recovery_config['model_path'] = root_pwd+config['model_dir']+'audio_recovery_lego.pt'
 
     # Instantiate robot controller for Yaskawa API
     robot_commander = YaskawaRobotController(namespace)
@@ -260,16 +260,16 @@ def run():
 
             expected_result_pub.publish(1)
 
-            audio_recovery = send_audio_outcome_request(audio_recovery_config, terminals[0].stamp)
+            # audio_recovery = send_audio_outcome_request(audio_recovery_config, terminals[0].stamp)
 
-            recovery_action_normalized = audio_recovery['action']
-            recovery_action = np.zeros(3)
-            recovery_action[0] = (recovery_action_normalized[0] * (config['x_range'][1] - config['x_range'][0])) + config['x_range'][0]
-            recovery_action[1] = (recovery_action_normalized[1] * (config['y_range'][1] - config['y_range'][0])) + config['y_range'][0]
-            recovery_action[2] = (recovery_action_normalized[2] * (config['theta_range'][1] - config['theta_range'][0])) + config['theta_range'][0] 
+            # recovery_action_normalized = audio_recovery['action']
+            # recovery_action = np.zeros(3)
+            # recovery_action[0] = (recovery_action_normalized[0] * (config['x_range'][1] - config['x_range'][0])) + config['x_range'][0]
+            # recovery_action[1] = (recovery_action_normalized[1] * (config['y_range'][1] - config['y_range'][0])) + config['y_range'][0]
+            # recovery_action[2] = (recovery_action_normalized[2] * (config['theta_range'][1] - config['theta_range'][0])) + config['theta_range'][0] 
 
-            print(f"Ground truth perturb values: {x_perturb}, {y_perturb}, {theta_perturb}")
-            print(f"Predicted perturb values: {recovery_action[0]}, {recovery_action[1]}, {recovery_action[2]}")
+            # print(f"Ground truth perturb values: {x_perturb}, {y_perturb}, {theta_perturb}")
+            # print(f"Predicted perturb values: {recovery_action[0]}, {recovery_action[1]}, {recovery_action[2]}")
 
             start_fts_outcome = send_start_fts_outcome_request(config['fts_detector'])
             outcomes = send_start_vision_outcome_request(config['lego_detector'])

@@ -51,7 +51,7 @@ class VibrotactileDataset(Dataset):
       if current_num % 4 == 0:
           print(current_trial)
           channel_num = 0
-          label = path[path.find('MoveDown')+len('MoveDown')+1:path.find('audio')-1]
+          label = path[path.find('MoveDownToContact')+len('MoveDownToContact')+1:path.find('audio')-1]
           if label == 'nominal':
             self.y[current_trial] = 0
           elif label == 'terminate':
@@ -83,9 +83,9 @@ if __name__ == '__main__':
     num_channels = len(channels)
 
     if args.type == 'lego':
-        audio_dataset = VibrotactileDataset(channels, f'{args.data_dir}/lego_dataset/*/*/test*/MoveDown/')
+        audio_dataset = VibrotactileDataset(channels, f'{args.data_dir}/lego_dataset/*/*/test*/MoveDownToContact/')
     else:
-        audio_dataset = VibrotactileDataset(channels, f'{args.data_dir}/nist_dataset/*/{args.type}/test*/MoveDown/')
+        audio_dataset = VibrotactileDataset(channels, f'{args.data_dir}/nist_dataset/*/{args.type}/test*/MoveDownToContact/')
     print(len(audio_dataset))
 
     test_dataloader = torch.utils.data.DataLoader(

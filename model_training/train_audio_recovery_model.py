@@ -66,7 +66,7 @@ class VibrotactileDataset(Dataset):
     for path in paths:
       current_num = int(path[path.rfind('_')+1:-4])
       if current_num % 4 == 0:
-          label = path[path.find('MoveDown')+len('MoveDown')+1:path.find('audio')-1]
+          label = path[path.find('MoveDownToContact')+len('MoveDownToContact')+1:path.find('audio')-1]
           if label == 'fail':
             self.y[current_trial,0] = 1
           elif label == 'success':
@@ -184,21 +184,21 @@ if __name__ == '__main__':
     num_channels = len(channels)
 
     if args.type == 'lego':
-        paths = glob.glob(f'{args.data_dir}/lego_dataset/*/*/test*/MoveDown/fail/audio/*.npy')
+        paths = glob.glob(f'{args.data_dir}/lego_dataset/*/*/test*/MoveDownToContact/fail/audio/*.npy')
     else:
-        paths = glob.glob(f'{args.data_dir}/nist_dataset/*/{args.type}/test*/MoveDown/fail/audio/*.npy')
+        paths = glob.glob(f'{args.data_dir}/nist_dataset/*/{args.type}/test*/MoveDownToContact/fail/audio/*.npy')
     if paths is not None:
         if args.type == 'lego':
-            audio_train_dataset = VibrotactileDataset(args.type,channels,f'{args.data_dir}/lego_dataset/*/*/vel*/MoveDown/')
-            audio_test_dataset = VibrotactileDataset(args.type,channels, f'{args.data_dir}/lego_dataset/*/*/test*/MoveDown/')
+            audio_train_dataset = VibrotactileDataset(args.type,channels,f'{args.data_dir}/lego_dataset/*/*/vel*/MoveDownToContact/')
+            audio_test_dataset = VibrotactileDataset(args.type,channels, f'{args.data_dir}/lego_dataset/*/*/test*/MoveDownToContact/')
         else:
-            audio_train_dataset = VibrotactileDataset(args.type,channels,f'{args.data_dir}/nist_dataset/*/{args.type}/vel*/MoveDown/')
-            audio_test_dataset = VibrotactileDataset(args.type,channels, f'{args.data_dir}/nist_dataset/*/{args.type}/test*/MoveDown/')
+            audio_train_dataset = VibrotactileDataset(args.type,channels,f'{args.data_dir}/nist_dataset/*/{args.type}/vel*/MoveDownToContact/')
+            audio_test_dataset = VibrotactileDataset(args.type,channels, f'{args.data_dir}/nist_dataset/*/{args.type}/test*/MoveDownToContact/')
     else:
         if args.type == 'lego':
-            audio_dataset = VibrotactileDataset(args.type,channels, f'{args.data_dir}/lego_dataset/*/{args.type}/vel*/MoveDown/')
+            audio_dataset = VibrotactileDataset(args.type,channels, f'{args.data_dir}/lego_dataset/*/{args.type}/vel*/MoveDownToContact/')
         else:
-            audio_dataset = VibrotactileDataset(args.type,channels, f'{args.data_dir}/nist_dataset/*/{args.type}/vel*/MoveDown/')
+            audio_dataset = VibrotactileDataset(args.type,channels, f'{args.data_dir}/nist_dataset/*/{args.type}/vel*/MoveDownToContact/')
 
         print(len(audio_dataset))
         #split data to test and train

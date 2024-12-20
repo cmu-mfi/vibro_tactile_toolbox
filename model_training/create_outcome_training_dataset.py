@@ -248,7 +248,7 @@ def make_file_names(dataset_name, skill_id, audio_dir, fts_dir, vision_dir, data
     return audio_pth, audio_spec_pth, fts_pth, side_cam_pth, wrist_cam_pth, outcome_ann_pth
 
 def main(args):
-    RECORDED_SKILLS = {'MoveDown'} #, 'PickLego', 'PlaceLego'}
+    RECORDED_SKILLS = {'MoveDownToContact'} #, 'PickLego', 'PlaceLego'}
 
     save_dir_path_list = args.save_dir.split('/')
     combined_path = ''
