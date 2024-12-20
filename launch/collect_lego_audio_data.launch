@@ -7,10 +7,13 @@
     <arg name="velocity_scale" default="0.01"/>
     <arg name="volume" default="75"/>
     <arg name="config" default="lego.yaml"/>
+    <arg name="data_dir" default=""/>
+    <arg name="proj_dir" default="$(find vibro_tactile_toolbox)"/>
+
     <group ns="$(arg namespace)">
         <node pkg="vibro_tactile_toolbox" name="collect_lego_audio_data" type="collect_lego_audio_data.py" output="screen">
             <param name="namespace" value="$(arg namespace)"/>
-            <param name="root_pwd" value="$(find vibro_tactile_toolbox)"/>
+            <param name="root_pwd" value="$(arg proj_dir)"/>
             <param name="num_trials" value="$(arg num_trials)"/>
             <param name="start_num" value="$(arg start_num)"/>
             <param name="block_type" value="$(arg block_type)"/>
@@ -18,6 +21,7 @@
             <param name="volume" value="$(arg volume)"/>
             <param name="verbose" value="$(arg verbose)"/>
             <param name="config" value="$(arg config)"/>
+            <param name="data_dir" value="$(arg data_dir)"/>
         </node>
     </group>
 </launch>

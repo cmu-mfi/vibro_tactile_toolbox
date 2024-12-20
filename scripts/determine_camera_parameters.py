@@ -80,14 +80,14 @@ def main(args):
   button = Button("Rotate", 100, 100, 100, 50, on_button_click, on_button_click2)
 
   # Create a window
-  cv2.namedWindow("Window")
+  cv2.namedWindow("RAW IMAGE")
 
   # Create a window
-  cv2.namedWindow("Cropped Window")
+  cv2.namedWindow("CROPPED IMAGE")
 
   # Set mouse callback
-  cv2.setMouseCallback("Window", button.handle_event)
-  image_msg = rospy.wait_for_message(args[1] + args[2],CompressedImage)
+  cv2.setMouseCallback("RAW IMAGE", button.handle_event)
+  image_msg = rospy.wait_for_message(args[1] + '/side_camera/color/image_raw/compressed',CompressedImage)
 
   np_arr = np.frombuffer(image_msg.data, np.uint8)
   image_np = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
@@ -126,9 +126,9 @@ def main(args):
     small_image = cv2.resize(vis_image, current_size)
 
     button.draw(small_image)
-    cv2.imshow("Window", small_image)
+    cv2.imshow("RAW IMAGE", small_image)
 
-    cv2.imshow("Cropped Window", cropped_cv_image)
+    cv2.imshow("CROPPED IMAGE", cropped_cv_image)
 
     if cv2.waitKey(1) == ord('q'):
         print('ROTATION = ' + str(ROTATION))

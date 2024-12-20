@@ -26,6 +26,7 @@ def run():
     # Messaging Namespace
     namespace = rospy.get_param("collect_nist_audio_data/namespace")
     root_pwd = rospy.get_param("collect_nist_audio_data/root_pwd")
+    data_path = rospy.get_param("collect_lego_audio_data/data_dir")
     yaml_file = rospy.get_param("collect_nist_audio_data/config")
     num_trials = rospy.get_param("collect_nist_audio_data/num_trials")
     start_num = rospy.get_param("collect_nist_audio_data/start_num")
@@ -53,7 +54,7 @@ def run():
                 if isinstance(config[key][i], str) and 'namespace' in config[key][i]:
                     config[key][i] = config[key][i].replace("namespace", namespace)
 
-    data_dir = config['data_dir']+'/volume_'+str(volume)+'/'+connector_type+'/vel_'+str(velocity_scale)+'/'
+    data_dir = data_path+'/nist/volume_'+str(volume)+'/'+connector_type+'/vel_'+str(velocity_scale)+'/'
 
     data_dir_path_list = data_dir.split('/')
     combined_path = ''
@@ -190,8 +191,12 @@ def run():
 
         terminals = move_to_above_perturb_pose_skill.execute_skill(execution_params, move_to_above_perturb_pose_params)
 
-        check_ros_topics(topics)
-        check_ros_services(config['ros_services'])
+        all_ros_topics_running = check_ros_topics(topics)
+        all_ros_services_running = check_ros_services(config['ros_services'])
+
+        if not (all_ros_topics_running and all_ros_services_running):
+            print('Stopping Data Collection Loop.')
+            break
 
         # 1. Begin rosbag recording
         rosbag_name = f"trial_{trial_num}-p_{x_perturb:0.4f}_{y_perturb:0.4f}_{theta_perturb:0.4f}_{move_down_velocity_scaling:0.2f}.bag"

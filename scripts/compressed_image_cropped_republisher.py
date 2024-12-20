@@ -49,11 +49,11 @@ class CompressedImageCroppedRepublisher:
     np_arr = np.frombuffer(ros_data.data, np.uint8)
     image_np = cv2.imdecode(np_arr, cv2.IMREAD_COLOR) # OpenCV >= 3.0:
 
-    if self.rotation == '90':
+    if self.rotation == 90:
       cropped_cv_image = cv2.rotate(image_np, cv2.ROTATE_90_CLOCKWISE)[self.y_offset:self.y_offset+self.y_size,self.x_offset:self.x_offset+self.x_size]
-    elif self.rotation == '180':
+    elif self.rotation == 180:
       cropped_cv_image = cv2.rotate(image_np, cv2.ROTATE_180)[self.y_offset:self.y_offset+self.y_size,self.x_offset:self.x_offset+self.x_size]
-    elif self.rotation == '270':
+    elif self.rotation == 270:
       cropped_cv_image = cv2.rotate(image_np, cv2.ROTATE_90_COUNTERCLOCKWISE)[self.y_offset:self.y_offset+self.y_size,self.x_offset:self.x_offset+self.x_size]
     else:
       cropped_cv_image = image_np[self.y_offset:self.y_offset+self.y_size,self.x_offset:self.x_offset+self.x_size]

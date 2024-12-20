@@ -1,0 +1,85 @@
+[11/25 11:04:09.020434][debug][2182395][Context.cpp:31] Context creating. work_dir=/home/rtc-demo/rtc_repos/vibro_tactile_toolbox/docker
+[11/25 11:04:09.020451][debug][2182395][Context.cpp:50] Config file version=1.1
+[11/25 11:04:09.020461][debug][2182395][FrameBufferManager.cpp:23] Max global frame buffer size updated! size=2048.000MB
+[11/25 11:04:09.020463][info][2182395][Context.cpp:69] Context created with config: default config!
+[11/25 11:04:09.020468][info][2182395][Context.cpp:74] Context work_dir=/home/rtc-demo/rtc_repos/vibro_tactile_toolbox/docker
+[11/25 11:04:09.020472][info][2182395][Context.cpp:77] 	- SDK version: 1.9.5
+[11/25 11:04:09.020476][info][2182395][Context.cpp:78] 	- SDK stage version: main
+[11/25 11:04:09.020481][info][2182395][Context.cpp:82] get config EnumerateNetDevice:false
+[11/25 11:04:09.020484][debug][2182395][DeviceManager.cpp:30] DeviceManager init ...
+[11/25 11:04:09.020485][info][2182395][LinuxPal.cpp:38] createObPal: create LinuxPal!
+[11/25 11:04:09.021266][debug][2182395][DeviceManager.cpp:34] Enable USB Device Enumerator ...
+[11/25 11:04:09.098680][debug][2182395][EnumeratorLibusb.cpp:323] queryDevicesInfo done!
+[11/25 11:04:09.098712][debug][2182395][ObV4lDevice.cpp:346] Found video4linux: video7
+[11/25 11:04:09.098916][debug][2182395][ObV4lDevice.cpp:346] Found video4linux: video5
+[11/25 11:04:09.099051][debug][2182395][ObV4lDevice.cpp:346] Found video4linux: video3
+[11/25 11:04:09.099175][debug][2182395][ObV4lDevice.cpp:346] Found video4linux: video1
+[11/25 11:04:09.099298][debug][2182395][ObV4lDevice.cpp:346] Found video4linux: video8
+[11/25 11:04:09.099474][debug][2182395][ObV4lDevice.cpp:346] Found video4linux: video6
+[11/25 11:04:09.099634][debug][2182395][ObV4lDevice.cpp:346] Found video4linux: video4
+[11/25 11:04:09.175627][debug][2182395][ObV4lDevice.cpp:346] Found video4linux: video2
+[11/25 11:04:09.176152][debug][2182395][ObV4lDevice.cpp:346] Found video4linux: video0
+[11/25 11:04:09.176611][debug][2182395][ObV4lDevice.cpp:346] Found video4linux: video9
+[11/25 11:04:09.176788][debug][2182395][UsbDeviceEnumerator.cpp:161] Current usb device port list:
+[11/25 11:04:09.176794][debug][2182395][UsbDeviceEnumerator.cpp:164]  - 4-4-10.0 | Orbbec Femto Bolt RGB Camera
+[11/25 11:04:09.176796][debug][2182395][UsbDeviceEnumerator.cpp:164]  - 4-4-10.2 | Orbbec Femto Bolt Depth Camera
+[11/25 11:04:09.176798][debug][2182395][UsbDeviceEnumerator.cpp:164]  - 4-4-10.4 | HID Interface
+[11/25 11:04:09.176856][info][2182395][LinuxPal.cpp:112] Create PollingDeviceWatcher!
+[11/25 11:04:09.176865][debug][2182395][UsbDeviceEnumerator.cpp:69] Found 1 device(s):
+[11/25 11:04:09.176868][debug][2182395][UsbDeviceEnumerator.cpp:72]   - Name: Femto Bolt, PID: 0x066B, SN/ID: CL8K141016H, connection: USB3.1
+[11/25 11:04:09.176875][info][2182395][DeviceManager.cpp:15] Current found device(s): (1)
+[11/25 11:04:09.176879][info][2182395][DeviceManager.cpp:24] 	- Name: Femto Bolt, PID: 0x066b, SN/ID: CL8K141016H, Connection: USB3.1
+[11/25 11:04:09.176883][debug][2182395][DeviceManager.cpp:55] DeviceManager construct done!
+[11/25 11:04:09.176899][debug][2182395][DeviceManager.cpp:112] DeviceManager  createDevice...
+[11/25 11:04:09.176901][debug][2182395][UsbDeviceEnumerator.cpp:289] UsbDeviceEnumerator createDevice...
+[11/25 11:04:09.176918][info][2182395][FemtoBoltUvcDevice.cpp:23] FemtoBoltUvcDevice init ...
+[11/25 11:04:09.176945][info][2182395][FemtoBoltUvcDevice.cpp:120] Create command start!
+[11/25 11:04:09.177797][debug][2182395][ObUvcDevice.cpp:57] uvc_open success
+[11/25 11:04:09.178125][info][2182395][MSDEConverterDevice.cpp:721] Succeed to load depth engine plugin
+[11/25 11:04:09.178136][debug][2182395][ObUvcDevice.cpp:80] ObUvcDevice::startStream()...
+[11/25 11:04:09.178141][debug][2182395][ObUvcDevice.cpp:383] playProfile: infIndex=2, selected_format.width=1024, height=512, format=OB_FORMAT_Y16
+[11/25 11:04:09.179789][debug][2182395][ObUvcDevice.cpp:85] ObUvcDevice::startStream() done
+[11/25 11:04:09.179842][debug][2182395][VendorCommand.cpp:198] VendorCommand constructor 62b8d271d6f0
+[11/25 11:04:09.385497][debug][2182395][PropertyAccessor.cpp:50] get firmware data success! propertyId: 1000, dataLen: 164
+[11/25 11:04:09.386527][debug][2182395][HostProtocol.cpp:450] get property value success! propertyId=98, cur={intValue: 0, floatValue: 0}, max={intValue: 1, floatValue: 1.4013e-45}, min={intValue: 0, floatValue: 0},def={intValue: 0, floatValue: 0},step={intValue: 1, floatValue: 1.4013e-45}
+[11/25 11:04:09.386537][debug][2182395][PropertyAccessor.cpp:28] get property value success! propertyId: 98, value: {intValue: 0, floatValue: 0}
+[11/25 11:04:09.386545][info][2182395][FemtoBoltUvcDevice.cpp:271] Create command done!
+[11/25 11:04:09.386552][info][2182395][FemtoBoltUvcDevice.cpp:431] init sensor map start!
+[11/25 11:04:09.386558][info][2182395][FemtoBoltUvcDevice.cpp:458] init sensor map done!
+[11/25 11:04:09.387216][debug][2182395][PropertyAccessor.cpp:50] get firmware data success! propertyId: 1000, dataLen: 164
+[11/25 11:04:09.387219][info][2182395][AbstractDevice.cpp:124] 	- Firmware version: 1.0.9
+[11/25 11:04:09.387257][info][2182395][FemtoBoltUvcDevice.cpp:275] Init depth process param start!
+[11/25 11:04:09.392188][debug][2182395][PropertyAccessor.cpp:64] get raw data! propertyId: 4027, async: false
+[11/25 11:04:09.392196][debug][2182395][FemtoBoltUvcDevice.cpp:311] init default softFilterParam: maxSpeckleSize: 25, maxDiff: 300, filterType: 1
+[11/25 11:04:09.393387][debug][2182395][PropertyAccessor.cpp:64] get raw data! propertyId: 4024, async: false
+[11/25 11:04:09.730065][debug][2182395][PropertyAccessor.cpp:64] get raw data! propertyId: 4036, async: false
+[11/25 11:04:09.730095][info][2182395][MSDEConverterDevice.cpp:772] got nvram data succeed.
+[11/25 11:04:09.730113][debug][2182395][ObUvcDevice.cpp:90] ObUvcDevice::stopStream()...
+[11/25 11:04:09.730118][info][2182395][ObUvcDevice.cpp:112] endpoint:130
+[11/25 11:04:09.730193][info][2182395][ObUvcDevice.cpp:118] libusb_clear_halt done, endpoint:130
+[11/25 11:04:09.754766][debug][2182395][ObUvcDevice.cpp:98] ObUvcDevice::stopStream() done
+[11/25 11:04:09.754787][debug][2182395][HostProtocol.cpp:417] Set property value, propertyId=38, value={intValue: 1, floatValue: 1.4013e-45}
+[11/25 11:04:10.045860][debug][2182395][PropertyAccessor.cpp:17] set property value success! propertyId: 38, value: {intValue: 1, floatValue: 1.4013e-45}
+[11/25 11:04:10.045878][info][2182395][FemtoBoltUvcDevice.cpp:402] setNvramDataStreamStopFunc succeed
+[11/25 11:04:10.045933][info][2182395][FemtoBoltUvcDevice.cpp:427] Init depth process param done!
+[11/25 11:04:10.046446][debug][2182409][PropertyAccessor.cpp:50] get firmware data success! propertyId: 1003, dataLen: 24
+[11/25 11:04:10.046492][debug][2182395][HostProtocol.cpp:417] Set property value, propertyId=38, value={intValue: 1, floatValue: 1.4013e-45}
+[11/25 11:04:10.046753][debug][2182395][PropertyAccessor.cpp:17] set property value success! propertyId: 38, value: {intValue: 1, floatValue: 1.4013e-45}
+[11/25 11:04:10.046762][debug][2182395][HostProtocol.cpp:417] Set property value, propertyId=77, value={intValue: 1, floatValue: 1.4013e-45}
+[11/25 11:04:10.047023][debug][2182395][PropertyAccessor.cpp:17] set property value success! propertyId: 77, value: {intValue: 1, floatValue: 1.4013e-45}
+[11/25 11:04:10.047037][info][2182395][FemtoBoltUvcDevice.cpp:38] FemtoBoltUvcDevice init done!
+[11/25 11:04:10.047045][debug][2182395][UsbDeviceEnumerator.cpp:338] Device created successfully! Name: Femto Bolt, PID: 0x066b, SN/ID: CL8K141016H
+[11/25 11:04:10.047049][info][2182395][DeviceManager.cpp:157] Device created successfully! Name: Femto Bolt, PID: 0x066b, SN/ID: CL8K141016H
+[11/25 11:04:10.047177][info][2182395][FemtoBoltUvcDevice.cpp:42] ~FemtoBoltUvcDevice start!
+[11/25 11:04:13.046574][info][2182395][FemtoBoltUvcDevice.cpp:52] ~FemtoBoltUvcDevice done!
+[11/25 11:04:13.046634][debug][2182395][VendorCommand.cpp:206] destructor 62b8d271d6f0
+[11/25 11:04:13.046648][debug][2182395][VendorCommand.cpp:452] disableHeartBeat heartBeatHelper_: 0
+[11/25 11:04:13.046652][debug][2182395][HostProtocol.cpp:139] ~HostProtocol()
+[11/25 11:04:13.046667][debug][2182405][HostProtocol.cpp:167] emitTranDataFutureSignalThread_ finish
+[11/25 11:04:13.046771][debug][2182395][ObUvcDevice.cpp:62] ~ObUvcDevice
+[11/25 11:04:13.046825][info][2182395][ObUvcDevice.cpp:70] uvc_close done.
+[11/25 11:04:13.046832][info][2182395][ObUvcDevice.cpp:72] ~ObUvcDevice done
+[11/25 11:04:13.046867][debug][2182395][Context.cpp:87] Context destroying ...
+[11/25 11:04:13.046871][debug][2182395][DeviceManager.cpp:59] DeviceManager destroy ...
+[11/25 11:04:13.046873][debug][2182395][DeviceManager.cpp:67] DeviceManager Destructors done
+[11/25 11:04:13.046992][info][2182395][Context.cpp:90] Context destroyed

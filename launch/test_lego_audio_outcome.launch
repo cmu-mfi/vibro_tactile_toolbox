@@ -10,10 +10,13 @@
     <arg name="use_audio_terminator" default="false"/>
     <arg name="randomize_placement" default="false"/>
     <arg name="config" default="lego.yaml"/>
+    <arg name="data_dir" default=""/>
+    <arg name="proj_dir" default="$(find vibro_tactile_toolbox)"/>
+
     <group ns="$(arg namespace)">
         <node pkg="vibro_tactile_toolbox" name="test_lego_audio_outcome" type="test_lego_audio_outcome.py" output="screen">
             <param name="namespace" value="$(arg namespace)"/>
-            <param name="root_pwd" value="$(find vibro_tactile_toolbox)"/>
+            <param name="root_pwd" value="$(arg proj_dir)"/>
             <param name="num_trials" value="$(arg num_trials)"/>
             <param name="start_num" value="$(arg start_num)"/>
             <param name="block_type" value="$(arg block_type)"/>
@@ -24,6 +27,7 @@
             <param name="randomize_placement" value="$(arg randomize_placement)"/>
             <param name="verbose" value="$(arg verbose)"/>
             <param name="config" value="$(arg config)"/>
+            <param name="data_dir" value="$(arg data_dir)"/>
         </node>
     </group>
 </launch>

@@ -37,9 +37,10 @@ def main(args):
             topic = topic.replace("namespace", args.namespace)
         topics.append(topic)
 
-    check_ros_topics(topics)
-    check_ros_services(config['ros_services'])
-    print("All Systems are running.")
+    all_ros_topics_running = check_ros_topics(topics)
+    all_ros_services_running = check_ros_services(config['ros_services'])
+    if all_ros_topics_running and all_ros_services_running:
+        print("All Systems are running.")
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser()

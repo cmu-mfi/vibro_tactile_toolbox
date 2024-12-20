@@ -58,6 +58,7 @@ def run():
     # Messaging Namespace
     namespace = rospy.get_param("test_lego_audio_outcome/namespace")
     root_pwd = rospy.get_param("test_lego_audio_outcome/root_pwd")
+    data_path = rospy.get_param("collect_lego_audio_data/data_dir")
     yaml_file = rospy.get_param("test_lego_audio_outcome/config")
     num_trials = rospy.get_param("test_lego_audio_outcome/num_trials")
     start_num = rospy.get_param("test_lego_audio_outcome/start_num")
@@ -95,7 +96,7 @@ def run():
     num_correct_predictions = 0
     num_trials_completed = 0
 
-    data_dir = config['data_dir']+'/volume_'+str(volume)+'/'+block_type+'/'+data_type+'_vel_'+str(velocity_scale)+'/'
+    data_dir = data_path+'/lego/volume_'+str(volume)+'/'+block_type+'/'+data_type+'_vel_'+str(velocity_scale)+'/'
 
     data_dir_path_list = data_dir.split('/')
     combined_path = ''
@@ -181,8 +182,12 @@ def run():
 
         expected_result_pub.publish(0)
 
-        check_ros_topics(topics)
-        check_ros_services(config['ros_services'])
+        all_ros_topics_running = check_ros_topics(topics)
+        all_ros_services_running = check_ros_services(config['ros_services'])
+
+        if not (all_ros_topics_running and all_ros_services_running):
+            print('Stopping Testing Loop.')
+            break
 
         # 1. Begin rosbag recording
         rosbag_name = f"trial_{trial_num}-p_{x_perturb:0.4f}_{y_perturb:0.4f}_{theta_perturb:0.4f}_{move_down_velocity_scaling:0.2f}.bag"

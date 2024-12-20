@@ -11,11 +11,13 @@
     <arg name="demo" default="false"/>
     <arg name="use_audio_terminator" default="true"/>
     <arg name="config" default="nist.yaml"/>
+    <arg name="data_dir" default=""/>
+    <arg name="proj_dir" default="$(find vibro_tactile_toolbox)"/>
     
     <group ns="$(arg namespace)">
         <node pkg="vibro_tactile_toolbox" name="test_nist_audio_outcome_node" type="test_nist_audio_outcome.py" output="screen">
             <param name="namespace" value="$(arg namespace)"/>
-            <param name="root_pwd" value="$(find vibro_tactile_toolbox)"/>
+            <param name="root_pwd" value="$(arg proj_dir)"/>
             <param name="num_trials" value="$(arg num_trials)"/>
             <param name="start_num" value="$(arg start_num)"/>
             <param name="connector_type" value="$(arg connector_type)"/>
@@ -27,6 +29,7 @@
             <param name="use_audio_terminator" value="$(arg use_audio_terminator)"/>
             <param name="verbose" value="$(arg verbose)"/>
             <param name="config" value="$(arg config)"/>
+            <param name="data_dir" value="$(arg data_dir)"/>
         </node>
     </group>
 </launch>

@@ -92,6 +92,7 @@ scripts/audio_detector.py
   scripts/collect_nist_audio_data.py
   scripts/compressed_image_cropped_republisher.py
   scripts/compressed_lego_detector.py
+  scripts/determine_camera_parameters.py
   scripts/fts_detector.py
   scripts/image_cropped_republisher.py
   scripts/lego_detector.py

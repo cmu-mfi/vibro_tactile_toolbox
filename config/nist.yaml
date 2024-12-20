@@ -1,6 +1,5 @@
 transforms_dir: "/transforms/"
 hande_ee_tf: "hande_ee.tf"
-data_dir: "/home/Documents/vibro_tactile_data/nist"
 model_dir: "/models/"
 x_range:
   - -0.005
