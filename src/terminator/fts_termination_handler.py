@@ -99,41 +99,41 @@ class FTSTerminationHandler(BaseTerminationHandler):
 
         # Fx-
         if (self.fts_wrench.force.x < self.baseline_wrench.force.x + self.wrench_thresh_lo.force.x):
-            causes.append(f"Fx ({self.fts_wrench.force.x:0.2f}) exceeds threshold ({self.wrench_thresh_lo.force.x:0.2f})")
+            causes.append(f"Fx ({(self.fts_wrench.force.x-self.baseline_wrench.force.x):0.2f}) exceeds threshold ({self.wrench_thresh_lo.force.x:0.2f})")
         # Fx+
         if (self.fts_wrench.force.x > self.baseline_wrench.force.x + self.wrench_thresh_hi.force.x):
-            causes.append(f"Fx ({self.fts_wrench.force.x:0.2f}) exceeds threshold ({self.wrench_thresh_hi.force.x:0.2f})")
+            causes.append(f"Fx ({(self.fts_wrench.force.x-self.baseline_wrench.force.x):0.2f}) exceeds threshold ({self.wrench_thresh_hi.force.x:0.2f})")
         # Fy-
         if (self.fts_wrench.force.y < self.baseline_wrench.force.y + self.wrench_thresh_lo.force.y):
-            causes.append(f"Fy ({self.fts_wrench.force.y:0.2f}) exceeds threshold ({self.wrench_thresh_lo.force.y:0.2f})")
+            causes.append(f"Fy ({(self.fts_wrench.force.y-self.baseline_wrench.force.y):0.2f}) exceeds threshold ({self.wrench_thresh_lo.force.y:0.2f})")
         # Fy+
         if (self.fts_wrench.force.y > self.baseline_wrench.force.y + self.wrench_thresh_hi.force.y):
-            causes.append(f"Fy ({self.fts_wrench.force.y:0.2f}) exceeds threshold ({self.wrench_thresh_hi.force.y:0.2f})")
+            causes.append(f"Fy ({(self.fts_wrench.force.y-self.baseline_wrench.force.y):0.2f}) exceeds threshold ({self.wrench_thresh_hi.force.y:0.2f})")
         # Fz-
         if (self.fts_wrench.force.z < self.baseline_wrench.force.z + self.wrench_thresh_lo.force.z):
-            causes.append(f"Fz ({self.fts_wrench.force.z:0.2f}) exceeds threshold ({self.wrench_thresh_lo.force.z:0.2f})")
+            causes.append(f"Fz ({(self.fts_wrench.force.z-self.baseline_wrench.force.z):0.2f}) exceeds threshold ({self.wrench_thresh_lo.force.z:0.2f})")
         # Fz+
         if (self.fts_wrench.force.z > self.baseline_wrench.force.z + self.wrench_thresh_hi.force.z):
-            causes.append(f"Fz ({self.fts_wrench.force.z:0.2f}) exceeds threshold ({self.wrench_thresh_hi.force.z:0.2f})")
+            causes.append(f"Fz ({(self.fts_wrench.force.z-self.baseline_wrench.force.z):0.2f}) exceeds threshold ({self.wrench_thresh_hi.force.z:0.2f})")
 
         # Tx-
         if (self.fts_wrench.torque.x < self.baseline_wrench.torque.x + self.wrench_thresh_lo.torque.x):
-            causes.append(f"Tx ({self.fts_wrench.torque.x:0.2f}) exceeds threshold ({self.wrench_thresh_lo.torque.x:0.2f})")
+            causes.append(f"Tx ({(self.fts_wrench.torque.x-self.baseline_wrench.torque.x):0.2f}) exceeds threshold ({self.wrench_thresh_lo.torque.x:0.2f})")
         # Tx+
         if (self.fts_wrench.torque.x > self.baseline_wrench.torque.x + self.wrench_thresh_hi.torque.x):
-            causes.append(f"Tx ({self.fts_wrench.torque.x:0.2f}) exceeds threshold ({self.wrench_thresh_hi.torque.x:0.2f})")
+            causes.append(f"Tx ({(self.fts_wrench.torque.x-self.baseline_wrench.torque.x):0.2f}) exceeds threshold ({self.wrench_thresh_hi.torque.x:0.2f})")
         # Ty-
         if (self.fts_wrench.torque.y < self.baseline_wrench.torque.y + self.wrench_thresh_lo.torque.y):
-            causes.append(f"Ty ({self.fts_wrench.torque.y:0.2f}) exceeds threshold ({self.wrench_thresh_lo.torque.y:0.2f})")
+            causes.append(f"Ty ({(self.fts_wrench.torque.y-self.baseline_wrench.torque.y):0.2f}) exceeds threshold ({self.wrench_thresh_lo.torque.y:0.2f})")
         # Ty+
         if (self.fts_wrench.torque.y > self.baseline_wrench.torque.y + self.wrench_thresh_hi.torque.y):
-            causes.append(f"Ty ({self.fts_wrench.torque.y:0.2f}) exceeds threshold ({self.wrench_thresh_hi.torque.y:0.2f})")
+            causes.append(f"Ty ({(self.fts_wrench.torque.y-self.baseline_wrench.torque.y):0.2f}) exceeds threshold ({self.wrench_thresh_hi.torque.y:0.2f})")
         # Tz-
         if (self.fts_wrench.torque.z < self.baseline_wrench.torque.z + self.wrench_thresh_lo.torque.z):
-            causes.append(f"Tz ({self.fts_wrench.torque.z:0.2f}) exceeds threshold ({self.wrench_thresh_lo.torque.z:0.2f})")
+            causes.append(f"Tz ({(self.fts_wrench.torque.z-self.baseline_wrench.torque.z):0.2f}) exceeds threshold ({self.wrench_thresh_lo.torque.z:0.2f})")
         # Tz+
         if (self.fts_wrench.torque.z > self.baseline_wrench.torque.z + self.wrench_thresh_hi.torque.z):
-            causes.append(f"Tz ({self.fts_wrench.torque.z:0.2f}) exceeds threshold ({self.wrench_thresh_hi.torque.z:0.2f})")
+            causes.append(f"Tz ({(self.fts_wrench.torque.z-self.baseline_wrench.torque.z):0.2f}) exceeds threshold ({self.wrench_thresh_hi.torque.z:0.2f})")
         
         terminate = len(causes) > 0
         if terminate:

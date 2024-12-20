@@ -2,13 +2,13 @@
 
 # Define the arrays for volumes, connectors, and velocities
 VOLS=(75)
-CONNECTORS=("dsub" "usb" "waterproof")
-VELS=(0.01 0.02)
-TRAIN_VS_TEST=("vel_" "test_vel_")
-ROBOT_NAME=""
-TYPE="nist"
-NUM_RESAMPLES=20
-NUM_RESAMPLES_TERMINATOR=50
+CONNECTORS=("waterproof")
+VELS=(0.01) # set in launch/collect_nist_audio_data.launch
+TRAIN_VS_TEST=("vel_")
+ROBOT_NAME="${NAMESPACE}"
+TYPE="${TYPE}"
+NUM_RESAMPLES=20 #recommended value = 20
+NUM_RESAMPLES_TERMINATOR=50 #recommended value = 50
 
 # Define the base paths
 BASE_TARGET_DIR="${DATA_DIR}/nist/volume_"

@@ -131,11 +131,11 @@ def main(args):
     cv2.imshow("CROPPED IMAGE", cropped_cv_image)
 
     if cv2.waitKey(1) == ord('q'):
-        print('ROTATION = ' + str(ROTATION))
-        print('x_offset = ' + str(x_offset))
-        print('y_offset = ' + str(y_offset))
-        print('x_size = ' + str(x_size))
-        print('y_size = ' + str(y_size))
+        print(f'<param name="x_offset" value="{str(x_offset)}"/>')
+        print(f'<param name="y_offset" value="{str(y_offset)}"/>')
+        print(f'<param name="x_size" value="{str(x_size)}"/>')
+        print(f'<param name="y_size" value="{str(y_size)}"/>')
+        print(f'<param name="rotation" value="{str(ROTATION)}"/>')
         break
     
   cv2.destroyAllWindows()

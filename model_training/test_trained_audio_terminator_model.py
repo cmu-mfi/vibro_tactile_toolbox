@@ -76,6 +76,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--type', '-t', type=str, default='nist')
     parser.add_argument('--data_dir', '-d', type=str, default='')
+    parser.add_argument('--proj_dir', '-p', type=str, default='')
     args = parser.parse_args()
 
     channels = [0,1,2,3]
@@ -93,7 +94,7 @@ if __name__ == '__main__':
         shuffle=False
     )
 
-    model = torch.jit.load('./models/audio_terminator_'+args.type+'.pt')
+    model = torch.jit.load(f'{args.proj_dir}/models/audio_terminator_{args.type}.pt')
     model.eval()
     model.to(device)
 

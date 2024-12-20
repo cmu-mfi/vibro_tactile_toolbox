@@ -81,6 +81,7 @@ if __name__ == '__main__':
     parser.add_argument('--channels', '-c', type=str, default='')
     parser.add_argument('--block_type', '-b', type=str, default='')
     parser.add_argument('--data_dir', '-d', type=str, default='')
+    parser.add_argument('--proj_dir', '-p', type=str, default='')
     args = parser.parse_args()
 
     if args.channels != '':
@@ -108,11 +109,11 @@ if __name__ == '__main__':
 
     if save_suffix == '': 
       if args.block_type != '':
-        model = torch.jit.load('models/blocks/audio_outcome_'+args.type+'_'+args.block_type+'.pt') # load
+        model = torch.jit.load(f'{args.proj_dir}/models/blocks/audio_outcome_{args.type}_{args.block_type}.pt') # load
       else:
-        model = torch.jit.load('models/audio_outcome_'+args.type+'.pt') # load
+        model = torch.jit.load(f'{args.proj_dir}/models/audio_outcome_{args.type}.pt') # load
     else: 
-        model = torch.jit.load('models/channels/audio_outcome_'+args.type+save_suffix+'.pt') # load
+        model = torch.jit.load(f'{args.proj_dir}/models/channels/audio_outcome_{args.type}{save_suffix}.pt') # load
 
     model.eval()
     model.to(device)

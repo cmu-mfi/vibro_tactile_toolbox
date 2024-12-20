@@ -27,7 +27,7 @@ def run():
     # Messaging Namespace
     namespace = rospy.get_param("test_nist_audio_outcome_node/namespace")
     root_pwd = rospy.get_param("test_nist_audio_outcome_node/root_pwd")
-    data_path = rospy.get_param("collect_lego_audio_data/data_dir")
+    data_path = rospy.get_param("test_nist_audio_outcome_node/data_dir")
     yaml_file = rospy.get_param("test_nist_audio_outcome_node/config")
     num_trials = rospy.get_param("test_nist_audio_outcome_node/num_trials")
     start_num = rospy.get_param("test_nist_audio_outcome_node/start_num")

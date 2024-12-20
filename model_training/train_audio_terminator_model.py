@@ -125,7 +125,7 @@ def train(dataloader, model, loss, optimizer):
 # Create the validation/test function
 max_test_correct = 0.85
 min_test_loss = 0.05
-def test(dataloader, model, type):
+def test(dataloader, model, type, proj_dir):
     global max_test_correct, min_test_loss
     size = len(dataloader.dataset)
     model.eval()
@@ -145,7 +145,7 @@ def test(dataloader, model, type):
         max_test_correct = correct
         min_test_loss = test_loss
         model_scripted = torch.jit.script(model) # Export to TorchScript
-        model_scripted.save('models/audio_terminator_'+type+'.pt') # Save
+        model_scripted.save(f'{proj_dir}/models/audio_terminator_{type}.pt') # Save
         print("====================== SAVED MODEL ==========================")
 
     print(f'\nTest Error:\nacc: {(100*correct):>0.1f}%, avg loss: {test_loss:>8f}\n')
@@ -155,6 +155,7 @@ if __name__ == '__main__':
     parser.add_argument('--type', '-t', type=str, default='lego')
     parser.add_argument('--train_ratio', '-r', type=float, default=0.8)
     parser.add_argument('--data_dir', '-d', type=str, default='')
+    parser.add_argument('--proj_dir', '-p', type=str, default='')
     args = parser.parse_args()
 
     channels = [0,1,2,3]
@@ -214,7 +215,7 @@ if __name__ == '__main__':
     for t in range(epochs):
         print(f'Epoch {t+1}\n-------------------------------')
         train(train_dataloader, model, cost, optimizer)
-        test(test_dataloader, model, args.type)
+        test(test_dataloader, model, args.type, args.proj_dir)
     print('Done!')
 
     summary(model, input_size=(15, num_channels, 256, 44))

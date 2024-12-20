@@ -134,7 +134,7 @@ def train(dataloader, model, loss, optimizer):
 # Create the validation/test function
 max_test_correct = 0.75
 min_test_loss = 0.05
-def test(dataloader, model, type, save_suffix, block_type):
+def test(dataloader, model, type, save_suffix, block_type, proj_dir):
     global max_test_correct, min_test_loss
     size = len(dataloader.dataset)
     model.eval()
@@ -156,11 +156,11 @@ def test(dataloader, model, type, save_suffix, block_type):
         model_scripted = torch.jit.script(model) # Export to TorchScript
         if save_suffix == '': 
             if block_type == '':
-                model_scripted.save('models/audio_outcome_'+type+'.pt') # Save
+                model_scripted.save(f'{proj_dir}/models/audio_outcome_{type}.pt') # Save
             else:
-                model_scripted.save('models/audio_outcome_'+type+'_'+block_type+'.pt') # Save
+                model_scripted.save(f'{proj_dir}/models/audio_outcome_{type}_{block_type}.pt') # Save
         else: 
-            model_scripted.save('models/channels/audio_outcome_'+type+save_suffix+'.pt') # Save
+            model_scripted.save(f'{proj_dir}/models/channels/audio_outcome_{type}{save_suffix}.pt') # Save
         #torch.save(model, 'models/audio_outcome_'+type+'.pt')
         print("====================== SAVED MODEL ==========================")
 
@@ -173,6 +173,7 @@ if __name__ == '__main__':
     parser.add_argument('--channels', '-c', type=str, default='')
     parser.add_argument('--block_type', '-b', type=str, default='')
     parser.add_argument('--data_dir', '-d', type=str, default='')
+    parser.add_argument('--proj_dir', '-p', type=str, default='')
     args = parser.parse_args()
     
     if args.channels != '':
@@ -239,7 +240,7 @@ if __name__ == '__main__':
     for t in range(epochs):
         print(f'Epoch {t+1}\n-------------------------------')
         train(train_dataloader, model, cost, optimizer)
-        test(test_dataloader, model, args.type, save_suffix, args.block_type)
+        test(test_dataloader, model, args.type, save_suffix, args.block_type, args.proj_dir)
     print('Done!')
 
     summary(model, input_size=(15, num_channels, 256, 87))
